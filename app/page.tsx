@@ -1,4 +1,3 @@
-import Image from "next/image";
 import {
   Search,
   Drill,
@@ -30,7 +29,7 @@ export default function Home() {
             <span className="text-xl font-bold tracking-tight text-slate-900">PODELI.rs</span>
           </div>
           <div className="hidden items-center gap-8 md:flex">
-            <a href="#kako-funkcionise" className="text-sm font-medium text-slate-600 hover:text-amber-600">Kako funkcioniše</a>
+            <a href="/kako-funkcionise" className="text-sm font-medium text-slate-600 hover:text-amber-600">Kako funkcioniše</a>
             <a href="#zasto-deljenje" className="text-sm font-medium text-slate-600 hover:text-amber-600">Zašto deljenje</a>
             <a href="#ponuda" className="text-sm font-medium text-slate-600 hover:text-amber-600">Ponuda</a>
             <button className="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-800">
@@ -311,32 +310,41 @@ export default function Home() {
       </section>
 
       {/* CTA Footer */}
-      <section className="relative overflow-hidden bg-amber-500 py-24 text-center">
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+      <section className="relative overflow-hidden bg-slate-900 py-24 text-center">
+        <div
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: "radial-gradient(#fff 1px, transparent 1px)",
+            backgroundSize: "24px 24px",
+          }}
+        ></div>
         <div className="relative mx-auto max-w-2xl px-6">
           <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
             Spreman da živiš pametnije?
           </h2>
-          <p className="mx-auto mt-6 max-w-xl text-lg text-amber-100">
-            Pridruži se listi čekanja za Beograd. Obavestićemo te čim platforma postane aktivna u tvom kraju.
+          <p className="mx-auto mt-6 max-w-xl text-lg text-slate-300">
+            Pridruži se listi čekanja za Beograd. Obavestićemo te čim platforma
+            postane aktivna u tvom kraju.
           </p>
-          
+
           <form className="mx-auto mt-10 max-w-md">
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <input
-                type="email"
-                required
-                placeholder="tvoja@email.adresa"
-                className="flex-1 rounded-xl border-0 px-5 py-3.5 text-slate-900 shadow-sm ring-1 ring-inset ring-white/20 placeholder:text-slate-500 focus:ring-2 focus:ring-inset focus:ring-white"
-              />
-              <button
-                type="submit"
-                className="flex-none rounded-xl bg-slate-900 px-8 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
-              >
-                Prijavi se
-              </button>
+            <div className="rounded-2xl bg-white p-2 shadow-xl shadow-slate-900/30">
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <input
+                  type="email"
+                  required
+                  placeholder="tvoja@email.adresa"
+                  className="flex-1 rounded-xl border border-slate-200 px-5 py-3.5 text-slate-900 placeholder:text-slate-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-200"
+                />
+                <button
+                  type="submit"
+                  className="flex-none rounded-xl bg-amber-500 px-8 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-amber-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+                >
+                  Prijavi se
+                </button>
+              </div>
             </div>
-            <p className="mt-4 text-xs text-amber-100/80">
+            <p className="mt-4 text-xs text-slate-400">
               *Bez spama. Samo važne informacije o lansiranju.
             </p>
           </form>
