@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { requireIdentity } from "@/lib/clerk";
+import { requireIdentity } from "@/lib/convex-auth";
 
 function parseDate(dateStr: string): Date {
   return new Date(dateStr + "T00:00:00");

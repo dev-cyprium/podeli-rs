@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { requireIdentity } from "@/lib/clerk";
+import { requireIdentity } from "@/lib/convex-auth";
 
 const deliveryMethodValues = ["licno", "glovo", "wolt", "cargo"] as const;
 
