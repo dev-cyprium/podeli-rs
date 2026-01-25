@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Doc } from "@/convex/_generated/dataModel";
+import { useMutation, useQuery } from "convex/react";
+import { Doc, Id } from "@/convex/_generated/dataModel";
+import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -37,7 +39,7 @@ export type ItemFormData = {
   description: string;
   category: string;
   pricePerDay: number;
-  images: string[];
+  images: Id<"_storage">[];
   availabilitySlots: AvailabilitySlot[];
   deliveryMethods: DeliveryMethod[];
 };
@@ -48,26 +50,45 @@ interface ItemWizardFormProps {
   onCancel?: () => void;
 }
 
-export function ItemWizardForm({ item, onSave, onCancel }: ItemWizardFormProps) {
+import { type DateRange } from "react-day-picker";
+import { format, parseISO } from "date-fns";
+import { Trash2 } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Card, CardContent } from "@/components/ui/card";
+
+export function ItemWizardForm({
+  item,
+  onSave,
+  onCancel,
+}: ItemWizardFormProps) {
+  const generateUploadUrl = useMutation(api.items.generateUploadUrl);
   const [title, setTitle] = useState(item?.title ?? "");
   const [description, setDescription] = useState(item?.description ?? "");
-  const [category, setCategory] = useState(item?.category ?? CATEGORY_OPTIONS[0]);
+  const [category, setCategory] = useState(
+    item?.category ?? CATEGORY_OPTIONS[0],
+  );
   const [pricePerDay, setPricePerDay] = useState(
-    item?.pricePerDay?.toString() ?? ""
+    item?.pricePerDay?.toString() ?? "",
   );
-  const [images, setImages] = useState<string[]>(
-    item?.images && item.images.length > 0 ? item.images : []
+  const [images, setImages] = useState<Id<"_storage">[]>(
+    item?.images && item.images.length > 0 ? item.images : [],
   );
-  const [availabilitySlots, setAvailabilitySlots] = useState<AvailabilitySlot[]>(
-    item?.availabilitySlots ?? []
-  );
+  const [availabilitySlots, setAvailabilitySlots] = useState<
+    AvailabilitySlot[]
+  >(item?.availabilitySlots ?? []);
   const [deliveryMethods, setDeliveryMethods] = useState<DeliveryMethod[]>(
-    (item?.deliveryMethods as DeliveryMethod[]) ?? []
+    (item?.deliveryMethods as DeliveryMethod[]) ?? [],
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isProcessingImages, setIsProcessingImages] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
+
+  // Get URLs for all images
+  const imageUrlsMap = useQuery(
+    api.items.getImageUrls,
+    images.length > 0 ? { storageIds: images } : "skip"
+  );
 
   const steps = [
     {
@@ -100,15 +121,15 @@ export function ItemWizardForm({ item, onSave, onCancel }: ItemWizardFormProps) 
     setAvailabilitySlots((prev) => [...prev, { startDate: "", endDate: "" }]);
   }
 
-  function updateSlot(
-    index: number,
-    key: "startDate" | "endDate",
-    value: string
-  ) {
+  function updateSlotRange(index: number, range: DateRange | undefined) {
     setAvailabilitySlots((prev) =>
-      prev.map((slot, idx) =>
-        idx === index ? { ...slot, [key]: value } : slot
-      )
+      prev.map((slot, idx) => {
+        if (idx !== index) return slot;
+        return {
+          startDate: range?.from ? format(range.from, "yyyy-MM-dd") : "",
+          endDate: range?.to ? format(range.to, "yyyy-MM-dd") : "",
+        };
+      }),
     );
   }
 
@@ -120,7 +141,7 @@ export function ItemWizardForm({ item, onSave, onCancel }: ItemWizardFormProps) 
     setDeliveryMethods((prev) =>
       prev.includes(method)
         ? prev.filter((itemValue) => itemValue !== method)
-        : [...prev, method]
+        : [...prev, method],
     );
   }
 
@@ -129,18 +150,25 @@ export function ItemWizardForm({ item, onSave, onCancel }: ItemWizardFormProps) 
     setIsProcessingImages(true);
     const fileArray = Array.from(files);
     try {
-      const dataUrls = await Promise.all(
-        fileArray.map(
-          (file) =>
-            new Promise<string>((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onload = () => resolve(reader.result as string);
-              reader.onerror = () => reject(new Error("Neuspešno učitavanje"));
-              reader.readAsDataURL(file);
-            })
-        )
-      );
-      setImages((prev) => [...prev.filter(Boolean), ...dataUrls]);
+      const uploadPromises = fileArray.map(async (file) => {
+        // Generate upload URL
+        const uploadUrl = await generateUploadUrl();
+        // Upload file to Convex
+        const result = await fetch(uploadUrl, {
+          method: "POST",
+          headers: { "Content-Type": file.type },
+          body: file,
+        });
+        if (!result.ok) {
+          throw new Error("Neuspešno učitavanje fajla");
+        }
+        const { storageId } = await result.json();
+        return storageId as Id<"_storage">;
+      });
+      const storageIds = await Promise.all(uploadPromises);
+      setImages((prev) => [...prev, ...storageIds]);
+    } catch (error) {
+      setFormError("Greška pri učitavanju slika. Pokušajte ponovo.");
     } finally {
       setIsProcessingImages(false);
     }
@@ -160,14 +188,13 @@ export function ItemWizardForm({ item, onSave, onCancel }: ItemWizardFormProps) 
       }
     }
     if (stepIndex === 1) {
-      const cleanedImages = images.map((img) => img.trim()).filter(Boolean);
-      if (cleanedImages.length === 0) {
+      if (images.length === 0) {
         return "Dodajte bar jednu fotografiju.";
       }
     }
     if (stepIndex === 2) {
       const cleanedSlots = availabilitySlots.filter(
-        (slot) => slot.startDate && slot.endDate
+        (slot) => slot.startDate && slot.endDate,
       );
       if (cleanedSlots.length === 0) {
         return "Dodajte bar jedan termin dostupnosti.";
@@ -191,6 +218,13 @@ export function ItemWizardForm({ item, onSave, onCancel }: ItemWizardFormProps) 
     setCurrentStep((prev) => Math.max(prev - 1, 0));
   }
 
+  function goToStep(stepIndex: number) {
+    if (stepIndex >= 0 && stepIndex < steps.length) {
+      setFormError(null);
+      setCurrentStep(stepIndex);
+    }
+  }
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (currentStep < steps.length - 1) {
@@ -200,9 +234,8 @@ export function ItemWizardForm({ item, onSave, onCancel }: ItemWizardFormProps) 
 
     setFormError(null);
     const numericPrice = Number(pricePerDay);
-    const cleanedImages = images.map((img) => img.trim()).filter(Boolean);
     const cleanedSlots = availabilitySlots.filter(
-      (slot) => slot.startDate && slot.endDate
+      (slot) => slot.startDate && slot.endDate,
     );
 
     setIsSubmitting(true);
@@ -212,7 +245,7 @@ export function ItemWizardForm({ item, onSave, onCancel }: ItemWizardFormProps) 
         description: description.trim(),
         category,
         pricePerDay: numericPrice,
-        images: cleanedImages,
+        images,
         availabilitySlots: cleanedSlots,
         deliveryMethods,
       });
@@ -255,10 +288,11 @@ export function ItemWizardForm({ item, onSave, onCancel }: ItemWizardFormProps) 
             <motion.div
               key={step.id}
               layout
-              className={`rounded-lg border px-3 py-2 text-xs font-semibold ${
+              onClick={() => goToStep(index)}
+              className={`cursor-pointer rounded-lg border px-3 py-2 text-xs font-semibold transition-colors ${
                 index === currentStep
                   ? "border-amber-200 bg-amber-50 text-amber-700"
-                  : "border-slate-200 bg-slate-50 text-slate-500"
+                  : "border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300 hover:bg-slate-100"
               }`}
             >
               {index + 1}. {step.title}
@@ -338,7 +372,9 @@ export function ItemWizardForm({ item, onSave, onCancel }: ItemWizardFormProps) 
                       type="file"
                       accept="image/*"
                       multiple
-                      onChange={(event) => handleImageUpload(event.target.files)}
+                      onChange={(event) =>
+                        handleImageUpload(event.target.files)
+                      }
                       className="hidden"
                     />
                     Dodaj slike
@@ -354,16 +390,24 @@ export function ItemWizardForm({ item, onSave, onCancel }: ItemWizardFormProps) 
                 </div>
               ) : (
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {images.map((image, index) => (
+                  {images.map((imageId, index) => {
+                    const imageUrl = imageUrlsMap?.[imageId] ?? null;
+                    return (
                       <div
-                        key={`image-${index}`}
+                        key={`image-${imageId}`}
                         className="group relative overflow-hidden rounded-lg border border-slate-200"
                       >
-                        <img
-                          src={image}
-                          alt={`Slika ${index + 1}`}
-                          className="h-40 w-full object-cover"
-                        />
+                        {imageUrl ? (
+                          <img
+                            src={imageUrl}
+                            alt={`Slika ${index + 1}`}
+                            className="h-40 w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-40 w-full items-center justify-center bg-slate-100 text-sm text-slate-500">
+                            Učitavanje...
+                          </div>
+                        )}
                         <button
                           type="button"
                           onClick={() => removeImage(index)}
@@ -372,7 +416,8 @@ export function ItemWizardForm({ item, onSave, onCancel }: ItemWizardFormProps) 
                           Ukloni
                         </button>
                       </div>
-                    ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -382,7 +427,12 @@ export function ItemWizardForm({ item, onSave, onCancel }: ItemWizardFormProps) 
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label>Dostupnost</Label>
-                <Button type="button" variant="outline" size="sm" onClick={addSlot}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addSlot}
+                >
                   Dodaj termin
                 </Button>
               </div>
@@ -393,38 +443,42 @@ export function ItemWizardForm({ item, onSave, onCancel }: ItemWizardFormProps) 
                   </p>
                 ) : (
                   availabilitySlots.map((slot, index) => (
-                    <div key={`slot-${index}`} className="grid gap-2">
-                      <div className="grid gap-2 sm:grid-cols-2">
-                        <div className="space-y-2">
-                          <Label>Od</Label>
-                          <Input
-                            type="date"
-                            value={slot.startDate}
-                            onChange={(event) =>
-                              updateSlot(index, "startDate", event.target.value)
-                            }
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Do</Label>
-                          <Input
-                            type="date"
-                            value={slot.endDate}
-                            onChange={(event) =>
-                              updateSlot(index, "endDate", event.target.value)
-                            }
-                          />
-                        </div>
+                    <div key={`slot-${index}`} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label>Period dostupnosti</Label>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeSlot(index)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Ukloni termin
+                        </Button>
                       </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeSlot(index)}
-                        className="w-fit"
-                      >
-                        Ukloni termin
-                      </Button>
+                      <Card className="w-fit">
+                        <CardContent className="p-0">
+                          <Calendar
+                            mode="range"
+                            defaultMonth={
+                              slot.startDate
+                                ? parseISO(slot.startDate)
+                                : new Date()
+                            }
+                            selected={{
+                              from: slot.startDate
+                                ? parseISO(slot.startDate)
+                                : undefined,
+                              to: slot.endDate
+                                ? parseISO(slot.endDate)
+                                : undefined,
+                            }}
+                            onSelect={(range) => updateSlotRange(index, range)}
+                            numberOfMonths={2}
+                            className="rounded-lg"
+                          />
+                        </CardContent>
+                      </Card>
                     </div>
                   ))
                 )}
@@ -483,9 +537,13 @@ export function ItemWizardForm({ item, onSave, onCancel }: ItemWizardFormProps) 
             {item ? "Sačuvaj izmene" : "Sačuvaj predmet"}
           </Button>
         )}
-        {onCancel ? (
-          <Button type="button" variant="outline" onClick={onCancel}>
-            Otkaži
+        {item && onCancel && currentStep < steps.length - 1 ? (
+          <Button
+            type="submit"
+            className="bg-amber-500 text-white hover:bg-amber-600"
+            disabled={isSubmitting}
+          >
+            Sačuvaj izmene
           </Button>
         ) : null}
       </div>

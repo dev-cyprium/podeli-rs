@@ -6,7 +6,7 @@ import { SignedIn, SignedOut } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { api } from "@/convex/_generated/api";
-import { Doc } from "@/convex/_generated/dataModel";
+import { Doc, Id } from "@/convex/_generated/dataModel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -77,10 +77,7 @@ function ItemsListContent() {
             Upravljajte ponudom i dostupnošću.
           </p>
         </div>
-        <Button
-          asChild
-          className="bg-amber-500 text-white hover:bg-amber-600"
-        >
+        <Button asChild className="bg-amber-500 text-white hover:bg-amber-600">
           <Link href="/kontrolna-tabla/predmeti/novi">Novi predmet</Link>
         </Button>
       </CardHeader>
@@ -105,7 +102,9 @@ function ItemsListContent() {
                   <ItemCard
                     item={item}
                     onEdit={() =>
-                      router.push(`/kontrolna-tabla/predmeti/novi?id=${item._id}`)
+                      router.push(
+                        `/kontrolna-tabla/predmeti/novi?id=${item._id}`,
+                      )
                     }
                     onDelete={() => handleDelete(item._id)}
                   />
@@ -128,6 +127,10 @@ function ItemCard({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const imageUrl = useQuery(
+    api.items.getImageUrl,
+    item.images[0] ? { storageId: item.images[0] as Id<"_storage"> } : "skip",
+  );
   const availabilitySummary =
     item.availabilitySlots.length > 0
       ? item.availabilitySlots.slice(0, 2).map(formatSlot).join(", ")
@@ -136,16 +139,11 @@ function ItemCard({
   return (
     <div className="flex gap-4 rounded-xl border border-slate-200 bg-white px-4 py-4">
       <div className="h-20 w-20 overflow-hidden rounded-lg bg-slate-100">
-        {item.images[0] ? (
+        {imageUrl ? (
           <img
-            src={item.images[0]}
+            src={imageUrl}
             alt={item.title}
             className="h-full w-full object-cover"
-            onError={(event) => {
-              const target = event.target as HTMLImageElement;
-              target.src =
-                "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' fill='%23e2e8f0'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='12' fill='%2394a3b8'%3ENema slike%3C/text%3E%3C/svg%3E";
-            }}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">

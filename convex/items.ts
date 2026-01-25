@@ -1,21 +1,19 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { Id } from "./_generated/dataModel";
 
-const deliveryMethodValues = [
-  "licno",
-  "glovo",
-  "wolt",
-  "cargo",
-] as const;
+const deliveryMethodValues = ["licno", "glovo", "wolt", "cargo"] as const;
 
 const deliveryMethodValidator = v.union(
   v.literal(deliveryMethodValues[0]),
   v.literal(deliveryMethodValues[1]),
   v.literal(deliveryMethodValues[2]),
-  v.literal(deliveryMethodValues[3])
+  v.literal(deliveryMethodValues[3]),
 );
 
-async function requireIdentity(ctx: { auth: { getUserIdentity: () => Promise<any> } }) {
+async function requireIdentity(ctx: {
+  auth: { getUserIdentity: () => Promise<any> };
+}) {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) {
     throw new Error("Morate biti prijavljeni.");
@@ -58,12 +56,12 @@ export const create = mutation({
     description: v.string(),
     category: v.string(),
     pricePerDay: v.number(),
-    images: v.array(v.string()),
+    images: v.array(v.id("_storage")),
     availabilitySlots: v.array(
       v.object({
         startDate: v.string(),
         endDate: v.string(),
-      })
+      }),
     ),
     deliveryMethods: v.array(deliveryMethodValidator),
   },
@@ -86,12 +84,12 @@ export const update = mutation({
     description: v.string(),
     category: v.string(),
     pricePerDay: v.number(),
-    images: v.array(v.string()),
+    images: v.array(v.id("_storage")),
     availabilitySlots: v.array(
       v.object({
         startDate: v.string(),
         endDate: v.string(),
-      })
+      }),
     ),
     deliveryMethods: v.array(deliveryMethodValidator),
   },
@@ -103,6 +101,13 @@ export const update = mutation({
     }
     if (item.ownerId !== identity.subject) {
       throw new Error("Nemate dozvolu da menjate ovaj predmet.");
+    }
+    // Delete old images that are no longer in the new list
+    const oldImageIds = item.images.filter(
+      (oldId) => !args.images.includes(oldId),
+    );
+    for (const oldImageId of oldImageIds) {
+      await ctx.storage.delete(oldImageId);
     }
     const { id, ...rest } = args;
     await ctx.db.patch(id, {
@@ -125,6 +130,40 @@ export const remove = mutation({
     if (item.ownerId !== identity.subject) {
       throw new Error("Nemate dozvolu da obrišete ovaj predmet.");
     }
+    // Delete associated image files
+    for (const imageId of item.images) {
+      await ctx.storage.delete(imageId);
+    }
     await ctx.db.delete(args.id);
+  },
+});
+
+export const generateUploadUrl = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await requireIdentity(ctx);
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
+export const getImageUrl = query({
+  args: {
+    storageId: v.id("_storage"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.storage.getUrl(args.storageId);
+  },
+});
+
+export const getImageUrls = query({
+  args: {
+    storageIds: v.array(v.id("_storage")),
+  },
+  handler: async (ctx, args) => {
+    const urlMap: Record<string, string | null> = {};
+    for (const storageId of args.storageIds) {
+      urlMap[storageId] = await ctx.storage.getUrl(storageId);
+    }
+    return urlMap;
   },
 });

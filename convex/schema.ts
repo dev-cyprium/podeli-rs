@@ -8,12 +8,12 @@ export default defineSchema({
     description: v.string(),
     category: v.string(),
     pricePerDay: v.number(),
-    images: v.array(v.string()),
+    images: v.array(v.id("_storage")),
     availabilitySlots: v.array(
       v.object({
         startDate: v.string(),
         endDate: v.string(),
-      })
+      }),
     ),
     deliveryMethods: v.array(v.string()),
     createdAt: v.number(),

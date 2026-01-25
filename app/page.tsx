@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import {
   Search,
   Drill,
@@ -10,11 +13,13 @@ import {
   PiggyBank,
   MapPin,
   Menu,
+  X,
 } from "lucide-react";
 import { SignInModal } from "@/components/SignInModal";
 import { UserMenu } from "@/components/UserMenu";
 
 export default function Home() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   return (
     <div className="min-h-screen bg-stone-50 font-sans text-slate-900 selection:bg-amber-100 selection:text-amber-900">
       {/* Navigation */}
@@ -51,11 +56,53 @@ export default function Home() {
             <UserMenu />
           </div>
           <div className="md:hidden">
-            <button className="p-2 text-slate-600">
-              <Menu className="h-6 w-6" />
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 text-slate-600 touch-manipulation"
+              aria-label="Toggle menu"
+            >
+              {isMobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
             </button>
           </div>
         </div>
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div className="border-t border-stone-200 bg-white md:hidden">
+            <div className="flex flex-col gap-4 px-6 py-4">
+              <a
+                href="/kako-funkcionise"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-sm font-medium text-slate-600 hover:text-amber-600"
+              >
+                Kako funkcioniše
+              </a>
+              <a
+                href="#zasto-deljenje"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-sm font-medium text-slate-600 hover:text-amber-600"
+              >
+                Zašto deljenje
+              </a>
+              <a
+                href="#ponuda"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-sm font-medium text-slate-600 hover:text-amber-600"
+              >
+                Ponuda
+              </a>
+              <div className="pt-2">
+                <SignInModal />
+              </div>
+              <div className="pt-2">
+                <UserMenu />
+              </div>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Hero Section */}
