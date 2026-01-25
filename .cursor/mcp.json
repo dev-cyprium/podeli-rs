@@ -2,6 +2,19 @@
   "mcpServers": {
     "clerk": {
       "url": "https://mcp.clerk.com/mcp"
+    },
+     "convex": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "convex@latest",
+        "mcp",
+        "start"
+      ]
+    },
+    "motion": {
+      "command": "npx",
+      "args": ["-y", "https://api.motion.dev/registry.tgz?package=motion-studio-mcp&version=latest"]
     }
   }
 }

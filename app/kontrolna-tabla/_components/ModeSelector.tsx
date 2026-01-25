@@ -1,15 +1,20 @@
 "use client";
 
+import Link from "next/link";
 import { Package, Search } from "lucide-react";
 
-interface ModeSelectorProps {
-  onSelectMode: (mode: "podeli" | "zakupi") => void;
-}
-
-export function ModeSelector({ onSelectMode }: ModeSelectorProps) {
+export function ModeSelector() {
   return (
     <div className="flex min-h-[calc(100vh-80px)] flex-col items-center justify-center px-6 py-16">
       <div className="mx-auto max-w-3xl text-center">
+        <div className="mb-6 flex justify-center">
+          <Link
+            href="/"
+            className="text-sm font-semibold text-slate-600 transition-colors hover:text-slate-900"
+          >
+            ← Nazad na početnu
+          </Link>
+        </div>
         <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
           Šta želiš da radiš danas?
         </h1>
@@ -20,8 +25,8 @@ export function ModeSelector({ onSelectMode }: ModeSelectorProps) {
 
       <div className="mt-12 grid w-full max-w-3xl grid-cols-1 gap-6 sm:grid-cols-2">
         {/* Podeli Card */}
-        <button
-          onClick={() => onSelectMode("podeli")}
+        <Link
+          href="/kontrolna-tabla/predmeti"
           className="group relative overflow-hidden rounded-2xl border-2 border-transparent bg-white p-8 text-left shadow-md transition-all hover:-translate-y-1 hover:border-amber-500 hover:shadow-xl"
         >
           <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-600 transition-colors group-hover:bg-amber-500 group-hover:text-white">
@@ -37,11 +42,11 @@ export function ModeSelector({ onSelectMode }: ModeSelectorProps) {
               &rarr;
             </span>
           </span>
-        </button>
+        </Link>
 
         {/* Zakupi Card */}
-        <button
-          onClick={() => onSelectMode("zakupi")}
+        <Link
+          href="/kontrolna-tabla/zakupi"
           className="group relative overflow-hidden rounded-2xl border-2 border-transparent bg-white p-8 text-left shadow-md transition-all hover:-translate-y-1 hover:border-amber-500 hover:shadow-xl"
         >
           <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100 text-blue-600 transition-colors group-hover:bg-amber-500 group-hover:text-white">
@@ -57,7 +62,7 @@ export function ModeSelector({ onSelectMode }: ModeSelectorProps) {
               &rarr;
             </span>
           </span>
-        </button>
+        </Link>
       </div>
     </div>
   );
