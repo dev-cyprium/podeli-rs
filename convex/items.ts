@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { UserIdentity } from "convex/server";
+import { requireIdentity } from "@/lib/clerk";
 
 const deliveryMethodValues = ["licno", "glovo", "wolt", "cargo"] as const;
 
@@ -10,16 +10,6 @@ const deliveryMethodValidator = v.union(
   v.literal(deliveryMethodValues[2]),
   v.literal(deliveryMethodValues[3]),
 );
-
-async function requireIdentity(ctx: {
-  auth: { getUserIdentity: () => Promise<UserIdentity | null> };
-}) {
-  const identity = await ctx.auth.getUserIdentity();
-  if (!identity) {
-    throw new Error("Morate biti prijavljeni.");
-  }
-  return identity;
-}
 
 export const listAll = query({
   args: {

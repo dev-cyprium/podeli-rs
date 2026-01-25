@@ -1,16 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { UserIdentity } from "convex/server";
-
-async function requireIdentity(ctx: {
-  auth: { getUserIdentity: () => Promise<UserIdentity | null> };
-}) {
-  const identity = await ctx.auth.getUserIdentity();
-  if (!identity) {
-    throw new Error("Morate biti prijavljeni.");
-  }
-  return identity;
-}
+import { requireIdentity } from "@/lib/clerk";
 
 function parseDate(dateStr: string): Date {
   return new Date(dateStr + "T00:00:00");

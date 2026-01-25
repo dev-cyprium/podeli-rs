@@ -34,12 +34,12 @@ export default defineSchema({
       v.literal("confirmed"),
       v.literal("active"),
       v.literal("completed"),
-      v.literal("cancelled")
+      v.literal("cancelled"),
     ),
     paymentStatus: v.union(
       v.literal("pending"),
       v.literal("paid"),
-      v.literal("refunded")
+      v.literal("refunded"),
     ),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -58,4 +58,13 @@ export default defineSchema({
   })
     .index("by_item", ["itemId"])
     .index("by_booking", ["bookingId"]),
+
+  notifications: defineTable({
+    userId: v.string(),
+    message: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_created_at", ["createdAt"]),
 });

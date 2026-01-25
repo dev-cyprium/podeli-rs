@@ -70,7 +70,7 @@ function ItemCard({
   const owner = item.owner;
 
   return (
-    <div className="group relative overflow-hidden rounded-2xl bg-white shadow-md transition-all hover:-translate-y-1 hover:shadow-xl">
+    <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-md transition-all hover:-translate-y-1 hover:shadow-xl">
       <Link href={`/predmet/${item._id}`}>
         <div className="relative flex h-48 w-full items-center justify-center bg-slate-100 transition-colors group-hover:bg-amber-50">
           {imageUrl ? (
@@ -90,13 +90,13 @@ function ItemCard({
           )}
         </div>
       </Link>
-      <div className="p-5">
+      <div className="flex h-full flex-col p-5">
         <Link href={`/predmet/${item._id}`}>
-          <div className="mb-2 flex items-start justify-between">
-            <h3 className="font-semibold text-slate-900 hover:text-amber-600">
+          <div className="mb-2 flex items-start justify-between gap-2">
+            <h3 className="line-clamp-2 flex-1 font-semibold text-slate-900 hover:text-amber-600">
               {item.title}
             </h3>
-            <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600">
+            <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600">
               {item.category}
             </span>
           </div>
@@ -119,7 +119,7 @@ function ItemCard({
             <span className="text-xs font-normal text-slate-400"> /dan</span>
           </span>
         </div>
-        <div className="mt-4 flex gap-2">
+        <div className="mt-auto flex gap-2 pt-4">
           <Button
             asChild
             className="flex-1 bg-amber-500 text-white hover:bg-amber-600"
