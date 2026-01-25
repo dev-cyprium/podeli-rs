@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
+import Image from "next/image";
 import {
   Search,
   Drill,
@@ -15,44 +16,71 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import { useQuery } from "convex/react";
+import { useQuery, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id, Doc } from "@/convex/_generated/dataModel";
 import { SignInModal } from "@/components/SignInModal";
 import { UserMenu } from "@/components/UserMenu";
 
+type UserSnapshot = {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+};
+
 // Icon mapping for categories
-const categoryIcons: Record<string, React.ComponentType<{ className?: string; strokeWidth?: number }>> = {
-  "Alati": Drill,
-  "Kampovanje": Tent,
-  "Zabava": Gamepad2,
-  "Prevoz": Bike,
-  "Elektronika": Gamepad2,
+const categoryIcons: Record<
+  string,
+  React.ComponentType<{ className?: string; strokeWidth?: number }>
+> = {
+  Alati: Drill,
+  Kampovanje: Tent,
+  Zabava: Gamepad2,
+  Prevoz: Bike,
+  Elektronika: Gamepad2,
   "Društvene igre": Gamepad2,
 };
 
-function getCategoryIcon(category: string) {
-  return categoryIcons[category] || Drill;
+function CategoryIcon({
+  category,
+  className,
+  strokeWidth,
+}: {
+  category: string;
+  className?: string;
+  strokeWidth?: number;
+}) {
+  const Icon = categoryIcons[category] || Drill;
+  return <Icon className={className} strokeWidth={strokeWidth} />;
 }
 
-function ItemCard({ item }: { item: Doc<"items"> }) {
-  const Icon = getCategoryIcon(item.category);
+function ItemCard({
+  item,
+}: {
+  item: Doc<"items"> & { owner: UserSnapshot | undefined };
+}) {
   const imageUrl = useQuery(
     api.items.getImageUrl,
     item.images[0] ? { storageId: item.images[0] as Id<"_storage"> } : "skip",
   );
+  console.log(item);
+  const owner = item.owner;
 
   return (
     <div className="group relative overflow-hidden rounded-2xl bg-white shadow-md transition-all hover:-translate-y-1 hover:shadow-xl">
-      <div className="flex h-48 w-full items-center justify-center bg-slate-100 transition-colors group-hover:bg-amber-50">
+      <div className="relative flex h-48 w-full items-center justify-center bg-slate-100 transition-colors group-hover:bg-amber-50">
         {imageUrl ? (
-          <img
+          <Image
             src={imageUrl}
             alt={item.title}
-            className="h-full w-full object-cover"
+            fill
+            sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 100vw"
+            className="object-cover"
           />
         ) : (
-          <Icon
+          <CategoryIcon
+            category={item.category}
             className="h-20 w-20 text-slate-300 group-hover:text-amber-500"
             strokeWidth={1.5}
           />
@@ -73,7 +101,9 @@ function ItemCard({ item }: { item: Doc<"items"> }) {
           <div className="flex items-center gap-2">
             <div className="h-6 w-6 rounded-full bg-slate-200"></div>
             <span className="text-xs font-medium text-slate-600">
-              Komšija
+              {owner && owner.firstName && owner.lastName
+                ? `${owner.firstName} ${owner.lastName[0]}.`
+                : "Komšija"}
             </span>
           </div>
           <span className="font-bold text-amber-600">
@@ -89,6 +119,26 @@ function ItemCard({ item }: { item: Doc<"items"> }) {
 export default function Home() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const items = useQuery(api.items.listAll, { limit: 8 });
+  const getUsersByIds = useAction(api.clerk.getUsersByIds);
+  const [users, setUsers] = useState<UserSnapshot[]>([]);
+
+  // Fetch users when items are loaded
+  useEffect(() => {
+    if (items && items.length > 0) {
+      const userIds = items.map((item) => item.ownerId);
+      getUsersByIds({ userIds }).then(setUsers).catch(console.error);
+    }
+  }, [items, getUsersByIds]);
+
+  // Merge items with user data
+  const itemsWithUsers = useMemo(() => {
+    if (!items) return undefined;
+    const userMap = new Map(users.map((user) => [user.id, user]));
+    return items.map((item) => ({
+      ...item,
+      owner: userMap.get(item.ownerId),
+    }));
+  }, [items, users]);
 
   return (
     <div className="min-h-screen bg-stone-50 font-sans text-slate-900 selection:bg-amber-100 selection:text-amber-900">
@@ -259,7 +309,7 @@ export default function Home() {
           </div>
 
           <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {items === undefined ? (
+            {itemsWithUsers === undefined ? (
               // Loading state
               Array.from({ length: 4 }).map((_, i) => (
                 <div
@@ -276,7 +326,7 @@ export default function Home() {
                   </div>
                 </div>
               ))
-            ) : items.length === 0 ? (
+            ) : itemsWithUsers.length === 0 ? (
               // Empty state
               <div className="col-span-full rounded-2xl bg-white p-12 text-center shadow-md">
                 <p className="text-slate-600">
@@ -286,7 +336,7 @@ export default function Home() {
               </div>
             ) : (
               // Items from database
-              items.map((item) => <ItemCard key={item._id} item={item} />)
+              itemsWithUsers.map((item) => <ItemCard key={item._id} item={item} />)
             )}
           </div>
         </div>

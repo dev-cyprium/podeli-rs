@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { Id } from "./_generated/dataModel";
+import { UserIdentity } from "convex/server";
 
 const deliveryMethodValues = ["licno", "glovo", "wolt", "cargo"] as const;
 
@@ -12,7 +12,7 @@ const deliveryMethodValidator = v.union(
 );
 
 async function requireIdentity(ctx: {
-  auth: { getUserIdentity: () => Promise<any> };
+  auth: { getUserIdentity: () => Promise<UserIdentity | null> };
 }) {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) {
@@ -27,10 +27,8 @@ export const listAll = query({
   },
   handler: async (ctx, args) => {
     const limit = args.limit ?? 20;
-    return await ctx.db
-      .query("items")
-      .order("desc")
-      .take(limit);
+    const items = await ctx.db.query("items").order("desc").take(limit);
+    return items;
   },
 });
 
@@ -154,7 +152,7 @@ export const remove = mutation({
 export const generateUploadUrl = mutation({
   args: {},
   handler: async (ctx) => {
-    const identity = await requireIdentity(ctx);
+    await requireIdentity(ctx);
     return await ctx.storage.generateUploadUrl();
   },
 });
