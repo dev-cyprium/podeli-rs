@@ -15,11 +15,81 @@ import {
   Menu,
   X,
 } from "lucide-react";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { Id, Doc } from "@/convex/_generated/dataModel";
 import { SignInModal } from "@/components/SignInModal";
 import { UserMenu } from "@/components/UserMenu";
 
+// Icon mapping for categories
+const categoryIcons: Record<string, React.ComponentType<{ className?: string; strokeWidth?: number }>> = {
+  "Alati": Drill,
+  "Kampovanje": Tent,
+  "Zabava": Gamepad2,
+  "Prevoz": Bike,
+  "Elektronika": Gamepad2,
+  "Društvene igre": Gamepad2,
+};
+
+function getCategoryIcon(category: string) {
+  return categoryIcons[category] || Drill;
+}
+
+function ItemCard({ item }: { item: Doc<"items"> }) {
+  const Icon = getCategoryIcon(item.category);
+  const imageUrl = useQuery(
+    api.items.getImageUrl,
+    item.images[0] ? { storageId: item.images[0] as Id<"_storage"> } : "skip",
+  );
+
+  return (
+    <div className="group relative overflow-hidden rounded-2xl bg-white shadow-md transition-all hover:-translate-y-1 hover:shadow-xl">
+      <div className="flex h-48 w-full items-center justify-center bg-slate-100 transition-colors group-hover:bg-amber-50">
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={item.title}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <Icon
+            className="h-20 w-20 text-slate-300 group-hover:text-amber-500"
+            strokeWidth={1.5}
+          />
+        )}
+      </div>
+      <div className="p-5">
+        <div className="mb-2 flex items-start justify-between">
+          <h3 className="font-semibold text-slate-900">{item.title}</h3>
+          <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600">
+            {item.category}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-slate-500">
+          <MapPin className="h-3 w-3" />
+          <span>Beograd</span>
+        </div>
+        <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-6 rounded-full bg-slate-200"></div>
+            <span className="text-xs font-medium text-slate-600">
+              Komšija
+            </span>
+          </div>
+          <span className="font-bold text-amber-600">
+            {item.pricePerDay.toFixed(0)} RSD
+            <span className="text-xs font-normal text-slate-400"> /dan</span>
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const items = useQuery(api.items.listAll, { limit: 8 });
+
   return (
     <div className="min-h-screen bg-stone-50 font-sans text-slate-900 selection:bg-amber-100 selection:text-amber-900">
       {/* Navigation */}
@@ -189,157 +259,35 @@ export default function Home() {
           </div>
 
           <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {/* Product Card 1 */}
-            <div className="group relative overflow-hidden rounded-2xl bg-white shadow-md transition-all hover:-translate-y-1 hover:shadow-xl">
-              <div className="flex h-48 w-full items-center justify-center bg-slate-100 transition-colors group-hover:bg-amber-50">
-                <Drill
-                  className="h-20 w-20 text-slate-300 group-hover:text-amber-500"
-                  strokeWidth={1.5}
-                />
-              </div>
-              <div className="p-5">
-                <div className="mb-2 flex items-start justify-between">
-                  <h3 className="font-semibold text-slate-900">
-                    Bosch Bušilica
-                  </h3>
-                  <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600">
-                    Alati
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-slate-500">
-                  <MapPin className="h-3 w-3" />
-                  <span>Vračar (0.5 km)</span>
-                </div>
-                <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
-                  <div className="flex items-center gap-2">
-                    <div className="h-6 w-6 rounded-full bg-slate-200"></div>
-                    <span className="text-xs font-medium text-slate-600">
-                      Marko P.
-                    </span>
+            {items === undefined ? (
+              // Loading state
+              Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="group relative overflow-hidden rounded-2xl bg-white shadow-md"
+                >
+                  <div className="flex h-48 w-full items-center justify-center bg-slate-100">
+                    <div className="h-20 w-20 animate-pulse rounded-full bg-slate-200"></div>
                   </div>
-                  <span className="font-bold text-amber-600">
-                    500 RSD
-                    <span className="text-xs font-normal text-slate-400">
-                      /dan
-                    </span>
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Product Card 2 */}
-            <div className="group relative overflow-hidden rounded-2xl bg-white shadow-md transition-all hover:-translate-y-1 hover:shadow-xl">
-              <div className="flex h-48 w-full items-center justify-center bg-slate-100 transition-colors group-hover:bg-amber-50">
-                <Tent
-                  className="h-20 w-20 text-slate-300 group-hover:text-amber-500"
-                  strokeWidth={1.5}
-                />
-              </div>
-              <div className="p-5">
-                <div className="mb-2 flex items-start justify-between">
-                  <h3 className="font-semibold text-slate-900">
-                    Šator za 4 osobe
-                  </h3>
-                  <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600">
-                    Kampovanje
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-slate-500">
-                  <MapPin className="h-3 w-3" />
-                  <span>Novi Beograd (1.2 km)</span>
-                </div>
-                <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
-                  <div className="flex items-center gap-2">
-                    <div className="h-6 w-6 rounded-full bg-slate-200"></div>
-                    <span className="text-xs font-medium text-slate-600">
-                      Jelena M.
-                    </span>
+                  <div className="p-5">
+                    <div className="mb-2 h-5 w-3/4 animate-pulse rounded bg-slate-200"></div>
+                    <div className="mb-2 h-4 w-1/4 animate-pulse rounded bg-slate-200"></div>
+                    <div className="mt-4 h-4 w-1/2 animate-pulse rounded bg-slate-200"></div>
                   </div>
-                  <span className="font-bold text-amber-600">
-                    800 RSD
-                    <span className="text-xs font-normal text-slate-400">
-                      /dan
-                    </span>
-                  </span>
                 </div>
+              ))
+            ) : items.length === 0 ? (
+              // Empty state
+              <div className="col-span-full rounded-2xl bg-white p-12 text-center shadow-md">
+                <p className="text-slate-600">
+                  Trenutno nema dostupnih predmeta. Budite prvi koji će objaviti
+                  predmet!
+                </p>
               </div>
-            </div>
-
-            {/* Product Card 3 */}
-            <div className="group relative overflow-hidden rounded-2xl bg-white shadow-md transition-all hover:-translate-y-1 hover:shadow-xl">
-              <div className="flex h-48 w-full items-center justify-center bg-slate-100 transition-colors group-hover:bg-amber-50">
-                <Gamepad2
-                  className="h-20 w-20 text-slate-300 group-hover:text-amber-500"
-                  strokeWidth={1.5}
-                />
-              </div>
-              <div className="p-5">
-                <div className="mb-2 flex items-start justify-between">
-                  <h3 className="font-semibold text-slate-900">
-                    PS5 + 2 džojstika
-                  </h3>
-                  <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600">
-                    Zabava
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-slate-500">
-                  <MapPin className="h-3 w-3" />
-                  <span>Dorćol (0.8 km)</span>
-                </div>
-                <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
-                  <div className="flex items-center gap-2">
-                    <div className="h-6 w-6 rounded-full bg-slate-200"></div>
-                    <span className="text-xs font-medium text-slate-600">
-                      Stefan K.
-                    </span>
-                  </div>
-                  <span className="font-bold text-amber-600">
-                    2000 RSD
-                    <span className="text-xs font-normal text-slate-400">
-                      /dan
-                    </span>
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Product Card 4 */}
-            <div className="group relative overflow-hidden rounded-2xl bg-white shadow-md transition-all hover:-translate-y-1 hover:shadow-xl">
-              <div className="flex h-48 w-full items-center justify-center bg-slate-100 transition-colors group-hover:bg-amber-50">
-                <Bike
-                  className="h-20 w-20 text-slate-300 group-hover:text-amber-500"
-                  strokeWidth={1.5}
-                />
-              </div>
-              <div className="p-5">
-                <div className="mb-2 flex items-start justify-between">
-                  <h3 className="font-semibold text-slate-900">
-                    Električni trotinet
-                  </h3>
-                  <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600">
-                    Prevoz
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-slate-500">
-                  <MapPin className="h-3 w-3" />
-                  <span>Zemun (2.5 km)</span>
-                </div>
-                <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
-                  <div className="flex items-center gap-2">
-                    <div className="h-6 w-6 rounded-full bg-slate-200"></div>
-                    <span className="text-xs font-medium text-slate-600">
-                      Nikola Đ.
-                    </span>
-                  </div>
-                  <span className="font-bold text-amber-600">
-                    1200 RSD
-                    <span className="text-xs font-normal text-slate-400">
-                      /dan
-                    </span>
-                  </span>
-                </div>
-              </div>
-            </div>
+            ) : (
+              // Items from database
+              items.map((item) => <ItemCard key={item._id} item={item} />)
+            )}
           </div>
         </div>
       </section>

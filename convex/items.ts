@@ -21,6 +21,19 @@ async function requireIdentity(ctx: {
   return identity;
 }
 
+export const listAll = query({
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit ?? 20;
+    return await ctx.db
+      .query("items")
+      .order("desc")
+      .take(limit);
+  },
+});
+
 export const listMine = query({
   args: {},
   handler: async (ctx) => {

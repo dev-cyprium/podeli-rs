@@ -6,6 +6,8 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardSidebar } from "./DashboardSidebar";
 
+import { BackgroundPattern } from "./BackgroundPattern";
+
 interface DashboardShellProps {
   mode: "podeli" | "zakupi";
   children: React.ReactNode;
@@ -24,7 +26,8 @@ export function DashboardShell({ mode, children }: DashboardShellProps) {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen">
+      <BackgroundPattern />
       {/* Mobile sidebar dialog */}
       <Dialog open={sidebarOpen} onOpenChange={setSidebarOpen}>
         <DialogContent
