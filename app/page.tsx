@@ -12,6 +12,7 @@ import {
   Menu,
 } from "lucide-react";
 import { SignInModal } from "@/components/SignInModal";
+import { UserMenu } from "@/components/UserMenu";
 
 export default function Home() {
   return (
@@ -47,6 +48,7 @@ export default function Home() {
               Ponuda
             </a>
             <SignInModal />
+            <UserMenu />
           </div>
           <div className="md:hidden">
             <button className="p-2 text-slate-600">
