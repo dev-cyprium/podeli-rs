@@ -61,6 +61,19 @@ export const getById = query({
   },
 });
 
+export const getByIdPublic = query({
+  args: {
+    id: v.id("items"),
+  },
+  handler: async (ctx, args) => {
+    const item = await ctx.db.get(args.id);
+    if (!item) {
+      return null;
+    }
+    return item;
+  },
+});
+
 export const create = mutation({
   args: {
     title: v.string(),

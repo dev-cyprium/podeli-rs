@@ -1,10 +1,10 @@
 import { DashboardShell } from "../_components/DashboardShell";
-import { ZakupiEmptyState } from "../_components/ZakupiEmptyState";
+import { RenterBookingsList } from "./_components/RenterBookingsList";
 
 export default function ZakupiPage() {
   return (
     <DashboardShell mode="zakupi">
-      <ZakupiEmptyState />
+      <RenterBookingsList />
     </DashboardShell>
   );
 }

@@ -1,0 +1,158 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { Doc, Id } from "@/convex/_generated/dataModel";
+import { Button } from "@/components/ui/button";
+import {
+  BookingStatusBadge,
+  PaymentStatusBadge,
+} from "@/components/booking/BookingStatusBadge";
+import { Calendar, MapPin, Star, X, MessageSquare } from "lucide-react";
+import { ReviewModal } from "./ReviewModal";
+
+type BookingWithItem = Doc<"bookings"> & {
+  item: Doc<"items"> | null;
+};
+
+interface RenterBookingCardProps {
+  booking: BookingWithItem;
+}
+
+export function RenterBookingCard({ booking }: RenterBookingCardProps) {
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+
+  const updateStatus = useMutation(api.bookings.updateBookingStatus);
+  const existingReview = useQuery(api.reviews.getReviewByBooking, {
+    bookingId: booking._id,
+  });
+  const imageUrl = useQuery(
+    api.items.getImageUrl,
+    booking.item?.images[0]
+      ? { storageId: booking.item.images[0] as Id<"_storage"> }
+      : "skip"
+  );
+
+  const canCancel =
+    booking.status === "confirmed" && booking.paymentStatus === "pending";
+  const canReview =
+    booking.status === "completed" && existingReview === null;
+
+  const handleCancel = async () => {
+    if (!confirm("Da li ste sigurni da želite da otkažete ovu rezervaciju?")) {
+      return;
+    }
+    setIsCancelling(true);
+    try {
+      await updateStatus({ id: booking._id, status: "cancelled" });
+    } catch (error) {
+      console.error("Failed to cancel booking:", error);
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="flex gap-4 rounded-xl border border-slate-200 bg-white p-4">
+        <Link
+          href={booking.item ? `/predmet/${booking.item._id}` : "#"}
+          className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-slate-100"
+        >
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={booking.item?.title ?? "Predmet"}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
+              Nema slike
+            </div>
+          )}
+        </Link>
+
+        <div className="flex flex-1 flex-col">
+          <div className="flex items-start justify-between">
+            <div>
+              <Link
+                href={booking.item ? `/predmet/${booking.item._id}` : "#"}
+                className="font-semibold text-slate-900 hover:text-amber-600"
+              >
+                {booking.item?.title ?? "Predmet nije dostupan"}
+              </Link>
+              <div className="mt-1 flex items-center gap-2 text-sm text-slate-500">
+                <MapPin className="h-3 w-3" />
+                <span>Beograd</span>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <BookingStatusBadge status={booking.status} />
+              <PaymentStatusBadge status={booking.paymentStatus} />
+            </div>
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center gap-4 text-sm">
+            <div className="flex items-center gap-1.5 text-slate-600">
+              <Calendar className="h-4 w-4" />
+              <span>
+                {booking.startDate} - {booking.endDate}
+              </span>
+            </div>
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+              {booking.totalDays} dan{booking.totalDays > 1 && "a"}
+            </span>
+          </div>
+
+          <div className="mt-auto flex items-center justify-between pt-3">
+            <span className="font-bold text-amber-600">
+              {booking.totalPrice.toFixed(0)} RSD
+            </span>
+
+            <div className="flex gap-2">
+              {canCancel && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCancel}
+                  disabled={isCancelling}
+                  className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                >
+                  <X className="mr-1 h-4 w-4" />
+                  {isCancelling ? "Otkazivanje..." : "Otkaži"}
+                </Button>
+              )}
+              {canReview && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowReviewModal(true)}
+                >
+                  <Star className="mr-1 h-4 w-4" />
+                  Ostavi recenziju
+                </Button>
+              )}
+              {existingReview && (
+                <span className="flex items-center gap-1 text-sm text-slate-500">
+                  <MessageSquare className="h-4 w-4" />
+                  Recenzija ostavljena
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {showReviewModal && (
+        <ReviewModal
+          bookingId={booking._id}
+          itemTitle={booking.item?.title ?? "Predmet"}
+          onClose={() => setShowReviewModal(false)}
+        />
+      )}
+    </>
+  );
+}

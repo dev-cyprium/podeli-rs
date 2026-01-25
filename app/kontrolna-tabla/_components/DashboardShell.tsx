@@ -33,6 +33,7 @@ export function DashboardShell({ mode, children }: DashboardShellProps) {
         <DialogContent
           className="fixed inset-y-0 left-0 top-0 z-50 h-full w-full max-w-xs translate-x-0 translate-y-0 rounded-none border-0 p-0 shadow-lg data-[state=closed]:-translate-x-full data-[state=open]:translate-x-0 sm:max-w-xs"
           showCloseButton={false}
+          accessibleTitle="Navigacija"
         >
           <DashboardSidebar
             mode={mode}

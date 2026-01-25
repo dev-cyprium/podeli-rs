@@ -19,4 +19,43 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_owner", ["ownerId"]),
+
+  bookings: defineTable({
+    itemId: v.id("items"),
+    renterId: v.string(),
+    ownerId: v.string(),
+    startDate: v.string(),
+    endDate: v.string(),
+    totalDays: v.number(),
+    pricePerDay: v.number(),
+    totalPrice: v.number(),
+    deliveryMethod: v.string(),
+    status: v.union(
+      v.literal("confirmed"),
+      v.literal("active"),
+      v.literal("completed"),
+      v.literal("cancelled")
+    ),
+    paymentStatus: v.union(
+      v.literal("pending"),
+      v.literal("paid"),
+      v.literal("refunded")
+    ),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_item", ["itemId"])
+    .index("by_renter", ["renterId"])
+    .index("by_owner", ["ownerId"]),
+
+  reviews: defineTable({
+    itemId: v.id("items"),
+    bookingId: v.id("bookings"),
+    reviewerId: v.string(),
+    rating: v.number(),
+    comment: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_item", ["itemId"])
+    .index("by_booking", ["bookingId"]),
 });

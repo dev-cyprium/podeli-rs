@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
   Search,
   Drill,
@@ -15,12 +16,14 @@ import {
   MapPin,
   Menu,
   X,
+  Eye,
 } from "lucide-react";
 import { useQuery, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id, Doc } from "@/convex/_generated/dataModel";
 import { SignInModal } from "@/components/SignInModal";
 import { UserMenu } from "@/components/UserMenu";
+import { Button } from "@/components/ui/button";
 
 type UserSnapshot = {
   id: string;
@@ -64,39 +67,44 @@ function ItemCard({
     api.items.getImageUrl,
     item.images[0] ? { storageId: item.images[0] as Id<"_storage"> } : "skip",
   );
-  console.log(item);
   const owner = item.owner;
 
   return (
     <div className="group relative overflow-hidden rounded-2xl bg-white shadow-md transition-all hover:-translate-y-1 hover:shadow-xl">
-      <div className="relative flex h-48 w-full items-center justify-center bg-slate-100 transition-colors group-hover:bg-amber-50">
-        {imageUrl ? (
-          <Image
-            src={imageUrl}
-            alt={item.title}
-            fill
-            sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 100vw"
-            className="object-cover"
-          />
-        ) : (
-          <CategoryIcon
-            category={item.category}
-            className="h-20 w-20 text-slate-300 group-hover:text-amber-500"
-            strokeWidth={1.5}
-          />
-        )}
-      </div>
+      <Link href={`/predmet/${item._id}`}>
+        <div className="relative flex h-48 w-full items-center justify-center bg-slate-100 transition-colors group-hover:bg-amber-50">
+          {imageUrl ? (
+            <Image
+              src={imageUrl}
+              alt={item.title}
+              fill
+              sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 100vw"
+              className="object-cover"
+            />
+          ) : (
+            <CategoryIcon
+              category={item.category}
+              className="h-20 w-20 text-slate-300 group-hover:text-amber-500"
+              strokeWidth={1.5}
+            />
+          )}
+        </div>
+      </Link>
       <div className="p-5">
-        <div className="mb-2 flex items-start justify-between">
-          <h3 className="font-semibold text-slate-900">{item.title}</h3>
-          <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600">
-            {item.category}
-          </span>
-        </div>
-        <div className="flex items-center gap-2 text-sm text-slate-500">
-          <MapPin className="h-3 w-3" />
-          <span>Beograd</span>
-        </div>
+        <Link href={`/predmet/${item._id}`}>
+          <div className="mb-2 flex items-start justify-between">
+            <h3 className="font-semibold text-slate-900 hover:text-amber-600">
+              {item.title}
+            </h3>
+            <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600">
+              {item.category}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <MapPin className="h-3 w-3" />
+            <span>Beograd</span>
+          </div>
+        </Link>
         <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
           <div className="flex items-center gap-2">
             <div className="h-6 w-6 rounded-full bg-slate-200"></div>
@@ -110,6 +118,21 @@ function ItemCard({
             {item.pricePerDay.toFixed(0)} RSD
             <span className="text-xs font-normal text-slate-400"> /dan</span>
           </span>
+        </div>
+        <div className="mt-4 flex gap-2">
+          <Button
+            asChild
+            className="flex-1 bg-amber-500 text-white hover:bg-amber-600"
+            size="sm"
+          >
+            <Link href={`/predmet/${item._id}`}>Iznajmi</Link>
+          </Button>
+          <Button asChild variant="outline" size="sm" className="flex-1">
+            <Link href={`/predmet/${item._id}`}>
+              <Eye className="mr-1 h-4 w-4" />
+              Pogledaj
+            </Link>
+          </Button>
         </div>
       </div>
     </div>
