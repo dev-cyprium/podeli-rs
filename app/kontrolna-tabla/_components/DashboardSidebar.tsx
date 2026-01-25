@@ -9,6 +9,7 @@ import {
   ChevronLeft,
   X,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -20,11 +21,19 @@ interface DashboardSidebarProps {
   onClose?: () => void;
 }
 
-const baseItems = [
+type NavItem = {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+  disabled?: boolean;
+  mode?: "podeli" | "zakupi";
+};
+
+const baseItems: NavItem[] = [
   { id: "poruke", label: "Poruke", icon: MessageSquare, disabled: true },
   { id: "ocene", label: "Ocene", icon: Star, disabled: true },
   { id: "istorija", label: "Istorija", icon: History, disabled: true },
-] as const;
+];
 
 export function DashboardSidebar({
   mode,
@@ -32,14 +41,14 @@ export function DashboardSidebar({
   onResetMode,
   onClose,
 }: DashboardSidebarProps) {
-  const navItems =
+  const navItems: NavItem[] =
     mode === "podeli"
       ? [
           {
             id: "predmeti",
             label: "Predmeti",
             icon: Package,
-            mode: "podeli" as const,
+            mode: "podeli",
           },
           ...baseItems,
         ]
@@ -48,7 +57,7 @@ export function DashboardSidebar({
             id: "zakupi",
             label: "Zakupi",
             icon: Package,
-            mode: "zakupi" as const,
+            mode: "zakupi",
           },
           ...baseItems,
         ];
@@ -60,7 +69,9 @@ export function DashboardSidebar({
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500 text-white shadow-amber-200">
             <HeartHandshake className="h-6 w-6" />
           </div>
-          <span className="text-lg font-semibold text-slate-900">PODELI.rs</span>
+          <span className="text-lg font-semibold text-slate-900">
+            PODELI.rs
+          </span>
         </Link>
         {onClose && (
           <button
@@ -80,7 +91,7 @@ export function DashboardSidebar({
         </p>
         <nav className="space-y-1">
           {navItems.map((item) => {
-            const isActive = item.mode ? item.mode === mode : false;
+            const isActive = item.mode === mode;
             const isDisabled = item.disabled ?? false;
             const Icon = item.icon;
 
@@ -98,7 +109,7 @@ export function DashboardSidebar({
                   isActive
                     ? "bg-amber-50 text-amber-700"
                     : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
-                  isDisabled && "cursor-not-allowed opacity-50"
+                  isDisabled && "cursor-not-allowed opacity-50",
                 )}
               >
                 <Icon className="h-4 w-4" />

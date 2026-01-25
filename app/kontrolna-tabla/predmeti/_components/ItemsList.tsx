@@ -21,7 +21,7 @@ const DELIVERY_OPTIONS: { value: DeliveryMethod; label: string }[] = [
   { value: "cargo", label: "Cargo" },
 ];
 
-function formatDelivery(method: DeliveryMethod) {
+function formatDelivery(method: string) {
   return (
     DELIVERY_OPTIONS.find((option) => option.value === method)?.label ?? method
   );

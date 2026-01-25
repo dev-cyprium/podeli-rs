@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SignedIn, SignedOut } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DashboardShell } from "../../_components/DashboardShell";
 import { ItemFormData, ItemWizardForm } from "../_components/ItemWizardForm";
 
-export default function NoviPredmetPage() {
+function NoviPredmetContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [pageError, setPageError] = useState<string | null>(null);
@@ -80,5 +80,23 @@ export default function NoviPredmetPage() {
         </CardContent>
       </Card>
     </DashboardShell>
+  );
+}
+
+export default function NoviPredmetPage() {
+  return (
+    <Suspense
+      fallback={
+        <DashboardShell mode="podeli">
+          <Card>
+            <CardContent className="py-10 text-center text-sm text-slate-500">
+              Učitavanje forme...
+            </CardContent>
+          </Card>
+        </DashboardShell>
+      }
+    >
+      <NoviPredmetContent />
+    </Suspense>
   );
 }
