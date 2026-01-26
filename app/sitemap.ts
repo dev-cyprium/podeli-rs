@@ -17,7 +17,7 @@ if (!CONVEX_URL) {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const client = new ConvexHttpClient(CONVEX_URL);
+  const client = new ConvexHttpClient(CONVEX_URL!);
   
   // Fetch minimal fields: _id, title, shortId, slug, updatedAt, createdAt
   const listings = await client.query(api.items.listForSitemap, {});
