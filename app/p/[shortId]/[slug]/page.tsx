@@ -1,25 +1,15 @@
-"use client";
-
-import { use, useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useQuery, useAction } from "convex/react";
-import { useAuth } from "@clerk/nextjs";
+import { redirect } from "next/navigation";
+import { fetchQuery } from "convex/nextjs";
+import { clerkClient } from "@clerk/nextjs/server";
 import { api } from "@/convex/_generated/api";
-import {
-  HeartHandshake,
-  ArrowLeft,
-  MapPin,
-  Truck,
-  Calendar,
-  User,
-} from "lucide-react";
+import { ArrowLeft, MapPin, Truck, Calendar, User } from "lucide-react";
 import { ItemImageGallery } from "./_components/ItemImageGallery";
 import { BookingForm } from "./_components/BookingForm";
 import { ReviewsList } from "./_components/ReviewsList";
+import { ItemDetailHeader } from "./_components/ItemDetailHeader";
 import { Badge } from "@/components/ui/badge";
-import { UserMenu } from "@/components/UserMenu";
-import { SignInButton } from "@/components/SignInButton";
+import { Metadata } from "next";
 
 type UserSnapshot = {
   id: string;
@@ -35,58 +25,49 @@ const DELIVERY_OPTIONS: Record<string, string> = {
   cargo: "Cargo",
 };
 
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const product = await fetchQuery(api.items.getByShortId, {
+    shortId: (await params).shortId,
+  });
+
+  if (!product) {
+    return {
+      title: "Predmet nije pronađen | PODELI.rs",
+      description:
+        "Ovaj predmet ne postoji ili je uklonjen. Pogledaj druge ponude na PODELI.rs.",
+    };
+  }
+
+  return {
+    title: `${product.title} | PODELI.rs`,
+    description:
+      product.description.slice(0, 155) + " | opis klijenta na PODELI.rs",
+    openGraph: {
+      title: product.title,
+      description: product.description,
+      images: product.images,
+    },
+  };
+}
+
 interface PageProps {
   params: Promise<{ shortId: string; slug: string }>;
 }
 
-export default function ItemDetailPage({ params }: PageProps) {
-  const resolvedParams = use(params);
+export default async function ItemDetailPage({ params }: PageProps) {
+  const resolvedParams = await params;
   const { shortId, slug } = resolvedParams;
-  const router = useRouter();
-  const item = useQuery(api.items.getByShortId, {
+
+  const item = await fetchQuery(api.items.getByShortId, {
     shortId,
   });
-  const getUsersByIds = useAction(api.clerk.getUsersByIds);
-  const [owner, setOwner] = useState<UserSnapshot | null>(null);
 
-  // Handle canonical redirect if slug doesn't match
-  useEffect(() => {
-    if (item && item.slug !== slug) {
-      router.replace(`/p/${item.shortId}/${item.slug}`);
-    }
-  }, [item, slug, router]);
-
-  useEffect(() => {
-    if (item) {
-      getUsersByIds({ userIds: [item.ownerId] })
-        .then((users) => setOwner(users[0] ?? null))
-        .catch(console.error);
-    }
-  }, [item, getUsersByIds]);
-
-  if (item === undefined) {
+  if (!item) {
     return (
       <div className="min-h-screen bg-stone-50">
-        <Header />
-        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="animate-pulse space-y-8">
-            <div className="h-8 w-48 rounded bg-slate-200" />
-            <div className="grid gap-8 lg:grid-cols-3">
-              <div className="lg:col-span-2">
-                <div className="h-96 rounded-xl bg-slate-200" />
-              </div>
-              <div className="h-96 rounded-xl bg-slate-200" />
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  if (item === null) {
-    return (
-      <div className="min-h-screen bg-stone-50">
-        <Header />
+        <ItemDetailHeader />
         <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <div className="rounded-xl bg-white p-12 text-center shadow-sm">
             <h1 className="text-2xl font-bold text-slate-900">
@@ -108,23 +89,29 @@ export default function ItemDetailPage({ params }: PageProps) {
     );
   }
 
-  // Don't render if redirecting
-  if (item && item.slug !== slug) {
-    return (
-      <div className="min-h-screen bg-stone-50">
-        <Header />
-        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="animate-pulse space-y-8">
-            <div className="h-8 w-48 rounded bg-slate-200" />
-          </div>
-        </main>
-      </div>
-    );
+  // Handle canonical redirect if slug doesn't match
+  if (item.slug !== slug) {
+    redirect(`/p/${item.shortId}/${item.slug}`);
+  }
+
+  // Fetch owner data from Clerk
+  let owner: UserSnapshot | null = null;
+  try {
+    const client = await clerkClient();
+    const user = await client.users.getUser(item.ownerId);
+    owner = {
+      id: user.id,
+      firstName: user.firstName || null,
+      lastName: user.lastName || null,
+      email: user.emailAddresses[0]?.emailAddress || null,
+    };
+  } catch (error) {
+    console.error("Failed to fetch owner data:", error);
   }
 
   return (
     <div className="min-h-screen bg-stone-50">
-      <Header />
+      <ItemDetailHeader />
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <Link
@@ -219,7 +206,9 @@ export default function ItemDetailPage({ params }: PageProps) {
                         ? `${owner.firstName} ${owner.lastName[0]}.`
                         : "Komšija"}
                     </p>
-                    <p className="text-sm text-slate-500">Verifikovan korisnik</p>
+                    <p className="text-sm text-slate-500">
+                      Verifikovan korisnik
+                    </p>
                   </div>
                 </div>
               </div>
@@ -234,33 +223,5 @@ export default function ItemDetailPage({ params }: PageProps) {
         </div>
       </main>
     </div>
-  );
-}
-
-function Header() {
-  const { isLoaded, isSignedIn } = useAuth();
-
-  return (
-    <nav className="sticky top-0 z-50 border-b border-stone-200 bg-white/80 backdrop-blur-md">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500 text-white shadow-amber-200">
-            <HeartHandshake className="h-6 w-6" />
-          </div>
-          <span className="text-xl font-bold tracking-tight text-slate-900">
-            PODELI.rs
-          </span>
-        </Link>
-        <div className="flex items-center gap-4">
-          {!isLoaded ? (
-            <div className="h-10 w-[100px] animate-pulse rounded-full bg-slate-200" />
-          ) : isSignedIn ? (
-            <UserMenu />
-          ) : (
-            <SignInButton />
-          )}
-        </div>
-      </div>
-    </nav>
   );
 }
