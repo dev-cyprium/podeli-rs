@@ -10,7 +10,7 @@ import { Doc, Id } from "@/convex/_generated/dataModel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PodeliEmptyState } from "../../_components/PodeliEmptyState";
+import { PodeliEmptyState } from "@/components/kontrolna-tabla/PodeliEmptyState";
 
 type DeliveryMethod = "licno" | "glovo" | "wolt" | "cargo";
 

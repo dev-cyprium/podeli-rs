@@ -13,7 +13,7 @@ import { api } from "@/convex/_generated/api";
 import { Id, Doc } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { getItemUrl } from "@/lib/utils";
-import { Drill, Tent, Gamepad2, Bike, MapPin, Eye } from "lucide-react";
+import { Drill, Tent, Gamepad2, Bike, MapPin } from "lucide-react";
 
 type UserSnapshot = {
   id: string;
@@ -109,19 +109,13 @@ function ItemCard({
             <span className="text-xs font-normal text-slate-400"> /dan</span>
           </span>
         </div>
-        <div className="mt-auto flex gap-2 pt-4">
+        <div className="mt-auto pt-4">
           <Button
             asChild
-            className="flex-1 bg-amber-500 text-white hover:bg-amber-600"
+            className="w-full bg-amber-500 text-white hover:bg-amber-600"
             size="sm"
           >
             <Link href={itemUrl}>Iznajmi</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm" className="flex-1">
-            <Link href={itemUrl}>
-              <Eye className="mr-1 h-4 w-4" />
-              Pogledaj
-            </Link>
           </Button>
         </div>
       </div>

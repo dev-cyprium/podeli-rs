@@ -1,6 +1,6 @@
-import { DashboardShell } from "../_components/DashboardShell";
-import { ItemsList } from "./_components/ItemsList";
-import { IncomingBookings } from "./_components/IncomingBookings";
+import { DashboardShell } from "@/components/kontrolna-tabla/DashboardShell";
+import { ItemsList } from "@/components/kontrolna-tabla/predmeti/ItemsList";
+import { IncomingBookings } from "@/components/kontrolna-tabla/predmeti/IncomingBookings";
 
 export default function PredmetiPage() {
   return (

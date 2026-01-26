@@ -1,7 +1,6 @@
 import { Suspense } from "react";
-import { ModeSelector } from "./_components/ModeSelector";
-
-import { BackgroundPattern } from "./_components/BackgroundPattern";
+import { ModeSelector } from "@/components/kontrolna-tabla/ModeSelector";
+import { BackgroundPattern } from "@/components/kontrolna-tabla/BackgroundPattern";
 
 export default function KontrolnaTablaPage() {
   return (

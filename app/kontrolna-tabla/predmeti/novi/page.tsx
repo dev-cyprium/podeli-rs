@@ -7,8 +7,8 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DashboardShell } from "../../_components/DashboardShell";
-import { ItemFormData, ItemWizardForm } from "../_components/ItemWizardForm";
+import { DashboardShell } from "@/components/kontrolna-tabla/DashboardShell";
+import { ItemFormData, ItemWizardForm } from "@/components/kontrolna-tabla/predmeti/ItemWizardForm";
 
 function NoviPredmetContent() {
   const router = useRouter();

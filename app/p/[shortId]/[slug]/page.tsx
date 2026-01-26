@@ -4,10 +4,10 @@ import { fetchQuery } from "convex/nextjs";
 import { clerkClient } from "@clerk/nextjs/server";
 import { api } from "@/convex/_generated/api";
 import { ArrowLeft, MapPin, Truck, Calendar, User } from "lucide-react";
-import { ItemImageGallery } from "./_components/ItemImageGallery";
-import { BookingForm } from "./_components/BookingForm";
-import { ReviewsList } from "./_components/ReviewsList";
-import { ItemDetailHeader } from "./_components/ItemDetailHeader";
+import { ItemImageGallery } from "@/components/p/ItemImageGallery";
+import { BookingForm } from "@/components/p/BookingForm";
+import { ReviewsList } from "@/components/p/ReviewsList";
+import { ItemDetailHeader } from "@/components/p/ItemDetailHeader";
 import { Badge } from "@/components/ui/badge";
 import { Metadata } from "next";
 

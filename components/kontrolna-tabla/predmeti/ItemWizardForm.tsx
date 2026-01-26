@@ -1,11 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { type DateRange } from "react-day-picker";
+import { format, parseISO } from "date-fns";
+import { Trash2 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useMutation, useQuery } from "convex/react";
 import { Doc, Id } from "@/convex/_generated/dataModel";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,12 +54,6 @@ interface ItemWizardFormProps {
   onSave: (data: ItemFormData) => Promise<void>;
   onCancel?: () => void;
 }
-
-import { type DateRange } from "react-day-picker";
-import { format, parseISO } from "date-fns";
-import { Trash2 } from "lucide-react";
-import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent } from "@/components/ui/card";
 
 export function ItemWizardForm({
   item,
