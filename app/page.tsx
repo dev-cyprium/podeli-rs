@@ -1,255 +1,17 @@
-"use client";
-
-import { useState, useEffect, useMemo } from "react";
-import Image from "next/image";
-import Link from "next/link";
 import {
   Search,
-  Drill,
-  Tent,
-  Gamepad2,
-  Bike,
   HeartHandshake,
   ShieldCheck,
   Leaf,
   PiggyBank,
-  MapPin,
-  Menu,
-  X,
-  Eye,
 } from "lucide-react";
-import { useQuery, useAction } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { Id, Doc } from "@/convex/_generated/dataModel";
-import { SignInModal } from "@/components/SignInModal";
-import { UserMenu } from "@/components/UserMenu";
-import { Button } from "@/components/ui/button";
-import { getItemUrl } from "@/lib/utils";
-
-type UserSnapshot = {
-  id: string;
-  firstName: string | null;
-  lastName: string | null;
-  email: string | null;
-};
-
-// Icon mapping for categories
-const categoryIcons: Record<
-  string,
-  React.ComponentType<{ className?: string; strokeWidth?: number }>
-> = {
-  Alati: Drill,
-  Kampovanje: Tent,
-  Zabava: Gamepad2,
-  Prevoz: Bike,
-  Elektronika: Gamepad2,
-  "Društvene igre": Gamepad2,
-};
-
-function CategoryIcon({
-  category,
-  className,
-  strokeWidth,
-}: {
-  category: string;
-  className?: string;
-  strokeWidth?: number;
-}) {
-  const Icon = categoryIcons[category] || Drill;
-  return <Icon className={className} strokeWidth={strokeWidth} />;
-}
-
-function ItemCard({
-  item,
-}: {
-  item: Doc<"items"> & { owner: UserSnapshot | undefined };
-}) {
-  const imageUrl = useQuery(
-    api.items.getImageUrl,
-    item.images[0] ? { storageId: item.images[0] as Id<"_storage"> } : "skip",
-  );
-  const owner = item.owner;
-
-  const itemUrl = getItemUrl(item);
-
-  return (
-    <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-md transition-all hover:-translate-y-1 hover:shadow-xl">
-      <Link href={itemUrl}>
-        <div className="relative flex h-48 w-full items-center justify-center bg-slate-100 transition-colors group-hover:bg-amber-50">
-          {imageUrl ? (
-            <Image
-              src={imageUrl}
-              alt={item.title}
-              fill
-              sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 100vw"
-              className="object-cover"
-            />
-          ) : (
-            <CategoryIcon
-              category={item.category}
-              className="h-20 w-20 text-slate-300 group-hover:text-amber-500"
-              strokeWidth={1.5}
-            />
-          )}
-        </div>
-      </Link>
-      <div className="flex h-full flex-col p-5">
-        <Link href={itemUrl}>
-          <div className="mb-2 flex items-start justify-between gap-2">
-            <h3 className="line-clamp-2 flex-1 font-semibold text-slate-900 hover:text-amber-600">
-              {item.title}
-            </h3>
-            <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600">
-              {item.category}
-            </span>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-slate-500">
-            <MapPin className="h-3 w-3" />
-            <span>Beograd</span>
-          </div>
-        </Link>
-        <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
-          <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded-full bg-slate-200"></div>
-            <span className="text-xs font-medium text-slate-600">
-              {owner && owner.firstName && owner.lastName
-                ? `${owner.firstName} ${owner.lastName[0]}.`
-                : "Komšija"}
-            </span>
-          </div>
-          <span className="font-bold text-amber-600">
-            {item.pricePerDay.toFixed(0)} RSD
-            <span className="text-xs font-normal text-slate-400"> /dan</span>
-          </span>
-        </div>
-        <div className="mt-auto flex gap-2 pt-4">
-          <Button
-            asChild
-            className="flex-1 bg-amber-500 text-white hover:bg-amber-600"
-            size="sm"
-          >
-            <Link href={itemUrl}>Iznajmi</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm" className="flex-1">
-            <Link href={itemUrl}>
-              <Eye className="mr-1 h-4 w-4" />
-              Pogledaj
-            </Link>
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
+import { NavBar } from "@/components/NavBar";
+import { ItemsGrid } from "@/components/ItemsGrid";
 
 export default function Home() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const items = useQuery(api.items.listAll, { limit: 8 });
-  const getUsersByIds = useAction(api.clerk.getUsersByIds);
-  const [users, setUsers] = useState<UserSnapshot[]>([]);
-
-  // Fetch users when items are loaded
-  useEffect(() => {
-    if (items && items.length > 0) {
-      const userIds = items.map((item) => item.ownerId);
-      getUsersByIds({ userIds }).then(setUsers).catch(console.error);
-    }
-  }, [items, getUsersByIds]);
-
-  // Merge items with user data
-  const itemsWithUsers = useMemo(() => {
-    if (!items) return undefined;
-    const userMap = new Map(users.map((user) => [user.id, user]));
-    return items.map((item) => ({
-      ...item,
-      owner: userMap.get(item.ownerId),
-    }));
-  }, [items, users]);
-
   return (
     <div className="min-h-screen bg-stone-50 font-sans text-slate-900 selection:bg-amber-100 selection:text-amber-900">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 border-b border-stone-200 bg-white/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
-          <div className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500 text-white shadow-amber-200">
-              <HeartHandshake className="h-6 w-6" />
-            </div>
-            <span className="text-xl font-bold tracking-tight text-slate-900">
-              PODELI.rs
-            </span>
-          </div>
-          <div className="hidden items-center gap-8 md:flex">
-            <a
-              href="/kako-funkcionise"
-              className="text-sm font-medium text-slate-600 hover:text-amber-600"
-            >
-              Kako funkcioniše
-            </a>
-            <a
-              href="#zasto-deljenje"
-              className="text-sm font-medium text-slate-600 hover:text-amber-600"
-            >
-              Zašto deljenje
-            </a>
-            <a
-              href="#ponuda"
-              className="text-sm font-medium text-slate-600 hover:text-amber-600"
-            >
-              Ponuda
-            </a>
-            <SignInModal />
-            <UserMenu />
-          </div>
-          <div className="md:hidden">
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2 text-slate-600 touch-manipulation"
-              aria-label="Toggle menu"
-            >
-              {isMobileMenuOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
-            </button>
-          </div>
-        </div>
-        {/* Mobile Menu */}
-        {isMobileMenuOpen && (
-          <div className="border-t border-stone-200 bg-white md:hidden">
-            <div className="flex flex-col gap-4 px-6 py-4">
-              <a
-                href="/kako-funkcionise"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="text-sm font-medium text-slate-600 hover:text-amber-600"
-              >
-                Kako funkcioniše
-              </a>
-              <a
-                href="#zasto-deljenje"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="text-sm font-medium text-slate-600 hover:text-amber-600"
-              >
-                Zašto deljenje
-              </a>
-              <a
-                href="#ponuda"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="text-sm font-medium text-slate-600 hover:text-amber-600"
-              >
-                Ponuda
-              </a>
-              <div className="pt-2">
-                <SignInModal />
-              </div>
-              <div className="pt-2">
-                <UserMenu />
-              </div>
-            </div>
-          </div>
-        )}
-      </nav>
+      <NavBar />
 
       {/* Hero Section */}
       <section className="relative overflow-hidden pt-16 pb-24 lg:pt-32">
@@ -335,35 +97,7 @@ export default function Home() {
           </div>
 
           <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {itemsWithUsers === undefined ? (
-              // Loading state
-              Array.from({ length: 4 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="group relative overflow-hidden rounded-2xl bg-white shadow-md"
-                >
-                  <div className="flex h-48 w-full items-center justify-center bg-slate-100">
-                    <div className="h-20 w-20 animate-pulse rounded-full bg-slate-200"></div>
-                  </div>
-                  <div className="p-5">
-                    <div className="mb-2 h-5 w-3/4 animate-pulse rounded bg-slate-200"></div>
-                    <div className="mb-2 h-4 w-1/4 animate-pulse rounded bg-slate-200"></div>
-                    <div className="mt-4 h-4 w-1/2 animate-pulse rounded bg-slate-200"></div>
-                  </div>
-                </div>
-              ))
-            ) : itemsWithUsers.length === 0 ? (
-              // Empty state
-              <div className="col-span-full rounded-2xl bg-white p-12 text-center shadow-md">
-                <p className="text-slate-600">
-                  Trenutno nema dostupnih predmeta. Budite prvi koji će objaviti
-                  predmet!
-                </p>
-              </div>
-            ) : (
-              // Items from database
-              itemsWithUsers.map((item) => <ItemCard key={item._id} item={item} />)
-            )}
+            <ItemsGrid />
           </div>
         </div>
       </section>
@@ -397,9 +131,7 @@ export default function Home() {
               <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-green-100 text-green-600">
                 <Leaf className="h-8 w-8" />
               </div>
-              <h3 className="text-xl font-bold text-slate-900">
-                Čuvaj planetu
-              </h3>
+              <h3 className="text-xl font-bold text-slate-900">Čuvaj planetu</h3>
               <p className="mt-3 leading-7 text-slate-600">
                 Jedna bušilica se u proseku koristi samo 13 minuta tokom svog
                 životnog veka. Deljenjem smanjujemo otpad.
@@ -487,9 +219,7 @@ export default function Home() {
                     <div className="font-semibold text-white">
                       Nikola Jovanović
                     </div>
-                    <div className="text-sm text-slate-400">
-                      Vračar, Beograd
-                    </div>
+                    <div className="text-sm text-slate-400">Vračar, Beograd</div>
                   </div>
                 </div>
               </blockquote>

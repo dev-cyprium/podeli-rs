@@ -4,6 +4,7 @@ import { use, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery, useAction } from "convex/react";
+import { useAuth } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
 import {
   HeartHandshake,
@@ -18,7 +19,7 @@ import { BookingForm } from "./_components/BookingForm";
 import { ReviewsList } from "./_components/ReviewsList";
 import { Badge } from "@/components/ui/badge";
 import { UserMenu } from "@/components/UserMenu";
-import { SignInModal } from "@/components/SignInModal";
+import { SignInButton } from "@/components/SignInButton";
 
 type UserSnapshot = {
   id: string;
@@ -237,6 +238,8 @@ export default function ItemDetailPage({ params }: PageProps) {
 }
 
 function Header() {
+  const { isLoaded, isSignedIn } = useAuth();
+
   return (
     <nav className="sticky top-0 z-50 border-b border-stone-200 bg-white/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
@@ -249,8 +252,13 @@ function Header() {
           </span>
         </Link>
         <div className="flex items-center gap-4">
-          <SignInModal />
-          <UserMenu />
+          {!isLoaded ? (
+            <div className="h-10 w-[100px] animate-pulse rounded-full bg-slate-200" />
+          ) : isSignedIn ? (
+            <UserMenu />
+          ) : (
+            <SignInButton />
+          )}
         </div>
       </div>
     </nav>
