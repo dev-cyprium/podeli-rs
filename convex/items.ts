@@ -45,6 +45,30 @@ export const listAll = query({
   },
 });
 
+/**
+ * Query for sitemap generation - returns all items with minimal fields
+ * No authentication required, public data only
+ */
+export const listForSitemap = query({
+  args: {},
+  handler: async (ctx) => {
+    const items = await ctx.db
+      .query("items")
+      .order("desc")
+      .collect();
+    
+    // Return only the fields needed for sitemap
+    return items.map((item) => ({
+      _id: item._id,
+      title: item.title,
+      shortId: item.shortId ?? extractShortId(item._id),
+      slug: item.slug ?? generateSlug(item.title),
+      updatedAt: item.updatedAt,
+      createdAt: item.createdAt,
+    }));
+  },
+});
+
 export const listMine = query({
   args: {},
   handler: async (ctx) => {
@@ -74,49 +98,20 @@ export const getById = query({
   },
 });
 
-export const getByIdPublic = query({
-  args: {
-    id: v.id("items"),
-  },
-  handler: async (ctx, args) => {
-    const item = await ctx.db.get(args.id);
-    if (!item) {
-      return null;
-    }
-    return item;
-  },
-});
-
 /**
- * Resolve item by shortId first, then fallback to full ID (for legacy support)
- * Returns the item and whether it was found by shortId (for redirect logic)
+ * Resolve item by shortId
  */
-export const getByShortIdOrId = query({
+export const getByShortId = query({
   args: {
-    shortIdOrId: v.string(),
+    shortId: v.string(),
   },
   handler: async (ctx, args) => {
-    // Try to resolve by shortId first
-    const itemsByShortId = await ctx.db
+    const items = await ctx.db
       .query("items")
-      .withIndex("by_shortId", (q) => q.eq("shortId", args.shortIdOrId))
+      .withIndex("by_shortId", (q) => q.eq("shortId", args.shortId))
       .collect();
 
-    if (itemsByShortId.length > 0) {
-      return { item: itemsByShortId[0], foundByShortId: true };
-    }
-
-    // Fallback to full ID (legacy support)
-    try {
-      const item = await ctx.db.get(args.shortIdOrId as Id<"items">);
-      if (item) {
-        return { item, foundByShortId: false };
-      }
-    } catch {
-      // Invalid ID format, ignore
-    }
-
-    return { item: null, foundByShortId: false };
+    return items.length > 0 ? items[0] : null;
   },
 });
 
@@ -188,17 +183,13 @@ export const update = mutation({
       await ctx.storage.delete(oldImageId);
     }
     const { id, ...rest } = args;
-    // Update slug if title changed, ensure shortId exists
+    // Update slug if title changed
     const updates: {
       updatedAt: number;
-      shortId?: string;
       slug?: string;
     } = {
       updatedAt: Date.now(),
     };
-    if (!item.shortId) {
-      updates.shortId = extractShortId(id);
-    }
     if (args.title !== item.title) {
       updates.slug = generateSlug(args.title);
     }

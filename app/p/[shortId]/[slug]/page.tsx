@@ -42,37 +42,18 @@ export default function ItemDetailPage({ params }: PageProps) {
   const resolvedParams = use(params);
   const { shortId, slug } = resolvedParams;
   const router = useRouter();
-  const result = useQuery(api.items.getByShortIdOrId, {
-    shortIdOrId: shortId,
+  const item = useQuery(api.items.getByShortId, {
+    shortId,
   });
   const getUsersByIds = useAction(api.clerk.getUsersByIds);
   const [owner, setOwner] = useState<UserSnapshot | null>(null);
 
-  // Handle redirects for canonical URLs
+  // Handle canonical redirect if slug doesn't match
   useEffect(() => {
-    if (result?.item) {
-      const item = result.item;
-      // If item doesn't have shortId/slug yet, wait for backfill
-      // In this case, we'll show the item but it's not ideal
-      if (!item.shortId || !item.slug) {
-        return;
-      }
-
-      // Redirect if slug doesn't match (canonical redirect)
-      if (item.slug !== slug && slug !== "legacy") {
-        router.replace(`/p/${item.shortId}/${item.slug}`);
-        return;
-      }
-
-      // Redirect if found by full ID (legacy URL) to canonical URL
-      if (!result.foundByShortId && item.shortId && item.slug) {
-        router.replace(`/p/${item.shortId}/${item.slug}`);
-        return;
-      }
+    if (item && item.slug !== slug) {
+      router.replace(`/p/${item.shortId}/${item.slug}`);
     }
-  }, [result, slug, router]);
-
-  const item = result?.item ?? undefined;
+  }, [item, slug, router]);
 
   useEffect(() => {
     if (item) {
@@ -82,7 +63,7 @@ export default function ItemDetailPage({ params }: PageProps) {
     }
   }, [item, getUsersByIds]);
 
-  if (result === undefined) {
+  if (item === undefined) {
     return (
       <div className="min-h-screen bg-stone-50">
         <Header />
@@ -126,14 +107,8 @@ export default function ItemDetailPage({ params }: PageProps) {
     );
   }
 
-  // Don't render if redirecting (unless it's a legacy slug placeholder)
-  if (
-    item.shortId &&
-    item.slug &&
-    item.slug !== slug &&
-    slug !== "legacy" &&
-    (!result.foundByShortId || item.slug !== slug)
-  ) {
+  // Don't render if redirecting
+  if (item && item.slug !== slug) {
     return (
       <div className="min-h-screen bg-stone-50">
         <Header />
