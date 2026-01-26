@@ -3,7 +3,12 @@
 import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useQuery, useAction } from "convex/react";
+import {
+  useQuery,
+  useAction,
+  Preloaded,
+  usePreloadedQuery,
+} from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id, Doc } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
@@ -49,7 +54,7 @@ function ItemCard({
 }) {
   const imageUrl = useQuery(
     api.items.getImageUrl,
-    item.images[0] ? { storageId: item.images[0] as Id<"_storage"> } : "skip"
+    item.images[0] ? { storageId: item.images[0] as Id<"_storage"> } : "skip",
   );
   const owner = item.owner;
   const itemUrl = getItemUrl(item);
@@ -124,8 +129,12 @@ function ItemCard({
   );
 }
 
-export function ItemsGrid() {
-  const items = useQuery(api.items.listAll, { limit: 8 });
+export function ItemsGrid({
+  preloadedItems,
+}: {
+  preloadedItems: Preloaded<typeof api.items.listAll>;
+}) {
+  const items = usePreloadedQuery(preloadedItems);
   const getUsersByIds = useAction(api.clerk.getUsersByIds);
   const [users, setUsers] = useState<UserSnapshot[]>([]);
 

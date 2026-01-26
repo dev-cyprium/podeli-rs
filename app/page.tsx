@@ -7,100 +7,118 @@ import {
 } from "lucide-react";
 import { NavBar } from "@/components/NavBar";
 import { ItemsGrid } from "@/components/ItemsGrid";
+import { ItemsGridSkeleton } from "@/components/ItemsGridSkeleton";
+import { preloadQuery } from "convex/nextjs";
+import { api } from "@/convex/_generated/api";
+import { Suspense } from "react";
 
-export default function Home() {
+function HeroSection() {
+  return (
+    <section className="relative overflow-hidden pt-16 pb-24 lg:pt-32">
+      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        <div className="flex flex-col items-center text-center">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-1.5 text-sm font-medium text-amber-800">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75"></span>
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500"></span>
+            </span>
+            Lansiramo uskoro u Beogradu
+          </div>
+
+          <h1 className="max-w-4xl text-5xl font-extrabold tracking-tight text-slate-900 sm:text-6xl lg:text-7xl">
+            Tvoj komšiluk je pun <br className="hidden sm:block" />
+            <span className="relative whitespace-nowrap text-amber-500">
+              <svg
+                className="absolute -bottom-2 left-0 -z-10 h-3 w-full fill-amber-200"
+                viewBox="0 0 100 10"
+                preserveAspectRatio="none"
+              >
+                <path d="M0 5 Q 50 10 100 5 L 100 0 Q 50 5 0 0 Z" />
+              </svg>
+              korisnih stvari
+            </span>
+          </h1>
+
+          <p className="mt-6 max-w-2xl text-lg leading-relaxed text-slate-600 sm:text-xl">
+            Zašto kupovati bušilicu koju ćeš koristiti 10 minuta godišnje?
+            <br className="hidden sm:block" />
+            Iznajmi je od komšije Marka za 300 dinara.
+          </p>
+
+          {/* Mock Search Bar */}
+          <div className="mt-10 w-full max-w-2xl">
+            <div className="relative flex items-center overflow-hidden rounded-2xl bg-white p-2 shadow-xl shadow-slate-200/50 ring-1 ring-slate-200">
+              <div className="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-slate-50 text-slate-400">
+                <Search className="h-6 w-6" />
+              </div>
+              <input
+                type="text"
+                className="h-full w-full border-0 bg-transparent px-4 text-lg text-slate-900 placeholder:text-slate-400 focus:ring-0"
+                placeholder="Šta ti treba danas? (npr. bušilica, šator, projektor...)"
+                readOnly
+              />
+              <button className="hidden rounded-xl bg-amber-500 px-8 py-3 text-base font-bold text-white transition-transform hover:scale-105 hover:bg-amber-600 sm:block">
+                Pronađi
+              </button>
+            </div>
+            <div className="mt-4 flex flex-wrap justify-center gap-2 text-sm text-slate-500">
+              <span>Popularno:</span>
+              <span className="cursor-pointer font-medium text-slate-700 hover:text-amber-600 hover:underline">
+                Alati
+              </span>
+              <span className="cursor-pointer font-medium text-slate-700 hover:text-amber-600 hover:underline">
+                Kampovanje
+              </span>
+              <span className="cursor-pointer font-medium text-slate-700 hover:text-amber-600 hover:underline">
+                Elektronika
+              </span>
+              <span className="cursor-pointer font-medium text-slate-700 hover:text-amber-600 hover:underline">
+                Društvene igre
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+async function ProductShowcaseSection() {
+  const preloadItems = await preloadQuery(api.items.listAll, { limit: 8 });
+
+  return (
+    <section id="ponuda" className="py-16 sm:py-24">
+      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            Šta komšije dele u Beogradu?
+          </h2>
+          <a
+            href="#"
+            className="text-sm font-semibold text-amber-600 hover:text-amber-700"
+          >
+            Vidi sve kategorije &rarr;
+          </a>
+        </div>
+
+        <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <ItemsGrid preloadedItems={preloadItems} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export default async function Home() {
   return (
     <div className="min-h-screen bg-stone-50 font-sans text-slate-900 selection:bg-amber-100 selection:text-amber-900">
       <NavBar />
 
-      {/* Hero Section */}
-      <section className="relative overflow-hidden pt-16 pb-24 lg:pt-32">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="flex flex-col items-center text-center">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-1.5 text-sm font-medium text-amber-800">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75"></span>
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500"></span>
-              </span>
-              Lansiramo uskoro u Beogradu
-            </div>
+      <HeroSection />
 
-            <h1 className="max-w-4xl text-5xl font-extrabold tracking-tight text-slate-900 sm:text-6xl lg:text-7xl">
-              Tvoj komšiluk je pun <br className="hidden sm:block" />
-              <span className="relative whitespace-nowrap text-amber-500">
-                <svg
-                  className="absolute -bottom-2 left-0 -z-10 h-3 w-full fill-amber-200"
-                  viewBox="0 0 100 10"
-                  preserveAspectRatio="none"
-                >
-                  <path d="M0 5 Q 50 10 100 5 L 100 0 Q 50 5 0 0 Z" />
-                </svg>
-                korisnih stvari
-              </span>
-            </h1>
-
-            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-slate-600 sm:text-xl">
-              Zašto kupovati bušilicu koju ćeš koristiti 10 minuta godišnje?
-              <br className="hidden sm:block" />
-              Iznajmi je od komšije Marka za 300 dinara.
-            </p>
-
-            {/* Mock Search Bar */}
-            <div className="mt-10 w-full max-w-2xl">
-              <div className="relative flex items-center overflow-hidden rounded-2xl bg-white p-2 shadow-xl shadow-slate-200/50 ring-1 ring-slate-200">
-                <div className="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-slate-50 text-slate-400">
-                  <Search className="h-6 w-6" />
-                </div>
-                <input
-                  type="text"
-                  className="h-full w-full border-0 bg-transparent px-4 text-lg text-slate-900 placeholder:text-slate-400 focus:ring-0"
-                  placeholder="Šta ti treba danas? (npr. bušilica, šator, projektor...)"
-                  readOnly
-                />
-                <button className="hidden rounded-xl bg-amber-500 px-8 py-3 text-base font-bold text-white transition-transform hover:scale-105 hover:bg-amber-600 sm:block">
-                  Pronađi
-                </button>
-              </div>
-              <div className="mt-4 flex flex-wrap justify-center gap-2 text-sm text-slate-500">
-                <span>Popularno:</span>
-                <span className="cursor-pointer font-medium text-slate-700 hover:text-amber-600 hover:underline">
-                  Alati
-                </span>
-                <span className="cursor-pointer font-medium text-slate-700 hover:text-amber-600 hover:underline">
-                  Kampovanje
-                </span>
-                <span className="cursor-pointer font-medium text-slate-700 hover:text-amber-600 hover:underline">
-                  Elektronika
-                </span>
-                <span className="cursor-pointer font-medium text-slate-700 hover:text-amber-600 hover:underline">
-                  Društvene igre
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Product Showcase (What you can find) */}
-      <section id="ponuda" className="py-16 sm:py-24">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-              Šta komšije dele u Beogradu?
-            </h2>
-            <a
-              href="#"
-              className="text-sm font-semibold text-amber-600 hover:text-amber-700"
-            >
-              Vidi sve kategorije &rarr;
-            </a>
-          </div>
-
-          <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            <ItemsGrid />
-          </div>
-        </div>
-      </section>
+      <Suspense fallback={<ItemsGridSkeleton />}>
+        <ProductShowcaseSection />
+      </Suspense>
 
       {/* Why Sharing Matters (Redesigned) */}
       <section id="zasto-deljenje" className="bg-white py-24">
@@ -131,7 +149,9 @@ export default function Home() {
               <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-green-100 text-green-600">
                 <Leaf className="h-8 w-8" />
               </div>
-              <h3 className="text-xl font-bold text-slate-900">Čuvaj planetu</h3>
+              <h3 className="text-xl font-bold text-slate-900">
+                Čuvaj planetu
+              </h3>
               <p className="mt-3 leading-7 text-slate-600">
                 Jedna bušilica se u proseku koristi samo 13 minuta tokom svog
                 životnog veka. Deljenjem smanjujemo otpad.
@@ -219,7 +239,9 @@ export default function Home() {
                     <div className="font-semibold text-white">
                       Nikola Jovanović
                     </div>
-                    <div className="text-sm text-slate-400">Vračar, Beograd</div>
+                    <div className="text-sm text-slate-400">
+                      Vračar, Beograd
+                    </div>
                   </div>
                 </div>
               </blockquote>
