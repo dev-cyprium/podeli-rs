@@ -1,6 +1,6 @@
 "use client";
 
-import { SignedOut, SignIn } from "@clerk/nextjs";
+import { SignedOut, SignIn, useAuth } from "@clerk/nextjs";
 import {
   Dialog,
   DialogContent,
@@ -10,6 +10,12 @@ import {
 import { Button } from "@/components/ui/button";
 
 export function SignInModal() {
+  const { isLoaded } = useAuth();
+
+  // Don't render anything while Clerk is loading to prevent
+  // showing the sign-in button during OAuth redirect hydration
+  if (!isLoaded) return null;
+
   return (
     <SignedOut>
       <Dialog>
@@ -24,7 +30,7 @@ export function SignInModal() {
         >
           <DialogTitle className="sr-only">Prijavi se</DialogTitle>
           <div className="flex justify-center">
-            <SignIn routing="hash" />
+            <SignIn forceRedirectUrl="/" signUpForceRedirectUrl="/" />
           </div>
         </DialogContent>
       </Dialog>
