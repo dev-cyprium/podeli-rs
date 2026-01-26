@@ -12,6 +12,7 @@ import {
 } from "@/components/booking/BookingStatusBadge";
 import { Calendar, MapPin, Star, X, MessageSquare } from "lucide-react";
 import { ReviewModal } from "./ReviewModal";
+import { getItemUrl } from "@/lib/utils";
 
 type BookingWithItem = Doc<"bookings"> & {
   item: Doc<"items"> | null;
@@ -55,11 +56,13 @@ export function RenterBookingCard({ booking }: RenterBookingCardProps) {
     }
   };
 
+  const itemUrl = booking.item ? getItemUrl(booking.item) : "#";
+
   return (
     <>
       <div className="flex gap-4 rounded-xl border border-slate-200 bg-white p-4">
         <Link
-          href={booking.item ? `/predmet/${booking.item._id}` : "#"}
+          href={itemUrl}
           className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-slate-100"
         >
           {imageUrl ? (
@@ -79,7 +82,7 @@ export function RenterBookingCard({ booking }: RenterBookingCardProps) {
           <div className="flex items-start justify-between">
             <div>
               <Link
-                href={booking.item ? `/predmet/${booking.item._id}` : "#"}
+                href={itemUrl}
                 className="font-semibold text-slate-900 hover:text-amber-600"
               >
                 {booking.item?.title ?? "Predmet nije dostupan"}

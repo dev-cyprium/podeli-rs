@@ -24,6 +24,7 @@ import { Id, Doc } from "@/convex/_generated/dataModel";
 import { SignInModal } from "@/components/SignInModal";
 import { UserMenu } from "@/components/UserMenu";
 import { Button } from "@/components/ui/button";
+import { getItemUrl } from "@/lib/utils";
 
 type UserSnapshot = {
   id: string;
@@ -69,9 +70,11 @@ function ItemCard({
   );
   const owner = item.owner;
 
+  const itemUrl = getItemUrl(item);
+
   return (
     <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-md transition-all hover:-translate-y-1 hover:shadow-xl">
-      <Link href={`/predmet/${item._id}`}>
+      <Link href={itemUrl}>
         <div className="relative flex h-48 w-full items-center justify-center bg-slate-100 transition-colors group-hover:bg-amber-50">
           {imageUrl ? (
             <Image
@@ -91,7 +94,7 @@ function ItemCard({
         </div>
       </Link>
       <div className="flex h-full flex-col p-5">
-        <Link href={`/predmet/${item._id}`}>
+        <Link href={itemUrl}>
           <div className="mb-2 flex items-start justify-between gap-2">
             <h3 className="line-clamp-2 flex-1 font-semibold text-slate-900 hover:text-amber-600">
               {item.title}
@@ -125,10 +128,10 @@ function ItemCard({
             className="flex-1 bg-amber-500 text-white hover:bg-amber-600"
             size="sm"
           >
-            <Link href={`/predmet/${item._id}`}>Iznajmi</Link>
+            <Link href={itemUrl}>Iznajmi</Link>
           </Button>
           <Button asChild variant="outline" size="sm" className="flex-1">
-            <Link href={`/predmet/${item._id}`}>
+            <Link href={itemUrl}>
               <Eye className="mr-1 h-4 w-4" />
               Pogledaj
             </Link>

@@ -1,8 +1,31 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireIdentity } from "@/lib/convex-auth";
+import { Id } from "./_generated/dataModel";
 
 const deliveryMethodValues = ["licno", "glovo", "wolt", "cargo"] as const;
+
+/**
+ * Generate a slug from a title: lowercase, ASCII-only, dash-separated
+ */
+function generateSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
+    .replace(/[^a-z0-9\s-]/g, "") // Remove non-ASCII characters except spaces and dashes
+    .trim()
+    .replace(/\s+/g, "-") // Replace spaces with dashes
+    .replace(/-+/g, "-") // Replace multiple dashes with single dash
+    .replace(/^-|-$/g, ""); // Remove leading/trailing dashes
+}
+
+/**
+ * Extract the first 8 characters of a Convex ID as shortId
+ */
+function extractShortId(id: Id<"items">): string {
+  return id.slice(0, 8);
+}
 
 const deliveryMethodValidator = v.union(
   v.literal(deliveryMethodValues[0]),
@@ -64,6 +87,39 @@ export const getByIdPublic = query({
   },
 });
 
+/**
+ * Resolve item by shortId first, then fallback to full ID (for legacy support)
+ * Returns the item and whether it was found by shortId (for redirect logic)
+ */
+export const getByShortIdOrId = query({
+  args: {
+    shortIdOrId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Try to resolve by shortId first
+    const itemsByShortId = await ctx.db
+      .query("items")
+      .withIndex("by_shortId", (q) => q.eq("shortId", args.shortIdOrId))
+      .collect();
+
+    if (itemsByShortId.length > 0) {
+      return { item: itemsByShortId[0], foundByShortId: true };
+    }
+
+    // Fallback to full ID (legacy support)
+    try {
+      const item = await ctx.db.get(args.shortIdOrId as Id<"items">);
+      if (item) {
+        return { item, foundByShortId: false };
+      }
+    } catch {
+      // Invalid ID format, ignore
+    }
+
+    return { item: null, foundByShortId: false };
+  },
+});
+
 export const create = mutation({
   args: {
     title: v.string(),
@@ -82,12 +138,20 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const identity = await requireIdentity(ctx);
     const now = Date.now();
-    return await ctx.db.insert("items", {
+    const itemId = await ctx.db.insert("items", {
       ...args,
       ownerId: identity.subject,
       createdAt: now,
       updatedAt: now,
     });
+    // Generate shortId and slug after insert to get the full ID
+    const shortId = extractShortId(itemId);
+    const slug = generateSlug(args.title);
+    await ctx.db.patch(itemId, {
+      shortId,
+      slug,
+    });
+    return itemId;
   },
 });
 
@@ -124,9 +188,23 @@ export const update = mutation({
       await ctx.storage.delete(oldImageId);
     }
     const { id, ...rest } = args;
+    // Update slug if title changed, ensure shortId exists
+    const updates: {
+      updatedAt: number;
+      shortId?: string;
+      slug?: string;
+    } = {
+      updatedAt: Date.now(),
+    };
+    if (!item.shortId) {
+      updates.shortId = extractShortId(id);
+    }
+    if (args.title !== item.title) {
+      updates.slug = generateSlug(args.title);
+    }
     await ctx.db.patch(id, {
       ...rest,
-      updatedAt: Date.now(),
+      ...updates,
     });
   },
 });
@@ -179,5 +257,32 @@ export const getImageUrls = query({
       urlMap[storageId] = await ctx.storage.getUrl(storageId);
     }
     return urlMap;
+  },
+});
+
+/**
+ * Backfill shortId and slug for existing items that don't have them
+ * This is safe to run multiple times - it only updates items missing these fields
+ */
+export const backfillShortIdAndSlug = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await requireIdentity(ctx);
+    // Only allow backfill by authenticated users (you may want to restrict this further)
+    const allItems = await ctx.db.query("items").collect();
+    let updated = 0;
+    for (const item of allItems) {
+      const needsUpdate = !item.shortId || !item.slug;
+      if (needsUpdate) {
+        const shortId = item.shortId ?? extractShortId(item._id);
+        const slug = item.slug ?? generateSlug(item.title);
+        await ctx.db.patch(item._id, {
+          shortId,
+          slug,
+        });
+        updated++;
+      }
+    }
+    return { updated, total: allItems.length };
   },
 });

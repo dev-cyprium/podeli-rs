@@ -34,10 +34,12 @@ export default function KakoFunkcionisePage() {
 
         <section className="mt-14 grid gap-6 sm:grid-cols-2">
           <div className="rounded-2xl bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold">1. Pretplata (za vlasnike)</h2>
+            <h2 className="text-lg font-semibold">
+              1. Pretplata (za vlasnike)
+            </h2>
             <p className="mt-2 text-slate-600">
-              Pretplata je vrlo povoljna i odnosi se na korisnike koji objavljuju
-              stvari. Sa jednom pretplatom možeš da izdaš:
+              Pretplata je vrlo povoljna i odnosi se na korisnike koji
+              objavljuju stvari. Sa jednom pretplatom možeš da izdaš:
             </p>
             <ul className="mt-4 space-y-2 text-slate-700">
               <li>• 1 stvar odjednom</li>
@@ -88,7 +90,9 @@ export default function KakoFunkcionisePage() {
         <section className="mt-14 rounded-3xl bg-slate-900 px-6 py-10 text-white">
           <h2 className="text-2xl font-semibold">Ukratko:</h2>
           <ul className="mt-4 space-y-2 text-slate-200">
-            <li>• Jeftina pretplata važi za korisnike koji objavljuju stvari.</li>
+            <li>
+              • Jeftina pretplata važi za korisnike koji objavljuju stvari.
+            </li>
             <li>• 1 pretplata = 1 stvar + 1 dodatna stvar po periodu.</li>
             <li>• Iznajmljivanje je dostupno bez pretplate.</li>
             <li>• Plaćanje je direktno između korisnika.</li>

@@ -14,6 +14,7 @@ import {
   PaymentStatusBadge,
 } from "@/components/booking/BookingStatusBadge";
 import { Calendar, Inbox, X, Check, CheckCircle } from "lucide-react";
+import { getItemUrl } from "@/lib/utils";
 
 type BookingWithItem = Doc<"bookings"> & {
   item: Doc<"items"> | null;
@@ -157,10 +158,12 @@ function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
     }
   };
 
+  const itemUrl = booking.item ? getItemUrl(booking.item) : "#";
+
   return (
     <div className="flex gap-3 rounded-lg border border-slate-200 bg-white p-3">
       <Link
-        href={booking.item ? `/predmet/${booking.item._id}` : "#"}
+        href={itemUrl}
         className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-slate-100"
       >
         {imageUrl ? (
@@ -179,7 +182,7 @@ function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
       <div className="flex flex-1 flex-col">
         <div className="flex items-start justify-between">
           <Link
-            href={booking.item ? `/predmet/${booking.item._id}` : "#"}
+            href={itemUrl}
             className="text-sm font-semibold text-slate-900 hover:text-amber-600"
           >
             {booking.item?.title ?? "Predmet nije dostupan"}
