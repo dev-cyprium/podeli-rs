@@ -41,11 +41,13 @@ export default defineSchema({
     totalPrice: v.number(),
     deliveryMethod: v.string(),
     status: v.union(
+      v.literal("pending"),
       v.literal("confirmed"),
       v.literal("active"),
       v.literal("completed"),
       v.literal("cancelled"),
     ),
+    paymentMethod: v.union(v.literal("cash"), v.literal("card")),
     paymentStatus: v.union(
       v.literal("pending"),
       v.literal("paid"),

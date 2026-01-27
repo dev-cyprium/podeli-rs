@@ -6,14 +6,14 @@ import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { ConvexError } from "convex/values";
 import { api } from "@/convex/_generated/api";
-import { Id, Doc } from "@/convex/_generated/dataModel";
+import { Doc } from "@/convex/_generated/dataModel";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { CalendarDays, Truck, CreditCard } from "lucide-react";
 import { DateRange } from "react-day-picker";
-import { PaymentPlaceholder } from "@/components/booking/PaymentPlaceholder";
+import { PaymentMethodModal } from "@/components/booking/PaymentMethodModal";
 
 type DeliveryMethod = "licno" | "glovo" | "wolt" | "cargo";
 
@@ -43,9 +43,7 @@ export function BookingForm({ item }: BookingFormProps) {
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>(
     (item.deliveryMethods[0] as DeliveryMethod) ?? "licno"
   );
-  const [showPayment, setShowPayment] = useState(false);
-  const [bookingId, setBookingId] = useState<Id<"bookings"> | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const createBooking = useMutation(api.bookings.createBooking);
@@ -81,42 +79,39 @@ export function BookingForm({ item }: BookingFormProps) {
   const canBook =
     isSignedIn && dateRange?.from && dateRange?.to && totalDays > 0;
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!canBook || !dateRange?.from || !dateRange?.to) {
       return;
     }
-
     setError(null);
-    setIsSubmitting(true);
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentConfirm = async (paymentMethod: "cash" | "card") => {
+    if (!dateRange?.from || !dateRange?.to) {
+      throw new Error("Izaberite datum.");
+    }
 
     try {
-      const id = await createBooking({
+      await createBooking({
         itemId: item._id,
         startDate: formatDate(dateRange.from),
         endDate: formatDate(dateRange.to),
         deliveryMethod,
+        paymentMethod,
       });
-      setBookingId(id);
-      setShowPayment(true);
+      // Wait a bit to show success message, then redirect
+      setTimeout(() => {
+        router.push("/kontrolna-tabla/zakupi");
+      }, 1500);
     } catch (err) {
       // Handle Convex application errors properly
       const errorMessage =
         err instanceof ConvexError
-          ? // Access data and cast it to the type we expect (string in this case)
-            (err.data as string)
-          : // Must be some developer error, and prod deployments will not
-            // reveal any more information about it to the client
-            "Greška pri rezervaciji. Molimo pokušajte ponovo.";
-      
-      setError(errorMessage);
-    } finally {
-      setIsSubmitting(false);
+          ? (err.data as string)
+          : "Greška pri rezervaciji. Molimo pokušajte ponovo.";
+      throw new Error(errorMessage);
     }
-  };
-
-  const handlePaymentComplete = () => {
-    setShowPayment(false);
-    router.push("/kontrolna-tabla/zakupi");
   };
 
   const availableDeliveryMethods = DELIVERY_OPTIONS.filter((option) =>
@@ -221,23 +216,22 @@ export function BookingForm({ item }: BookingFormProps) {
               <Button
                 className="w-full bg-amber-500 hover:bg-amber-600"
                 size="lg"
-                disabled={!canBook || isSubmitting}
+                disabled={!canBook}
                 onClick={handleSubmit}
               >
                 <CreditCard className="mr-2 h-4 w-4" />
-                {isSubmitting ? "Rezervisanje..." : "Rezerviši"}
+                Rezerviši
               </Button>
             </>
           )}
         </CardContent>
       </Card>
 
-      {showPayment && bookingId && (
-        <PaymentPlaceholder
-          bookingId={bookingId}
+      {showPaymentModal && (
+        <PaymentMethodModal
           totalPrice={totalPrice}
-          onComplete={handlePaymentComplete}
-          onCancel={() => setShowPayment(false)}
+          onConfirm={handlePaymentConfirm}
+          onCancel={() => setShowPaymentModal(false)}
         />
       )}
     </>

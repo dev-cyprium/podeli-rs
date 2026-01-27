@@ -32,6 +32,7 @@ export const createBooking = mutation({
     startDate: v.string(),
     endDate: v.string(),
     deliveryMethod: v.string(),
+    paymentMethod: v.union(v.literal("cash"), v.literal("card")),
   },
   handler: async (ctx, args) => {
     const identity = await requireIdentity(ctx);
@@ -53,6 +54,7 @@ export const createBooking = mutation({
       throw new ConvexError("Izabrani način dostave nije dostupan za ovaj predmet.");
     }
 
+    // Only check conflicts with confirmed/active bookings (not pending)
     const existingBookings = await ctx.db
       .query("bookings")
       .withIndex("by_item", (q) => q.eq("itemId", args.itemId))
@@ -60,7 +62,7 @@ export const createBooking = mutation({
 
     const conflictingBooking = existingBookings.find(
       (booking) =>
-        booking.status !== "cancelled" &&
+        (booking.status === "confirmed" || booking.status === "active") &&
         datesOverlap(
           args.startDate,
           args.endDate,
@@ -79,7 +81,7 @@ export const createBooking = mutation({
     const totalPrice = totalDays * item.pricePerDay;
     const now = Date.now();
 
-    return await ctx.db.insert("bookings", {
+    const bookingId = await ctx.db.insert("bookings", {
       itemId: args.itemId,
       renterId,
       ownerId: item.ownerId,
@@ -89,11 +91,22 @@ export const createBooking = mutation({
       pricePerDay: item.pricePerDay,
       totalPrice,
       deliveryMethod: args.deliveryMethod,
-      status: "confirmed",
+      paymentMethod: args.paymentMethod,
+      status: "pending",
       paymentStatus: "pending",
       createdAt: now,
       updatedAt: now,
     });
+
+    // Notify owner about new booking request
+    await ctx.db.insert("notifications", {
+      userId: item.ownerId,
+      message: `Nova rezervacija za "${item.title}" čeka vaše odobrenje.`,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return bookingId;
   },
 });
 
@@ -179,6 +192,7 @@ export const updateBookingStatus = mutation({
   args: {
     id: v.id("bookings"),
     status: v.union(
+      v.literal("pending"),
       v.literal("confirmed"),
       v.literal("active"),
       v.literal("completed"),
@@ -266,11 +280,112 @@ export const getItemBookedDates = query({
       .withIndex("by_item", (q) => q.eq("itemId", args.itemId))
       .collect();
 
+    // Only confirmed and active bookings block dates (not pending)
     return bookings
-      .filter((b) => b.status !== "cancelled")
+      .filter((b) => b.status === "confirmed" || b.status === "active")
       .map((b) => ({
         startDate: b.startDate,
         endDate: b.endDate,
       }));
+  },
+});
+
+export const approveBooking = mutation({
+  args: {
+    id: v.id("bookings"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await requireIdentity(ctx);
+    const booking = await ctx.db.get(args.id);
+
+    if (!booking) {
+      throw new ConvexError("Rezervacija nije pronađena.");
+    }
+
+    if (booking.ownerId !== identity.subject) {
+      throw new ConvexError("Samo vlasnik može odobriti rezervaciju.");
+    }
+
+    if (booking.status !== "pending") {
+      throw new ConvexError("Samo rezervacije na čekanju mogu biti odobrene.");
+    }
+
+    // Check for conflicts with other confirmed/active bookings
+    const existingBookings = await ctx.db
+      .query("bookings")
+      .withIndex("by_item", (q) => q.eq("itemId", booking.itemId))
+      .collect();
+
+    const conflictingBooking = existingBookings.find(
+      (b) =>
+        b._id !== booking._id &&
+        (b.status === "confirmed" || b.status === "active") &&
+        datesOverlap(
+          booking.startDate,
+          booking.endDate,
+          b.startDate,
+          b.endDate
+        )
+    );
+
+    if (conflictingBooking) {
+      throw new ConvexError(
+        "Datumi su već rezervisani drugom rezervacijom. Odbijte ovu rezervaciju."
+      );
+    }
+
+    const now = Date.now();
+
+    await ctx.db.patch(args.id, {
+      status: "confirmed",
+      updatedAt: now,
+    });
+
+    // Notify renter about approval
+    const item = await ctx.db.get(booking.itemId);
+    await ctx.db.insert("notifications", {
+      userId: booking.renterId,
+      message: `Vaša rezervacija za "${item?.title ?? "predmet"}" je odobrena!`,
+      createdAt: now,
+      updatedAt: now,
+    });
+  },
+});
+
+export const rejectBooking = mutation({
+  args: {
+    id: v.id("bookings"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await requireIdentity(ctx);
+    const booking = await ctx.db.get(args.id);
+
+    if (!booking) {
+      throw new ConvexError("Rezervacija nije pronađena.");
+    }
+
+    if (booking.ownerId !== identity.subject) {
+      throw new ConvexError("Samo vlasnik može odbiti rezervaciju.");
+    }
+
+    if (booking.status !== "pending") {
+      throw new ConvexError("Samo rezervacije na čekanju mogu biti odbijene.");
+    }
+
+    const now = Date.now();
+
+    await ctx.db.patch(args.id, {
+      status: "cancelled",
+      updatedAt: now,
+    });
+
+    // Notify renter about rejection
+    const item = await ctx.db.get(booking.itemId);
+    await ctx.db.insert("notifications", {
+      userId: booking.renterId,
+      message: `Vaša rezervacija za "${item?.title ?? "predmet"}" je odbijena.`,
+      createdAt: now,
+      updatedAt: now,
+    });
   },
 });

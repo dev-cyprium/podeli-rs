@@ -13,7 +13,7 @@ import {
   BookingStatusBadge,
   PaymentStatusBadge,
 } from "@/components/booking/BookingStatusBadge";
-import { Calendar, Inbox, X, Check, CheckCircle } from "lucide-react";
+import { Calendar, Clock, Inbox, X, Check, CheckCircle } from "lucide-react";
 import { getItemUrl } from "@/lib/utils";
 
 type BookingWithItem = Doc<"bookings"> & {
@@ -48,6 +48,7 @@ function IncomingBookingsContent() {
     );
   }
 
+  const pendingBookings = bookings.filter((b) => b.status === "pending");
   const activeBookings = bookings.filter(
     (b) => b.status === "confirmed" || b.status === "active"
   );
@@ -75,6 +76,35 @@ function IncomingBookingsContent() {
           </div>
         ) : (
           <div className="space-y-6">
+            {pendingBookings.length > 0 && (
+              <div>
+                <h3 className="mb-3 flex items-center gap-2 text-sm font-medium text-yellow-700">
+                  <Clock className="h-4 w-4" />
+                  Zahtevi na čekanju ({pendingBookings.length})
+                </h3>
+                <div className="space-y-3">
+                  <AnimatePresence mode="popLayout">
+                    {pendingBookings.map((booking) => (
+                      <motion.div
+                        key={booking._id}
+                        layout
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -12 }}
+                        transition={{
+                          type: "spring",
+                          bounce: 0.35,
+                          duration: 0.4,
+                        }}
+                      >
+                        <PendingBookingCard booking={booking} />
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </div>
+            )}
+
             {activeBookings.length > 0 && (
               <div>
                 <h3 className="mb-3 text-sm font-medium text-slate-700">
@@ -245,6 +275,127 @@ function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
             )}
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function PendingBookingCard({ booking }: { booking: BookingWithItem }) {
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const approveBooking = useMutation(api.bookings.approveBooking);
+  const rejectBooking = useMutation(api.bookings.rejectBooking);
+  const imageUrl = useQuery(
+    api.items.getImageUrl,
+    booking.item?.images[0]
+      ? { storageId: booking.item.images[0] as Id<"_storage"> }
+      : "skip"
+  );
+
+  const handleApprove = async () => {
+    setError(null);
+    setIsUpdating(true);
+    try {
+      await approveBooking({ id: booking._id });
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Greška pri odobravanju.";
+      setError(msg);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleReject = async () => {
+    if (!confirm("Da li ste sigurni da želite da odbijete ovu rezervaciju?")) {
+      return;
+    }
+    setError(null);
+    setIsUpdating(true);
+    try {
+      await rejectBooking({ id: booking._id });
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Greška pri odbijanju.";
+      setError(msg);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const itemUrl = booking.item ? getItemUrl(booking.item) : "#";
+
+  return (
+    <div className="flex gap-3 rounded-lg border border-yellow-200 bg-yellow-50 p-3">
+      <Link
+        href={itemUrl}
+        className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-slate-100"
+      >
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={booking.item?.title ?? "Predmet"}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
+            Nema
+          </div>
+        )}
+      </Link>
+
+      <div className="flex flex-1 flex-col">
+        <div className="flex items-start justify-between">
+          <Link
+            href={itemUrl}
+            className="text-sm font-semibold text-slate-900 hover:text-amber-600"
+          >
+            {booking.item?.title ?? "Predmet nije dostupan"}
+          </Link>
+          <BookingStatusBadge status={booking.status} />
+        </div>
+
+        <div className="mt-1 flex items-center gap-3 text-xs text-slate-500">
+          <div className="flex items-center gap-1">
+            <Calendar className="h-3 w-3" />
+            <span>
+              {booking.startDate} - {booking.endDate}
+            </span>
+          </div>
+          <span className="font-medium text-amber-600">
+            {booking.totalPrice.toFixed(0)} RSD
+          </span>
+        </div>
+
+        {error && (
+          <div className="mt-2 rounded bg-red-50 p-2 text-xs text-red-600">
+            {error}
+          </div>
+        )}
+
+        <div className="mt-2 flex gap-2">
+          <Button
+            size="xs"
+            variant="outline"
+            onClick={handleApprove}
+            disabled={isUpdating}
+            className="text-green-600 hover:bg-green-50"
+          >
+            <Check className="mr-1 h-3 w-3" />
+            Odobri
+          </Button>
+          <Button
+            size="xs"
+            variant="outline"
+            onClick={handleReject}
+            disabled={isUpdating}
+            className="text-red-600 hover:bg-red-50"
+          >
+            <X className="mr-1 h-3 w-3" />
+            Odbij
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -2,10 +2,11 @@
 
 import { cn } from "@/lib/utils";
 
-type BookingStatus = "confirmed" | "active" | "completed" | "cancelled";
+type BookingStatus = "pending" | "confirmed" | "active" | "completed" | "cancelled";
 type PaymentStatus = "pending" | "paid" | "refunded";
 
 const statusLabels: Record<BookingStatus, string> = {
+  pending: "Čeka odobrenje",
   confirmed: "Potvrđeno",
   active: "Aktivno",
   completed: "Završeno",
@@ -13,6 +14,7 @@ const statusLabels: Record<BookingStatus, string> = {
 };
 
 const statusColors: Record<BookingStatus, string> = {
+  pending: "bg-yellow-100 text-yellow-700 border-yellow-200",
   confirmed: "bg-blue-100 text-blue-700 border-blue-200",
   active: "bg-green-100 text-green-700 border-green-200",
   completed: "bg-slate-100 text-slate-700 border-slate-200",
