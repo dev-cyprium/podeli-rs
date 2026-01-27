@@ -139,9 +139,52 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await requireIdentity(ctx);
+
+    // Validate title
+    if (!args.title.trim()) {
+      throw new Error("Naziv predmeta je obavezan.");
+    }
+
+    // Validate description
+    if (!args.description.trim()) {
+      throw new Error("Opis predmeta je obavezan.");
+    }
+
+    // Validate category
+    if (!args.category.trim()) {
+      throw new Error("Kategorija je obavezna.");
+    }
+
+    // Validate price
+    if (Number.isNaN(args.pricePerDay) || args.pricePerDay <= 0) {
+      throw new Error("Cena po danu mora biti veća od nule.");
+    }
+
+    // Validate images
+    if (args.images.length === 0) {
+      throw new Error("Dodajte bar jednu fotografiju.");
+    }
+    if (args.images.length > 1) {
+      throw new Error("Dozvoljena je samo jedna fotografija.");
+    }
+
+    // Validate availability slots
+    const validSlots = args.availabilitySlots.filter(
+      (slot) => slot.startDate && slot.endDate,
+    );
+    if (validSlots.length === 0) {
+      throw new Error("Dodajte bar jedan termin dostupnosti.");
+    }
+
+    // Validate delivery methods
+    if (args.deliveryMethods.length === 0) {
+      throw new Error("Odaberite bar jedan način dostave.");
+    }
+
     const now = Date.now();
     const itemId = await ctx.db.insert("items", {
       ...args,
+      availabilitySlots: validSlots,
       ownerId: identity.subject,
       createdAt: now,
       updatedAt: now,
@@ -184,6 +227,48 @@ export const update = mutation({
     if (item.ownerId !== identity.subject) {
       throw new Error("Nemate dozvolu da menjate ovaj predmet.");
     }
+
+    // Validate title
+    if (!args.title.trim()) {
+      throw new Error("Naziv predmeta je obavezan.");
+    }
+
+    // Validate description
+    if (!args.description.trim()) {
+      throw new Error("Opis predmeta je obavezan.");
+    }
+
+    // Validate category
+    if (!args.category.trim()) {
+      throw new Error("Kategorija je obavezna.");
+    }
+
+    // Validate price
+    if (Number.isNaN(args.pricePerDay) || args.pricePerDay <= 0) {
+      throw new Error("Cena po danu mora biti veća od nule.");
+    }
+
+    // Validate images
+    if (args.images.length === 0) {
+      throw new Error("Dodajte bar jednu fotografiju.");
+    }
+    if (args.images.length > 1) {
+      throw new Error("Dozvoljena je samo jedna fotografija.");
+    }
+
+    // Validate availability slots
+    const validSlots = args.availabilitySlots.filter(
+      (slot) => slot.startDate && slot.endDate,
+    );
+    if (validSlots.length === 0) {
+      throw new Error("Dodajte bar jedan termin dostupnosti.");
+    }
+
+    // Validate delivery methods
+    if (args.deliveryMethods.length === 0) {
+      throw new Error("Odaberite bar jedan način dostave.");
+    }
+
     // Delete old images that are no longer in the new list
     const oldImageIds = item.images.filter(
       (oldId) => !args.images.includes(oldId),
@@ -208,6 +293,7 @@ export const update = mutation({
     }
     await ctx.db.patch(id, {
       ...rest,
+      availabilitySlots: validSlots,
       ...updates,
     });
   },
@@ -439,14 +525,3 @@ export const searchItems = query({
   },
 });
 
-/**
- * Get all unique categories
- */
-export const listCategories = query({
-  args: {},
-  handler: async (ctx) => {
-    const items = await ctx.db.query("items").collect();
-    const categories = [...new Set(items.map((item) => item.category))];
-    return categories.sort();
-  },
-});

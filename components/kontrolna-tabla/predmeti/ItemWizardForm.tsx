@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { type DateRange } from "react-day-picker";
 import { format, parseISO } from "date-fns";
 import { Trash2 } from "lucide-react";
@@ -21,22 +21,11 @@ type AvailabilitySlot = {
   endDate: string;
 };
 
-type DeliveryMethod = "licno" | "glovo" | "wolt" | "cargo";
+type DeliveryMethod = "licno";
 
-const CATEGORY_OPTIONS = [
-  "Alat",
-  "Elektronika",
-  "Sport",
-  "Kuća",
-  "Auto",
-  "Ostalo",
-];
-
-const DELIVERY_OPTIONS: { value: DeliveryMethod; label: string }[] = [
+const DELIVERY_OPTIONS: { value: DeliveryMethod | null; label: string; disabled?: boolean }[] = [
   { value: "licno", label: "Lično preuzimanje" },
-  { value: "glovo", label: "Glovo" },
-  { value: "wolt", label: "Wolt" },
-  { value: "cargo", label: "Cargo" },
+  { value: null, label: "Partnerska kurirska služba", disabled: true },
 ];
 
 export type ItemFormData = {
@@ -61,16 +50,17 @@ export function ItemWizardForm({
   onCancel,
 }: ItemWizardFormProps) {
   const generateUploadUrl = useMutation(api.items.generateUploadUrl);
+  const categories = useQuery(api.categories.listNames) ?? [];
   const [title, setTitle] = useState(item?.title ?? "");
   const [description, setDescription] = useState(item?.description ?? "");
   const [category, setCategory] = useState(
-    item?.category ?? CATEGORY_OPTIONS[0],
+    item?.category ?? categories[0] ?? "",
   );
   const [pricePerDay, setPricePerDay] = useState(
     item?.pricePerDay?.toString() ?? "",
   );
   const [images, setImages] = useState<Id<"_storage">[]>(
-    item?.images && item.images.length > 0 ? item.images : [],
+    item?.images && item.images.length > 0 ? [item.images[0]] : [],
   );
   const [availabilitySlots, setAvailabilitySlots] = useState<
     AvailabilitySlot[]
@@ -82,6 +72,8 @@ export function ItemWizardForm({
   const [isProcessingImages, setIsProcessingImages] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
+  const [invalidSteps, setInvalidSteps] = useState<Set<number>>(new Set());
+  const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set()); // Don't mark any step as visited initially
 
   // Get URLs for all images
   const imageUrlsMap = useQuery(
@@ -97,8 +89,8 @@ export function ItemWizardForm({
     },
     {
       id: "images",
-      title: "Fotografije",
-      description: "Dodajte nekoliko slika.",
+      title: "Fotografija",
+      description: "Dodajte fotografiju predmeta.",
     },
     {
       id: "availability",
@@ -112,8 +104,8 @@ export function ItemWizardForm({
     },
   ];
 
-  function removeImage(index: number) {
-    setImages((prev) => prev.filter((_, idx) => idx !== index));
+  function removeImage() {
+    setImages([]);
   }
 
   function addSlot() {
@@ -147,27 +139,32 @@ export function ItemWizardForm({
   async function handleImageUpload(files: FileList | null) {
     if (!files || files.length === 0) return;
     setIsProcessingImages(true);
-    const fileArray = Array.from(files);
+    // Only take the first file
+    const file = files[0];
+    
+    // Delete the old image if it exists
+    if (images.length > 0) {
+      // Note: We don't delete from storage here as it will be handled by the update mutation
+      // when the form is submitted
+    }
+    
     try {
-      const uploadPromises = fileArray.map(async (file) => {
-        // Generate upload URL
-        const uploadUrl = await generateUploadUrl();
-        // Upload file to Convex
-        const result = await fetch(uploadUrl, {
-          method: "POST",
-          headers: { "Content-Type": file.type },
-          body: file,
-        });
-        if (!result.ok) {
-          throw new Error("Neuspešno učitavanje fajla");
-        }
-        const { storageId } = await result.json();
-        return storageId as Id<"_storage">;
+      // Generate upload URL
+      const uploadUrl = await generateUploadUrl();
+      // Upload file to Convex
+      const result = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { "Content-Type": file.type },
+        body: file,
       });
-      const storageIds = await Promise.all(uploadPromises);
-      setImages((prev) => [...prev, ...storageIds]);
+      if (!result.ok) {
+        throw new Error("Neuspešno učitavanje fajla");
+      }
+      const { storageId } = await result.json();
+      // Replace the image instead of appending
+      setImages([storageId as Id<"_storage">]);
     } catch (error) {
-      setFormError("Greška pri učitavanju slika. Pokušajte ponovo.");
+      setFormError("Greška pri učitavanju slike. Pokušajte ponovo.");
     } finally {
       setIsProcessingImages(false);
     }
@@ -188,7 +185,7 @@ export function ItemWizardForm({
     }
     if (stepIndex === 1) {
       if (images.length === 0) {
-        return "Dodajte bar jednu fotografiju.";
+        return "Dodajte fotografiju predmeta.";
       }
     }
     if (stepIndex === 2) {
@@ -199,17 +196,74 @@ export function ItemWizardForm({
         return "Dodajte bar jedan termin dostupnosti.";
       }
     }
+    if (stepIndex === 3) {
+      if (deliveryMethods.length === 0) {
+        return "Odaberite bar jedan način dostave.";
+      }
+    }
     return null;
   }
 
+  function validateAllSteps() {
+    const newInvalidSteps = new Set<number>();
+    for (let i = 0; i < steps.length; i++) {
+      // Only validate steps that have been visited
+      if (visitedSteps.has(i)) {
+        const error = validateStep(i);
+        if (error) {
+          newInvalidSteps.add(i);
+        }
+      }
+    }
+    setInvalidSteps(newInvalidSteps);
+    return newInvalidSteps.size === 0;
+  }
+
+  function isStepValid(stepIndex: number): boolean {
+    return validateStep(stepIndex) === null;
+  }
+
+  // Re-validate visited steps when form data changes
+  useEffect(() => {
+    if (visitedSteps.size > 0) {
+      const newInvalidSteps = new Set<number>();
+      for (let i = 0; i < steps.length; i++) {
+        // Only validate steps that have been visited
+        if (visitedSteps.has(i)) {
+          const error = validateStep(i);
+          if (error) {
+            newInvalidSteps.add(i);
+          }
+        }
+      }
+      setInvalidSteps(newInvalidSteps);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, description, category, pricePerDay, images.length, availabilitySlots.length, deliveryMethods.length, visitedSteps.size]);
+
   function handleNext() {
+    // Mark current step as visited when trying to proceed
+    const newVisitedSteps = new Set(visitedSteps);
+    newVisitedSteps.add(currentStep);
+    setVisitedSteps(newVisitedSteps);
+
     const errorMessage = validateStep(currentStep);
     if (errorMessage) {
       setFormError(errorMessage);
+      const newInvalidSteps = new Set(invalidSteps);
+      newInvalidSteps.add(currentStep);
+      setInvalidSteps(newInvalidSteps);
       return;
     }
     setFormError(null);
-    setCurrentStep((prev) => Math.min(prev + 1, steps.length - 1));
+    const newInvalidSteps = new Set(invalidSteps);
+    newInvalidSteps.delete(currentStep);
+    setInvalidSteps(newInvalidSteps);
+    const nextStep = Math.min(currentStep + 1, steps.length - 1);
+    setCurrentStep(nextStep);
+    // Don't mark next step as visited until user interacts with it
+    // Re-validate all steps
+    validateAllSteps();
   }
 
   function handleBack() {
@@ -219,8 +273,39 @@ export function ItemWizardForm({
 
   function goToStep(stepIndex: number) {
     if (stepIndex >= 0 && stepIndex < steps.length) {
+      // Only mark current step as visited if we're trying to move forward
+      if (stepIndex > currentStep) {
+        const newVisitedSteps = new Set(visitedSteps);
+        newVisitedSteps.add(currentStep);
+        setVisitedSteps(newVisitedSteps);
+
+        // Validate all previous steps before allowing navigation
+        // Moving forward - validate current step first
+        const currentError = validateStep(currentStep);
+        if (currentError) {
+          setFormError(currentError);
+          const newInvalidSteps = new Set(invalidSteps);
+          newInvalidSteps.add(currentStep);
+          setInvalidSteps(newInvalidSteps);
+          return;
+        }
+        // Validate all steps up to the target
+        for (let i = 0; i < stepIndex; i++) {
+          const error = validateStep(i);
+          if (error) {
+            setFormError(`Molimo popunite korak ${i + 1} pre nego što nastavite.`);
+            const newInvalidSteps = new Set(invalidSteps);
+            newInvalidSteps.add(i);
+            setInvalidSteps(newInvalidSteps);
+            return;
+          }
+        }
+      }
       setFormError(null);
       setCurrentStep(stepIndex);
+      // Don't mark target step as visited until user interacts with it
+      // Re-validate all steps to update invalid indicators
+      validateAllSteps();
     }
   }
 
@@ -228,6 +313,27 @@ export function ItemWizardForm({
     event.preventDefault();
     if (currentStep < steps.length - 1) {
       handleNext();
+      return;
+    }
+
+    // Mark all steps as visited when trying to submit
+    const newVisitedSteps = new Set(visitedSteps);
+    for (let i = 0; i < steps.length; i++) {
+      newVisitedSteps.add(i);
+    }
+    setVisitedSteps(newVisitedSteps);
+
+    // Validate all steps before submission
+    const allValid = validateAllSteps();
+    if (!allValid) {
+      setFormError("Molimo popunite sve obavezne polja pre nego što sačuvate predmet.");
+      // Navigate to first invalid step
+      for (let i = 0; i < steps.length; i++) {
+        if (invalidSteps.has(i)) {
+          setCurrentStep(i);
+          break;
+        }
+      }
       return;
     }
 
@@ -283,20 +389,31 @@ export function ItemWizardForm({
           />
         </div>
         <div className="mt-4 grid gap-2 sm:grid-cols-4">
-          {steps.map((step, index) => (
-            <motion.div
-              key={step.id}
-              layout
-              onClick={() => goToStep(index)}
-              className={`cursor-pointer rounded-lg border px-3 py-2 text-xs font-semibold transition-colors ${
-                index === currentStep
-                  ? "border-amber-200 bg-amber-50 text-amber-700"
-                  : "border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300 hover:bg-slate-100"
-              }`}
-            >
-              {index + 1}. {step.title}
-            </motion.div>
-          ))}
+          {steps.map((step, index) => {
+            const isInvalid = invalidSteps.has(index) && visitedSteps.has(index);
+            return (
+              <motion.div
+                key={step.id}
+                layout
+                onClick={() => goToStep(index)}
+                className={`relative cursor-pointer rounded-lg border px-3 py-2 text-xs font-semibold transition-colors ${
+                  index === currentStep
+                    ? "border-amber-200 bg-amber-50 text-amber-700"
+                    : isInvalid
+                      ? "border-red-200 bg-red-50 text-red-700"
+                      : "border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300 hover:bg-slate-100"
+                }`}
+              >
+                {index + 1}. {step.title}
+                {isInvalid && (
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span>
+                  </span>
+                )}
+              </motion.div>
+            );
+          })}
         </div>
       </div>
 
@@ -329,7 +446,7 @@ export function ItemWizardForm({
                   value={category}
                   onChange={(event) => setCategory(event.target.value)}
                 >
-                  {CATEGORY_OPTIONS.map((option) => (
+                  {categories.map((option) => (
                     <option key={option} value={option}>
                       {option}
                     </option>
@@ -362,63 +479,87 @@ export function ItemWizardForm({
           ) : null}
 
           {currentStep === 1 ? (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <Label>Fotografije</Label>
-                <div className="flex items-center gap-2">
-                  <label className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={(event) =>
-                        handleImageUpload(event.target.files)
-                      }
-                      className="hidden"
-                    />
-                    Dodaj slike
-                  </label>
-                </div>
+            <div className="space-y-4">
+              <div>
+                <Label>Fotografija</Label>
               </div>
               {isProcessingImages ? (
-                <p className="text-sm text-slate-500">Učitavanje slika...</p>
+                <div className="flex items-center justify-center rounded-lg border border-slate-200 bg-slate-50 p-12">
+                  <p className="text-sm text-slate-500">Učitavanje fotografije...</p>
+                </div>
               ) : null}
-              {images.length === 0 ? (
-                <div className="rounded-lg border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
-                  Dodajte fotografije predmeta.
-                </div>
-              ) : (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {images.map((imageId, index) => {
-                    const imageUrl = imageUrlsMap?.[imageId] ?? null;
-                    return (
-                      <div
-                        key={`image-${imageId}`}
-                        className="group relative overflow-hidden rounded-lg border border-slate-200"
-                      >
-                        {imageUrl ? (
-                          <img
-                            src={imageUrl}
-                            alt={`Slika ${index + 1}`}
-                            className="h-40 w-full object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-40 w-full items-center justify-center bg-slate-100 text-sm text-slate-500">
-                            Učitavanje...
-                          </div>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => removeImage(index)}
-                          className="absolute right-2 top-2 rounded-full bg-white/90 px-2 py-1 text-xs font-semibold text-slate-700 opacity-0 shadow-sm transition-opacity group-hover:opacity-100"
-                        >
-                          Ukloni
-                        </button>
+              {!isProcessingImages && images.length === 0 ? (
+                <label className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-12 text-center transition-colors hover:border-amber-400 hover:bg-amber-50/50 cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(event) =>
+                      handleImageUpload(event.target.files)
+                    }
+                    className="hidden"
+                  />
+                  <div className="mb-3 text-slate-400">
+                    <svg
+                      className="mx-auto h-12 w-12"
+                      stroke="currentColor"
+                      fill="none"
+                      viewBox="0 0 48 48"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                        strokeWidth={2}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </div>
+                  <p className="text-sm font-medium text-slate-700">
+                    Kliknite da dodate fotografiju
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    PNG, JPG ili GIF do 10MB
+                  </p>
+                </label>
+              ) : null}
+              {!isProcessingImages && images.length > 0 ? (
+                <div className="relative group">
+                  <div className="relative overflow-hidden rounded-lg border-2 border-slate-200 bg-slate-100">
+                    {imageUrlsMap?.[images[0]] ? (
+                      <img
+                        src={imageUrlsMap[images[0]]}
+                        alt="Fotografija predmeta"
+                        className="h-[400px] w-full object-contain"
+                      />
+                    ) : (
+                      <div className="flex h-[400px] w-full items-center justify-center bg-slate-100 text-sm text-slate-500">
+                        Učitavanje...
                       </div>
-                    );
-                  })}
+                    )}
+                  </div>
+                  <div className="mt-3 flex items-center justify-center gap-3">
+                    <label className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(event) =>
+                          handleImageUpload(event.target.files)
+                        }
+                        className="hidden"
+                      />
+                      Zameni fotografiju
+                    </label>
+                    <button
+                      type="button"
+                      onClick={removeImage}
+                      className="inline-flex items-center gap-2 rounded-md border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 transition-colors"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Ukloni
+                    </button>
+                  </div>
                 </div>
-              )}
+              ) : null}
             </div>
           ) : null}
 
@@ -486,19 +627,33 @@ export function ItemWizardForm({
           ) : null}
 
           {currentStep === 3 ? (
-            <div className="space-y-3">
+            <div className="space-y-2">
               <Label>Način dostave</Label>
               <div className="grid gap-2">
-                {DELIVERY_OPTIONS.map((option) => (
+                {DELIVERY_OPTIONS.map((option, index) => (
                   <label
-                    key={option.value}
-                    className="flex items-center gap-3 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700"
+                    key={`${option.value ?? "coming-soon"}-${index}`}
+                    className={`flex items-center gap-2 rounded-lg border px-2 py-1 text-sm ${
+                      option.disabled
+                        ? "border-slate-200 bg-slate-50 opacity-60 cursor-not-allowed"
+                        : "border-slate-200 text-slate-700 cursor-pointer hover:bg-slate-50"
+                    }`}
                   >
                     <Checkbox
-                      checked={deliveryMethods.includes(option.value)}
-                      onChange={() => toggleDelivery(option.value)}
+                      checked={!option.disabled && option.value !== null && deliveryMethods.includes(option.value)}
+                      onChange={() => !option.disabled && option.value !== null && toggleDelivery(option.value)}
+                      disabled={option.disabled}
                     />
-                    {option.label}
+                    <span className="flex items-center gap-2">
+                      <span className={option.disabled ? "line-through text-slate-400" : ""}>
+                        {option.label}
+                      </span>
+                      {option.disabled && (
+                        <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
+                          Uskoro
+                        </span>
+                      )}
+                    </span>
                   </label>
                 ))}
               </div>
@@ -531,7 +686,7 @@ export function ItemWizardForm({
           <Button
             type="submit"
             className="bg-amber-500 text-white hover:bg-amber-600"
-            disabled={isSubmitting}
+            disabled={isSubmitting || invalidSteps.size > 0}
           >
             {item ? "Sačuvaj izmene" : "Sačuvaj predmet"}
           </Button>

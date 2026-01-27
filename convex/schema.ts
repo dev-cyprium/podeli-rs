@@ -79,4 +79,13 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_created_at", ["createdAt"]),
+
+  categories: defineTable({
+    name: v.string(),
+    order: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_name", ["name"])
+    .index("by_order", ["order"]),
 });

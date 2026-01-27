@@ -4,14 +4,6 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { motion } from "framer-motion";
 
-const PREDEFINED_CATEGORIES = [
-  "Alati",
-  "Kampovanje",
-  "Elektronika",
-  "Društvene igre",
-  "Prevoz",
-];
-
 interface CategoryFilterProps {
   selectedCategory: string | null;
   onCategoryChange: (category: string | null) => void;
@@ -21,12 +13,7 @@ export function CategoryFilter({
   selectedCategory,
   onCategoryChange,
 }: CategoryFilterProps) {
-  const dbCategories = useQuery(api.items.listCategories);
-
-  // Merge predefined categories with any additional ones from DB
-  const categories = dbCategories
-    ? [...new Set([...PREDEFINED_CATEGORIES, ...dbCategories])]
-    : PREDEFINED_CATEGORIES;
+  const categories = useQuery(api.categories.listNames) ?? [];
 
   return (
     <div className="flex flex-wrap gap-2">
