@@ -1,4 +1,4 @@
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireIdentity } from "@/lib/convex-auth";
 
@@ -39,18 +39,18 @@ export const createBooking = mutation({
 
     const item = await ctx.db.get(args.itemId);
     if (!item) {
-      throw new Error("Predmet nije pronađen.");
+      throw new ConvexError("Predmet nije pronađen.");
     }
 
     if (item.ownerId === renterId) {
-      throw new Error("Ne možete rezervisati sopstveni predmet.");
+      throw new ConvexError("Ne možete rezervisati sopstveni predmet.");
     }
 
     if (
       item.deliveryMethods.length > 0 &&
       !item.deliveryMethods.includes(args.deliveryMethod)
     ) {
-      throw new Error("Izabrani način dostave nije dostupan za ovaj predmet.");
+      throw new ConvexError("Izabrani način dostave nije dostupan za ovaj predmet.");
     }
 
     const existingBookings = await ctx.db
@@ -70,7 +70,7 @@ export const createBooking = mutation({
     );
 
     if (conflictingBooking) {
-      throw new Error(
+      throw new ConvexError(
         "Predmet je već rezervisan za izabrani period. Molimo izaberite drugi termin."
       );
     }
@@ -113,7 +113,7 @@ export const getBookingById = query({
       booking.renterId !== identity.subject &&
       booking.ownerId !== identity.subject
     ) {
-      throw new Error("Nemate pristup ovoj rezervaciji.");
+      throw new ConvexError("Nemate pristup ovoj rezervaciji.");
     }
 
     const item = await ctx.db.get(booking.itemId);
@@ -190,31 +190,31 @@ export const updateBookingStatus = mutation({
     const booking = await ctx.db.get(args.id);
 
     if (!booking) {
-      throw new Error("Rezervacija nije pronađena.");
+      throw new ConvexError("Rezervacija nije pronađena.");
     }
 
     const isOwner = booking.ownerId === identity.subject;
     const isRenter = booking.renterId === identity.subject;
 
     if (!isOwner && !isRenter) {
-      throw new Error("Nemate pristup ovoj rezervaciji.");
+      throw new ConvexError("Nemate pristup ovoj rezervaciji.");
     }
 
     if (args.status === "cancelled") {
       if (booking.status === "completed") {
-        throw new Error("Ne možete otkazati završenu rezervaciju.");
+        throw new ConvexError("Ne možete otkazati završenu rezervaciju.");
       }
       if (booking.status === "cancelled") {
-        throw new Error("Rezervacija je već otkazana.");
+        throw new ConvexError("Rezervacija je već otkazana.");
       }
     }
 
     if (args.status === "active" && !isOwner) {
-      throw new Error("Samo vlasnik može aktivirati rezervaciju.");
+      throw new ConvexError("Samo vlasnik može aktivirati rezervaciju.");
     }
 
     if (args.status === "completed" && !isOwner) {
-      throw new Error("Samo vlasnik može označiti rezervaciju kao završenu.");
+      throw new ConvexError("Samo vlasnik može označiti rezervaciju kao završenu.");
     }
 
     await ctx.db.patch(args.id, {
@@ -233,19 +233,19 @@ export const markAsPaid = mutation({
     const booking = await ctx.db.get(args.id);
 
     if (!booking) {
-      throw new Error("Rezervacija nije pronađena.");
+      throw new ConvexError("Rezervacija nije pronađena.");
     }
 
     if (booking.renterId !== identity.subject) {
-      throw new Error("Samo zakupac može izvršiti plaćanje.");
+      throw new ConvexError("Samo zakupac može izvršiti plaćanje.");
     }
 
     if (booking.paymentStatus === "paid") {
-      throw new Error("Rezervacija je već plaćena.");
+      throw new ConvexError("Rezervacija je već plaćena.");
     }
 
     if (booking.status === "cancelled") {
-      throw new Error("Ne možete platiti otkazanu rezervaciju.");
+      throw new ConvexError("Ne možete platiti otkazanu rezervaciju.");
     }
 
     await ctx.db.patch(args.id, {

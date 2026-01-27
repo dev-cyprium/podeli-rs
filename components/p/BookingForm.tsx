@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
+import { ConvexError } from "convex/values";
 import { api } from "@/convex/_generated/api";
 import { Id, Doc } from "@/convex/_generated/dataModel";
 import { Calendar } from "@/components/ui/calendar";
@@ -98,7 +99,16 @@ export function BookingForm({ item }: BookingFormProps) {
       setBookingId(id);
       setShowPayment(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Greška pri rezervaciji");
+      // Handle Convex application errors properly
+      const errorMessage =
+        err instanceof ConvexError
+          ? // Access data and cast it to the type we expect (string in this case)
+            (err.data as string)
+          : // Must be some developer error, and prod deployments will not
+            // reveal any more information about it to the client
+            "Greška pri rezervaciji. Molimo pokušajte ponovo.";
+      
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
