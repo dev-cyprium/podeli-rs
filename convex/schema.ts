@@ -18,11 +18,17 @@ export default defineSchema({
     deliveryMethods: v.array(v.string()),
     shortId: v.optional(v.string()),
     slug: v.optional(v.string()),
+    searchText: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_owner", ["ownerId"])
-    .index("by_shortId", ["shortId"]),
+    .index("by_shortId", ["shortId"])
+    .index("by_category", ["category"])
+    .searchIndex("search_items", {
+      searchField: "searchText",
+      filterFields: ["category"],
+    }),
 
   bookings: defineTable({
     itemId: v.id("items"),
