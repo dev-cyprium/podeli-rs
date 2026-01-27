@@ -45,36 +45,37 @@ function HeroSection() {
             Iznajmi je od komšije Marka za 300 dinara.
           </p>
 
-          {/* Mock Search Bar */}
+          {/* Search Bar */}
           <div className="mt-10 w-full max-w-2xl">
-            <div className="relative flex items-center overflow-hidden rounded-2xl bg-white p-2 shadow-xl shadow-slate-200/50 ring-1 ring-slate-200">
-              <div className="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-slate-50 text-slate-400">
-                <Search className="h-6 w-6" />
+            <div className="rounded-2xl bg-white p-2 shadow-xl shadow-slate-200/50 ring-1 ring-slate-200 focus-within:ring-2 focus-within:ring-amber-500">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-0">
+                <div className="relative flex flex-1 items-center">
+                  <Search className="pointer-events-none absolute left-3 h-5 w-5 text-slate-400" />
+                  <input
+                    type="text"
+                    className="h-12 w-full rounded-xl border-0 bg-slate-50 pl-10 pr-4 text-base text-slate-900 placeholder:text-slate-400 focus:bg-slate-100 focus:outline-none sm:bg-transparent sm:focus:bg-transparent"
+                    placeholder="Šta ti treba? (npr. bušilica, šator...)"
+                  />
+                </div>
+                <button className="h-12 rounded-xl bg-amber-500 px-6 text-base font-bold text-white transition-colors hover:bg-amber-600 active:bg-amber-700 sm:ml-2 sm:h-10 sm:px-8">
+                  Pronađi
+                </button>
               </div>
-              <input
-                type="text"
-                className="h-full w-full border-0 bg-transparent px-4 text-lg text-slate-900 placeholder:text-slate-400 focus:ring-0"
-                placeholder="Šta ti treba danas? (npr. bušilica, šator, projektor...)"
-                readOnly
-              />
-              <button className="hidden rounded-xl bg-amber-500 px-8 py-3 text-base font-bold text-white transition-transform hover:scale-105 hover:bg-amber-600 sm:block">
-                Pronađi
-              </button>
             </div>
             <div className="mt-4 flex flex-wrap justify-center gap-2 text-sm text-slate-500">
               <span>Popularno:</span>
-              <span className="cursor-pointer font-medium text-slate-700 hover:text-amber-600 hover:underline">
+              <button className="font-medium text-slate-700 hover:text-amber-600 hover:underline">
                 Alati
-              </span>
-              <span className="cursor-pointer font-medium text-slate-700 hover:text-amber-600 hover:underline">
+              </button>
+              <button className="font-medium text-slate-700 hover:text-amber-600 hover:underline">
                 Kampovanje
-              </span>
-              <span className="cursor-pointer font-medium text-slate-700 hover:text-amber-600 hover:underline">
+              </button>
+              <button className="font-medium text-slate-700 hover:text-amber-600 hover:underline">
                 Elektronika
-              </span>
-              <span className="cursor-pointer font-medium text-slate-700 hover:text-amber-600 hover:underline">
+              </button>
+              <button className="font-medium text-slate-700 hover:text-amber-600 hover:underline">
                 Društvene igre
-              </span>
+              </button>
             </div>
           </div>
         </div>
