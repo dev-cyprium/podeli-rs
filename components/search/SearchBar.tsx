@@ -9,6 +9,7 @@ import { Search, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { getItemUrl } from "@/lib/utils";
+import posthog from "posthog-js";
 
 const dropdownVariants = {
   hidden: { opacity: 0, y: -10 },
@@ -50,7 +51,7 @@ export function SearchBar({
   const debouncedQuery = useDebounce(inputValue, 300);
   const suggestions = useQuery(
     api.items.searchAutocomplete,
-    debouncedQuery.length >= 2 ? { query: debouncedQuery } : "skip"
+    debouncedQuery.length >= 2 ? { query: debouncedQuery } : "skip",
   );
 
   // Compute whether dropdown should be open
@@ -60,7 +61,7 @@ export function SearchBar({
   // Create a stable key for suggestions to detect changes
   const suggestionsKey = useMemo(
     () => (suggestions ? suggestions.map((s) => s._id).join(",") : null),
-    [suggestions]
+    [suggestions],
   );
 
   // Reset selected index when suggestions change
@@ -87,6 +88,7 @@ export function SearchBar({
       router.push("/pretraga");
     }
     setIsDropdownOpen(false);
+    posthog.capture("search_performed", { query });
   }, [inputValue, onSearch, router]);
 
   const handleSelectSuggestion = useCallback(
@@ -96,7 +98,7 @@ export function SearchBar({
       setIsDropdownOpen(false);
       setInputValue("");
     },
-    [router]
+    [router],
   );
 
   const handleKeyDown = useCallback(
@@ -112,13 +114,13 @@ export function SearchBar({
         case "ArrowDown":
           e.preventDefault();
           setSelectedIndex((prev) =>
-            prev < suggestions.length - 1 ? prev + 1 : 0
+            prev < suggestions.length - 1 ? prev + 1 : 0,
           );
           break;
         case "ArrowUp":
           e.preventDefault();
           setSelectedIndex((prev) =>
-            prev > 0 ? prev - 1 : suggestions.length - 1
+            prev > 0 ? prev - 1 : suggestions.length - 1,
           );
           break;
         case "Enter":
@@ -136,7 +138,7 @@ export function SearchBar({
           break;
       }
     },
-    [isOpen, suggestions, selectedIndex, handleSelectSuggestion, handleSearch]
+    [isOpen, suggestions, selectedIndex, handleSelectSuggestion, handleSearch],
   );
 
   // Click outside to close
