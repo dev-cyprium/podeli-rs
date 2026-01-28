@@ -11,9 +11,6 @@ interface PlanCardProps {
 
 const DELIVERY_LABELS: Record<string, string> = {
   licno: "Lično preuzimanje",
-  glovo: "Glovo",
-  wolt: "Wolt",
-  cargo: "Cargo",
 };
 
 export function PlanCard({ plan, isCurrentPlan }: PlanCardProps) {
@@ -39,13 +36,15 @@ export function PlanCard({ plan, isCurrentPlan }: PlanCardProps) {
     .filter(Boolean)
     .join(" ");
 
+  // Check if plan has courier delivery (any method other than "licno")
+  const hasCourierDelivery = plan.allowedDeliveryMethods.some(m => m !== "licno");
+
   const features = [
     plan.maxListings === -1
       ? "Neograničen broj oglasa"
       : `${plan.maxListings} oglas${plan.maxListings > 1 ? "a" : ""}`,
-    ...plan.allowedDeliveryMethods.map(
-      (m) => DELIVERY_LABELS[m] ?? m
-    ),
+    // Only show "Lično preuzimanje" for delivery
+    plan.allowedDeliveryMethods.includes("licno") ? "Lično preuzimanje" : null,
     plan.hasBadge && plan.badgeLabel
       ? `${plan.badgeLabel} bedž`
       : null,
@@ -100,12 +99,17 @@ export function PlanCard({ plan, isCurrentPlan }: PlanCardProps) {
             {feature}
           </li>
         ))}
-        {isFree && (
+        {isFree ? (
           <li className="flex items-center gap-2 text-sm text-muted-foreground">
             <Lock className="h-4 w-4 shrink-0" />
             Kurirska dostava nije dostupna
           </li>
-        )}
+        ) : hasCourierDelivery ? (
+          <li className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Lock className="h-4 w-4 shrink-0" />
+            Kurirska služba (Uskoro)
+          </li>
+        ) : null}
       </ul>
 
       {isCurrentPlan ? (

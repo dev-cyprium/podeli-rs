@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { type DateRange } from "react-day-picker";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, addWeeks, addMonths, addYears } from "date-fns";
 import { Trash2 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useMutation, useQuery } from "convex/react";
@@ -36,11 +36,9 @@ type PlanLimits = {
   isSubscription: boolean;
 };
 
-const ALL_DELIVERY_OPTIONS: { value: string; label: string }[] = [
+const ALL_DELIVERY_OPTIONS: { value: string; label: string; comingSoon?: boolean }[] = [
   { value: "licno", label: "Lično preuzimanje" },
-  { value: "glovo", label: "Glovo" },
-  { value: "wolt", label: "Wolt" },
-  { value: "cargo", label: "Cargo" },
+  { value: "kurir", label: "Partnerska kurirska služba", comingSoon: true },
 ];
 
 export type ItemFormData = {
@@ -64,7 +62,7 @@ export function ItemWizardForm({
   item,
   onSave,
   onCancel,
-  planLimits,
+  planLimits: _planLimits,
 }: ItemWizardFormProps) {
   const generateUploadUrl = useMutation(api.items.generateUploadUrl);
   const categories = useQuery(api.categories.listNames) ?? [];
@@ -91,6 +89,13 @@ export function ItemWizardForm({
   const [currentStep, setCurrentStep] = useState(0);
   const [invalidSteps, setInvalidSteps] = useState<Set<number>>(new Set());
   const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set()); // Don't mark any step as visited initially
+
+  // Set category to first available when categories load and no category is set
+  useEffect(() => {
+    if (!category && categories.length > 0 && !item?.category) {
+      setCategory(categories[0]);
+    }
+  }, [categories, category, item?.category]);
 
   // Get URLs for all images
   const imageUrlsMap = useQuery(
@@ -143,6 +148,25 @@ export function ItemWizardForm({
 
   function removeSlot(index: number) {
     setAvailabilitySlots((prev) => prev.filter((_, idx) => idx !== index));
+  }
+
+  function addPresetSlot(duration: "week" | "month" | "year") {
+    const today = new Date();
+    let endDate: Date;
+    if (duration === "week") {
+      endDate = addWeeks(today, 1);
+    } else if (duration === "month") {
+      endDate = addMonths(today, 1);
+    } else {
+      endDate = addYears(today, 1);
+    }
+    setAvailabilitySlots((prev) => [
+      ...prev,
+      {
+        startDate: format(today, "yyyy-MM-dd"),
+        endDate: format(endDate, "yyyy-MM-dd"),
+      },
+    ]);
   }
 
   function toggleDelivery(method: DeliveryMethod) {
@@ -326,8 +350,7 @@ export function ItemWizardForm({
     }
   }
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function handleSubmit() {
     if (currentStep < steps.length - 1) {
       handleNext();
       return;
@@ -380,7 +403,7 @@ export function ItemWizardForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <div className="space-y-5">
       <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -584,14 +607,40 @@ export function ItemWizardForm({
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label>Dostupnost</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addSlot}
-                >
-                  Dodaj termin
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => addPresetSlot("week")}
+                  >
+                    1 nedelja
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => addPresetSlot("month")}
+                  >
+                    1 mesec
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => addPresetSlot("year")}
+                  >
+                    1 godina
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addSlot}
+                  >
+                    Dodaj termin
+                  </Button>
+                </div>
               </div>
               <div className="space-y-3">
                 {availabilitySlots.length === 0 ? (
@@ -648,10 +697,8 @@ export function ItemWizardForm({
               <Label>Način dostave</Label>
               <div className="grid gap-2">
                 {ALL_DELIVERY_OPTIONS.map((option) => {
-                  const isAllowed = planLimits
-                    ? planLimits.allowedDeliveryMethods.includes(option.value)
-                    : option.value === "licno";
-                  const isLocked = !isAllowed;
+                  // "comingSoon" options are always locked regardless of plan
+                  const isLocked = option.comingSoon === true;
 
                   return (
                     <label
@@ -673,7 +720,7 @@ export function ItemWizardForm({
                         </span>
                         {isLocked && (
                           <span className="rounded-full bg-[#f0a202]/10 px-1.5 py-0.5 text-[10px] font-medium text-[#f0a202]">
-                            Dostupno uz Starter plan
+                            Uskoro
                           </span>
                         )}
                       </span>
@@ -708,23 +755,25 @@ export function ItemWizardForm({
           </Button>
         ) : (
           <Button
-            type="submit"
+            type="button"
             className="bg-podeli-accent text-podeli-dark hover:bg-podeli-accent/90"
             disabled={isSubmitting || invalidSteps.size > 0}
+            onClick={handleSubmit}
           >
             {item ? "Sačuvaj izmene" : "Sačuvaj predmet"}
           </Button>
         )}
         {item && onCancel && currentStep < steps.length - 1 ? (
           <Button
-            type="submit"
+            type="button"
             className="bg-podeli-accent text-podeli-dark hover:bg-podeli-accent/90"
             disabled={isSubmitting}
+            onClick={handleSubmit}
           >
             Sačuvaj izmene
           </Button>
         ) : null}
       </div>
-    </form>
+    </div>
   );
 }
