@@ -135,7 +135,7 @@ export default async function Home() {
 
           <div className="mt-16 grid grid-cols-1 gap-12 sm:grid-cols-3">
             <div className="flex flex-col items-center text-center">
-              <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-podeli-accent/10 text-podeli-accent">
+              <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#0ea5e9]/10 text-[#0ea5e9]">
                 <PiggyBank className="h-8 w-8" />
               </div>
               <h3 className="text-xl font-bold text-podeli-dark">Uštedi novac</h3>
@@ -146,7 +146,7 @@ export default async function Home() {
             </div>
 
             <div className="flex flex-col items-center text-center">
-              <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-podeli-blue/10 text-podeli-blue">
+              <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#16a34a]/10 text-[#16a34a]">
                 <Leaf className="h-8 w-8" />
               </div>
               <h3 className="text-xl font-bold text-podeli-dark">
@@ -159,7 +159,7 @@ export default async function Home() {
             </div>
 
             <div className="flex flex-col items-center text-center">
-              <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-podeli-blue/10 text-podeli-blue">
+              <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#9333ea]/10 text-[#9333ea]">
                 <HeartHandshake className="h-8 w-8" />
               </div>
               <h3 className="text-xl font-bold text-podeli-dark">
