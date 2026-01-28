@@ -47,6 +47,32 @@ export const createBooking = mutation({
       throw new ConvexError("Ne možete rezervisati sopstveni predmet.");
     }
 
+    // --- Plan enforcement: rental limit ---
+    const renterProfile = await ctx.db
+      .query("profiles")
+      .withIndex("by_userId", (q) => q.eq("userId", renterId))
+      .first();
+
+    if (renterProfile) {
+      const renterPlan = await ctx.db.get(renterProfile.planId);
+      if (renterPlan && renterPlan.maxActiveRentals !== -1) {
+        const renterBookings = await ctx.db
+          .query("bookings")
+          .withIndex("by_renter", (q) => q.eq("renterId", renterId))
+          .collect();
+
+        const activeRentalCount = renterBookings.filter(
+          (b) => b.status === "pending" || b.status === "confirmed" || b.status === "active"
+        ).length;
+
+        if (activeRentalCount >= renterPlan.maxActiveRentals) {
+          throw new ConvexError(
+            `Dostigli ste limit od ${renterPlan.maxActiveRentals} aktivnih zakupa za vaš "${renterPlan.name}" plan. Nadogradite plan za neograničen broj zakupa.`
+          );
+        }
+      }
+    }
+
     if (
       item.deliveryMethods.length > 0 &&
       !item.deliveryMethods.includes(args.deliveryMethod)

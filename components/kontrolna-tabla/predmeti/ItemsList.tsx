@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PodeliEmptyState } from "@/components/kontrolna-tabla/PodeliEmptyState";
+import { AlertTriangle } from "lucide-react";
 
 type DeliveryMethod = "licno" | "glovo" | "wolt" | "cargo";
 
@@ -52,6 +53,7 @@ function ItemsListContent() {
   const router = useRouter();
   const items = useQuery(api.items.listMine, {});
   const removeItem = useMutation(api.items.remove);
+  const limits = useQuery(api.profiles.getMyPlanLimits);
 
   if (!items) {
     return (
@@ -61,6 +63,9 @@ function ItemsListContent() {
     );
   }
 
+  const isUnlimited = limits?.maxListings === -1;
+  const atLimit = limits && !isUnlimited && limits.listingCount >= limits.maxListings;
+
   async function handleDelete(id: Doc<"items">["_id"]) {
     if (!confirm("Da li ste sigurni da želite da obrišete predmet?")) {
       return;
@@ -68,18 +73,36 @@ function ItemsListContent() {
     await removeItem({ id });
   }
 
+  const listingCountLabel = limits
+    ? isUnlimited
+      ? `${items.length}`
+      : `${items.length}/${limits.maxListings}`
+    : `${items.length}`;
+
   return (
     <Card>
       <CardHeader className="flex items-center justify-between">
         <div>
-          <CardTitle>Moji predmeti</CardTitle>
+          <CardTitle>Moji predmeti ({listingCountLabel})</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">
             Upravljajte ponudom i dostupnošću.
           </p>
         </div>
-        <Button asChild className="bg-podeli-accent text-podeli-dark hover:bg-podeli-accent/90">
-          <Link href="/kontrolna-tabla/predmeti/novi">Novi predmet</Link>
-        </Button>
+        {atLimit ? (
+          <div className="flex items-center gap-2">
+            <span className="flex items-center gap-1 text-xs text-[#f0a202]">
+              <AlertTriangle className="h-3 w-3" />
+              Limit dostignut
+            </span>
+            <Button asChild size="sm" className="bg-[#f0a202] text-white hover:bg-[#f0a202]/90">
+              <Link href="/planovi">Nadogradite</Link>
+            </Button>
+          </div>
+        ) : (
+          <Button asChild className="bg-podeli-accent text-podeli-dark hover:bg-podeli-accent/90">
+            <Link href="/kontrolna-tabla/predmeti/novi">Novi predmet</Link>
+          </Button>
+        )}
       </CardHeader>
       <CardContent>
         {items.length === 0 ? (

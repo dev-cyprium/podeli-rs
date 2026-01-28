@@ -19,6 +19,7 @@ export default defineSchema({
     shortId: v.optional(v.string()),
     slug: v.optional(v.string()),
     searchText: v.optional(v.string()),
+    singleListingExpiresAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -29,6 +30,49 @@ export default defineSchema({
       searchField: "searchText",
       filterFields: ["category"],
     }),
+
+  plans: defineTable({
+    slug: v.string(),
+    name: v.string(),
+    description: v.string(),
+    maxListings: v.number(),
+    maxActiveRentals: v.number(),
+    allowedDeliveryMethods: v.array(v.string()),
+    hasBadge: v.boolean(),
+    badgeLabel: v.optional(v.string()),
+    priceAmount: v.number(),
+    priceCurrency: v.string(),
+    priceInterval: v.string(),
+    isSubscription: v.boolean(),
+    listingDurationDays: v.optional(v.number()),
+    order: v.number(),
+    isActive: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_order", ["order"])
+    .index("by_isActive", ["isActive"]),
+
+  profiles: defineTable({
+    userId: v.string(),
+    planId: v.id("plans"),
+    planSlug: v.string(),
+    planActivatedAt: v.number(),
+    planExpiresAt: v.optional(v.number()),
+    singleListingItemId: v.optional(v.id("items")),
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
+    imageUrl: v.optional(v.string()),
+    email: v.optional(v.string()),
+    hasBadge: v.boolean(),
+    badgeLabel: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_planSlug", ["planSlug"])
+    .index("by_hasBadge", ["hasBadge"]),
 
   bookings: defineTable({
     itemId: v.id("items"),

@@ -11,7 +11,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { CalendarDays, Truck, CreditCard } from "lucide-react";
+import { CalendarDays, Truck, CreditCard, AlertTriangle } from "lucide-react";
 import { DateRange } from "react-day-picker";
 import { PaymentMethodModal } from "@/components/booking/PaymentMethodModal";
 
@@ -50,6 +50,15 @@ export function BookingForm({ item }: BookingFormProps) {
   const bookedDates = useQuery(api.bookings.getItemBookedDates, {
     itemId: item._id,
   });
+
+  const planLimits = useQuery(
+    api.profiles.getMyPlanLimits,
+    isSignedIn ? {} : "skip"
+  );
+
+  const isUnlimitedRentals = planLimits?.maxActiveRentals === -1;
+  const atRentalLimit = planLimits && !isUnlimitedRentals &&
+    planLimits.activeRentalCount >= planLimits.maxActiveRentals;
 
   const disabledDates = useMemo(() => {
     if (!bookedDates) return [];
@@ -205,6 +214,22 @@ export function BookingForm({ item }: BookingFormProps) {
             <p className="text-center text-sm text-muted-foreground">
               Prijavite se da biste rezervisali ovaj predmet.
             </p>
+          ) : atRentalLimit ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 rounded-lg bg-[#f0a202]/10 p-3 text-sm text-[#f0a202]">
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+                <span>
+                  Dostigli ste limit od {planLimits?.maxActiveRentals} aktivnih zakupa za vaš &quot;{planLimits?.planName}&quot; plan.
+                </span>
+              </div>
+              <Button
+                asChild
+                className="w-full bg-[#f0a202] text-white hover:bg-[#f0a202]/90"
+                size="lg"
+              >
+                <a href="/planovi">Nadogradite plan</a>
+              </Button>
+            </div>
           ) : (
             <>
               {!canBook && (

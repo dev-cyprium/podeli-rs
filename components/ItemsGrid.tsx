@@ -12,6 +12,7 @@ import {
 import { api } from "@/convex/_generated/api";
 import { Id, Doc } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
+import { DomacinBadge } from "@/components/DomacinBadge";
 import { getItemUrl } from "@/lib/utils";
 import { Drill, Tent, Gamepad2, Bike, MapPin } from "lucide-react";
 
@@ -47,20 +48,29 @@ function CategoryIcon({
   return <Icon className={className} strokeWidth={strokeWidth} />;
 }
 
+type OwnerProfile = {
+  userId: string;
+  hasBadge: boolean;
+  badgeLabel?: string;
+  planSlug: string;
+};
+
 function ItemCard({
   item,
 }: {
-  item: Doc<"items"> & { owner: UserSnapshot | undefined };
+  item: Doc<"items"> & { owner: UserSnapshot | undefined; ownerProfile?: OwnerProfile };
 }) {
   const imageUrl = useQuery(
     api.items.getImageUrl,
     item.images[0] ? { storageId: item.images[0] as Id<"_storage"> } : "skip",
   );
   const owner = item.owner;
+  const ownerProfile = item.ownerProfile;
+  const hasBadge = ownerProfile?.hasBadge ?? false;
   const itemUrl = getItemUrl(item);
 
   return (
-    <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl bg-card shadow-md transition-all hover:-translate-y-1 hover:shadow-xl">
+    <div className={`group relative flex h-full flex-col overflow-hidden rounded-2xl bg-card shadow-md transition-all hover:-translate-y-1 hover:shadow-xl ${hasBadge ? "ring-2 ring-[#f0a202]/50 shadow-[0_4px_24px_0_rgba(240,162,2,0.10)]" : ""}`}>
       <Link href={itemUrl}>
         <div className="relative flex h-48 w-full items-center justify-center bg-muted transition-colors group-hover:bg-podeli-accent/10">
           {imageUrl ? (
@@ -103,6 +113,7 @@ function ItemCard({
                 ? `${owner.firstName} ${owner.lastName[0]}.`
                 : "Komšija"}
             </span>
+            {hasBadge && <DomacinBadge size="sm" />}
           </div>
           <span className="font-bold text-podeli-accent">
             {item.pricePerDay.toFixed(0)} RSD
@@ -132,6 +143,16 @@ export function ItemsGrid({
   const getUsersByIds = useAction(api.clerk.getUsersByIds);
   const [users, setUsers] = useState<UserSnapshot[]>([]);
 
+  const ownerIds = useMemo(() => {
+    if (!items) return [];
+    return [...new Set(items.map((item) => item.ownerId))];
+  }, [items]);
+
+  const ownerProfiles = useQuery(
+    api.profiles.getProfilesByUserIds,
+    ownerIds.length > 0 ? { userIds: ownerIds } : "skip"
+  );
+
   useEffect(() => {
     if (items && items.length > 0) {
       const userIds = items.map((item) => item.ownerId);
@@ -142,11 +163,15 @@ export function ItemsGrid({
   const itemsWithUsers = useMemo(() => {
     if (!items) return undefined;
     const userMap = new Map(users.map((user) => [user.id, user]));
+    const profileMap = new Map(
+      (ownerProfiles ?? []).map((p) => [p.userId, p])
+    );
     return items.map((item) => ({
       ...item,
       owner: userMap.get(item.ownerId),
+      ownerProfile: profileMap.get(item.ownerId),
     }));
-  }, [items, users]);
+  }, [items, users, ownerProfiles]);
 
   if (itemsWithUsers === undefined) {
     return (

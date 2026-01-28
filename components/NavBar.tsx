@@ -32,6 +32,12 @@ export async function NavBar() {
           >
             Ponuda
           </a>
+          <Link
+            href="/planovi"
+            className="text-sm font-medium text-muted-foreground hover:text-podeli-accent"
+          >
+            Planovi
+          </Link>
           {isSignedIn ? <UserMenu /> : <SignInButton />}
         </div>
         <NavLinks isSignedIn={isSignedIn} />

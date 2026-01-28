@@ -47,8 +47,13 @@ export const listAll = query({
   },
   handler: async (ctx, args) => {
     const limit = args.limit ?? 20;
-    const items = await ctx.db.query("items").order("desc").take(limit);
-    return items;
+    const items = await ctx.db.query("items").order("desc").take(limit + 50);
+    // Filter out expired single listing items
+    const now = Date.now();
+    const activeItems = items.filter(
+      (item) => !item.singleListingExpiresAt || item.singleListingExpiresAt > now
+    );
+    return activeItems.slice(0, limit);
   },
 });
 
@@ -59,11 +64,17 @@ export const listAll = query({
 export const listForSitemap = query({
   args: {},
   handler: async (ctx) => {
-    const items = await ctx.db
+    const allItems = await ctx.db
       .query("items")
       .order("desc")
       .collect();
-    
+
+    // Filter out expired single listing items
+    const now = Date.now();
+    const items = allItems.filter(
+      (item) => !item.singleListingExpiresAt || item.singleListingExpiresAt > now
+    );
+
     // Return only the fields needed for sitemap
     return items.map((item) => ({
       _id: item._id,
@@ -118,7 +129,15 @@ export const getByShortId = query({
       .withIndex("by_shortId", (q) => q.eq("shortId", args.shortId))
       .collect();
 
-    return items.length > 0 ? items[0] : null;
+    if (items.length === 0) return null;
+
+    const item = items[0];
+    // Filter expired single listing items from public view
+    if (item.singleListingExpiresAt && item.singleListingExpiresAt <= Date.now()) {
+      return null;
+    }
+
+    return item;
   },
 });
 
@@ -139,6 +158,49 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const identity = await requireIdentity(ctx);
+
+    // --- Plan enforcement ---
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
+      .first();
+
+    if (!profile) {
+      throw new Error("Profil nije pronađen. Osvežite stranicu i pokušajte ponovo.");
+    }
+
+    const plan = await ctx.db.get(profile.planId);
+    if (!plan) {
+      throw new Error("Plan nije pronađen.");
+    }
+
+    // Check single listing expiration
+    if (profile.planSlug === "single_listing" && profile.planExpiresAt && profile.planExpiresAt < Date.now()) {
+      throw new Error("Vaš pojedinačni oglas je istekao. Nadogradite plan da biste kreirali nove oglase.");
+    }
+
+    // Check listing count vs maxListings
+    if (plan.maxListings !== -1) {
+      const myItems = await ctx.db
+        .query("items")
+        .withIndex("by_owner", (q) => q.eq("ownerId", identity.subject))
+        .collect();
+
+      if (myItems.length >= plan.maxListings) {
+        throw new Error(
+          `Dostigli ste limit od ${plan.maxListings} oglas(a) za vaš "${plan.name}" plan. Nadogradite plan za više oglasa.`
+        );
+      }
+    }
+
+    // Check delivery methods against plan allowed methods
+    for (const method of args.deliveryMethods) {
+      if (!plan.allowedDeliveryMethods.includes(method)) {
+        throw new Error(
+          `Način dostave "${method}" nije dostupan za vaš "${plan.name}" plan. Nadogradite plan za dodatne opcije dostave.`
+        );
+      }
+    }
 
     // Validate title
     if (!args.title.trim()) {
@@ -182,10 +244,18 @@ export const create = mutation({
     }
 
     const now = Date.now();
+
+    // Set single listing expiration if applicable
+    let singleListingExpiresAt: number | undefined;
+    if (profile.planSlug === "single_listing" && plan.listingDurationDays) {
+      singleListingExpiresAt = now + plan.listingDurationDays * 24 * 60 * 60 * 1000;
+    }
+
     const itemId = await ctx.db.insert("items", {
       ...args,
       availabilitySlots: validSlots,
       ownerId: identity.subject,
+      singleListingExpiresAt,
       createdAt: now,
       updatedAt: now,
     });
@@ -226,6 +296,25 @@ export const update = mutation({
     }
     if (item.ownerId !== identity.subject) {
       throw new Error("Nemate dozvolu da menjate ovaj predmet.");
+    }
+
+    // --- Plan enforcement: delivery method restriction ---
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
+      .first();
+
+    if (profile) {
+      const plan = await ctx.db.get(profile.planId);
+      if (plan) {
+        for (const method of args.deliveryMethods) {
+          if (!plan.allowedDeliveryMethods.includes(method)) {
+            throw new Error(
+              `Način dostave "${method}" nije dostupan za vaš "${plan.name}" plan. Nadogradite plan za dodatne opcije dostave.`
+            );
+          }
+        }
+      }
     }
 
     // Validate title
@@ -438,6 +527,12 @@ export const searchItems = query({
   },
   handler: async (ctx, args) => {
     const { query: searchQuery, category, paginationOpts } = args;
+    const now = Date.now();
+
+    // Helper to filter expired single listing items
+    function filterActive<T extends { singleListingExpiresAt?: number }>(items: T[]): T[] {
+      return items.filter((item) => !item.singleListingExpiresAt || item.singleListingExpiresAt > now);
+    }
 
     // If we have a search query, use the search index
     if (searchQuery && searchQuery.length >= 2) {
@@ -452,7 +547,7 @@ export const searchItems = query({
         });
 
       // Manual pagination for search queries
-      const allResults = await searchBuilder.collect();
+      const allResults = filterActive(await searchBuilder.collect());
       const cursorIndex = paginationOpts.cursor
         ? allResults.findIndex((item) => item._id === paginationOpts.cursor)
         : -1;
@@ -475,11 +570,13 @@ export const searchItems = query({
 
     // If no search query but category filter, use category index
     if (category) {
-      const allResults = await ctx.db
-        .query("items")
-        .withIndex("by_category", (q) => q.eq("category", category))
-        .order("desc")
-        .collect();
+      const allResults = filterActive(
+        await ctx.db
+          .query("items")
+          .withIndex("by_category", (q) => q.eq("category", category))
+          .order("desc")
+          .collect()
+      );
 
       const cursorIndex = paginationOpts.cursor
         ? allResults.findIndex((item) => item._id === paginationOpts.cursor)
@@ -502,7 +599,7 @@ export const searchItems = query({
     }
 
     // Default: return all items ordered by most recent
-    const allResults = await ctx.db.query("items").order("desc").collect();
+    const allResults = filterActive(await ctx.db.query("items").order("desc").collect());
 
     const cursorIndex = paginationOpts.cursor
       ? allResults.findIndex((item) => item._id === paginationOpts.cursor)
@@ -524,4 +621,3 @@ export const searchItems = query({
     };
   },
 });
-

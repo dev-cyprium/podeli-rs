@@ -23,9 +23,26 @@ type AvailabilitySlot = {
 
 type DeliveryMethod = "licno";
 
-const DELIVERY_OPTIONS: { value: DeliveryMethod | null; label: string; disabled?: boolean }[] = [
+type PlanLimits = {
+  planName: string;
+  planSlug: string;
+  maxListings: number;
+  maxActiveRentals: number;
+  allowedDeliveryMethods: string[];
+  hasBadge: boolean;
+  badgeLabel?: string;
+  listingCount: number;
+  activeRentalCount: number;
+  planExpiresAt?: number;
+  listingDurationDays?: number;
+  isSubscription: boolean;
+};
+
+const ALL_DELIVERY_OPTIONS: { value: string; label: string }[] = [
   { value: "licno", label: "Lično preuzimanje" },
-  { value: null, label: "Partnerska kurirska služba", disabled: true },
+  { value: "glovo", label: "Glovo" },
+  { value: "wolt", label: "Wolt" },
+  { value: "cargo", label: "Cargo" },
 ];
 
 export type ItemFormData = {
@@ -42,12 +59,14 @@ interface ItemWizardFormProps {
   item: Doc<"items"> | null;
   onSave: (data: ItemFormData) => Promise<void>;
   onCancel?: () => void;
+  planLimits?: PlanLimits;
 }
 
 export function ItemWizardForm({
   item,
   onSave,
   onCancel,
+  planLimits,
 }: ItemWizardFormProps) {
   const generateUploadUrl = useMutation(api.items.generateUploadUrl);
   const categories = useQuery(api.categories.listNames) ?? [];
@@ -527,7 +546,7 @@ export function ItemWizardForm({
                   <div className="relative overflow-hidden rounded-lg border-2 border-border bg-muted">
                     {imageUrlsMap?.[images[0]] ? (
                       <img
-                        src={imageUrlsMap[images[0]]}
+                        src={imageUrlsMap[images[0]] ?? undefined}
                         alt="Fotografija predmeta"
                         className="h-[400px] w-full object-contain"
                       />
@@ -630,32 +649,39 @@ export function ItemWizardForm({
             <div className="space-y-2">
               <Label>Način dostave</Label>
               <div className="grid gap-2">
-                {DELIVERY_OPTIONS.map((option, index) => (
-                  <label
-                    key={`${option.value ?? "coming-soon"}-${index}`}
-                    className={`flex items-center gap-2 rounded-lg border px-2 py-1 text-sm ${
-                      option.disabled
-                        ? "border-border bg-muted opacity-60 cursor-not-allowed"
-                        : "border-border text-podeli-dark cursor-pointer hover:bg-muted"
-                    }`}
-                  >
-                    <Checkbox
-                      checked={!option.disabled && option.value !== null && deliveryMethods.includes(option.value)}
-                      onChange={() => !option.disabled && option.value !== null && toggleDelivery(option.value)}
-                      disabled={option.disabled}
-                    />
-                    <span className="flex items-center gap-2">
-                      <span className={option.disabled ? "line-through text-muted-foreground" : ""}>
-                        {option.label}
-                      </span>
-                      {option.disabled && (
-                        <span className="rounded-full bg-podeli-accent/10 px-1.5 py-0.5 text-[10px] font-medium text-podeli-accent">
-                          Uskoro
+                {ALL_DELIVERY_OPTIONS.map((option) => {
+                  const isAllowed = planLimits
+                    ? planLimits.allowedDeliveryMethods.includes(option.value)
+                    : option.value === "licno";
+                  const isLocked = !isAllowed;
+
+                  return (
+                    <label
+                      key={option.value}
+                      className={`flex items-center gap-2 rounded-lg border px-2 py-1 text-sm ${
+                        isLocked
+                          ? "border-border bg-muted opacity-60 cursor-not-allowed"
+                          : "border-border text-podeli-dark cursor-pointer hover:bg-muted"
+                      }`}
+                    >
+                      <Checkbox
+                        checked={!isLocked && deliveryMethods.includes(option.value as DeliveryMethod)}
+                        onChange={() => !isLocked && toggleDelivery(option.value as DeliveryMethod)}
+                        disabled={isLocked}
+                      />
+                      <span className="flex items-center gap-2">
+                        <span className={isLocked ? "text-muted-foreground" : ""}>
+                          {option.label}
                         </span>
-                      )}
-                    </span>
-                  </label>
-                ))}
+                        {isLocked && (
+                          <span className="rounded-full bg-[#f0a202]/10 px-1.5 py-0.5 text-[10px] font-medium text-[#f0a202]">
+                            Dostupno uz Starter plan
+                          </span>
+                        )}
+                      </span>
+                    </label>
+                  );
+                })}
               </div>
             </div>
           ) : null}

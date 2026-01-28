@@ -7,6 +7,7 @@ import { useQuery, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id, Doc } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
+import { DomacinBadge } from "@/components/DomacinBadge";
 import { getItemUrl } from "@/lib/utils";
 import { Drill, Tent, Gamepad2, Bike, MapPin, Loader2 } from "lucide-react";
 import { SearchResultsSkeleton } from "./SearchResultsSkeleton";
@@ -43,20 +44,29 @@ function CategoryIcon({
   return <Icon className={className} strokeWidth={strokeWidth} />;
 }
 
+type OwnerProfile = {
+  userId: string;
+  hasBadge: boolean;
+  badgeLabel?: string;
+  planSlug: string;
+};
+
 function ItemCard({
   item,
 }: {
-  item: Doc<"items"> & { owner: UserSnapshot | undefined };
+  item: Doc<"items"> & { owner: UserSnapshot | undefined; ownerProfile?: OwnerProfile };
 }) {
   const imageUrl = useQuery(
     api.items.getImageUrl,
     item.images[0] ? { storageId: item.images[0] as Id<"_storage"> } : "skip"
   );
   const owner = item.owner;
+  const ownerProfile = item.ownerProfile;
+  const hasBadge = ownerProfile?.hasBadge ?? false;
   const itemUrl = getItemUrl(item);
 
   return (
-    <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl bg-card shadow-md transition-all hover:-translate-y-1 hover:shadow-xl">
+    <div className={`group relative flex h-full flex-col overflow-hidden rounded-2xl bg-card shadow-md transition-all hover:-translate-y-1 hover:shadow-xl ${hasBadge ? "ring-2 ring-[#f0a202]/50 shadow-[0_4px_24px_0_rgba(240,162,2,0.10)]" : ""}`}>
       <Link href={itemUrl}>
         <div className="relative flex h-48 w-full items-center justify-center bg-muted transition-colors group-hover:bg-podeli-accent/10">
           {imageUrl ? (
@@ -99,6 +109,7 @@ function ItemCard({
                 ? `${owner.firstName} ${owner.lastName[0]}.`
                 : "Komšija"}
             </span>
+            {hasBadge && <DomacinBadge size="sm" />}
           </div>
           <span className="font-bold text-podeli-accent">
             {item.pricePerDay.toFixed(0)} RSD
@@ -199,13 +210,26 @@ function SearchResultsInner({ query, category }: SearchResultsInnerProps) {
     return () => observer.disconnect();
   }, [searchResult]);
 
+  const ownerIds = useMemo(() => {
+    return [...new Set(accumulatedItems.map((item) => item.ownerId))];
+  }, [accumulatedItems]);
+
+  const ownerProfiles = useQuery(
+    api.profiles.getProfilesByUserIds,
+    ownerIds.length > 0 ? { userIds: ownerIds } : "skip"
+  );
+
   const itemsWithUsers = useMemo(() => {
     const userMap = new Map(users.map((user) => [user.id, user]));
+    const profileMap = new Map(
+      (ownerProfiles ?? []).map((p) => [p.userId, p])
+    );
     return accumulatedItems.map((item) => ({
       ...item,
       owner: userMap.get(item.ownerId),
+      ownerProfile: profileMap.get(item.ownerId),
     }));
-  }, [accumulatedItems, users]);
+  }, [accumulatedItems, users, ownerProfiles]);
 
   // Initial loading state
   if (!searchResult && accumulatedItems.length === 0) {

@@ -51,6 +51,13 @@ export function NavLinks({ isSignedIn }: NavLinksProps) {
             >
               Ponuda
             </a>
+            <Link
+              href="/planovi"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="text-sm font-medium text-muted-foreground hover:text-podeli-accent"
+            >
+              Planovi
+            </Link>
             <div className="pt-2">
               {isSignedIn ? <UserMenu /> : <SignInButton />}
             </div>

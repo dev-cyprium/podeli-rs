@@ -99,7 +99,7 @@ export const update = mutation({
     if (args.name && args.name !== category.name) {
       const existing = await ctx.db
         .query("categories")
-        .withIndex("by_name", (q) => q.eq("name", args.name))
+        .withIndex("by_name", (q) => q.eq("name", args.name!))
         .first();
       if (existing) {
         throw new Error("Kategorija sa ovim imenom već postoji.");

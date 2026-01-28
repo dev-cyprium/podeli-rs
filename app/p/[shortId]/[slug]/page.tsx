@@ -4,6 +4,7 @@ import { fetchQuery } from "convex/nextjs";
 import { clerkClient } from "@clerk/nextjs/server";
 import { api } from "@/convex/_generated/api";
 import { ArrowLeft, MapPin, Truck, Calendar, User } from "lucide-react";
+import { DomacinBadge } from "@/components/DomacinBadge";
 import { ItemImageGallery } from "@/components/p/ItemImageGallery";
 import { BookingForm } from "@/components/p/BookingForm";
 import { ReviewsList } from "@/components/p/ReviewsList";
@@ -109,6 +110,10 @@ export default async function ItemDetailPage({ params }: PageProps) {
     console.error("Failed to fetch owner data:", error);
   }
 
+  const ownerProfile = await fetchQuery(api.profiles.getProfileByUserId, {
+    userId: item.ownerId,
+  });
+
   return (
     <div className="min-h-screen bg-podeli-light">
       <ItemDetailHeader />
@@ -195,17 +200,20 @@ export default async function ItemDetailPage({ params }: PageProps) {
                   Vlasnik
                 </h2>
                 <div className="mt-3 flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-lg font-medium text-muted-foreground">
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-full bg-muted text-lg font-medium text-muted-foreground ${ownerProfile?.hasBadge ? "ring-2 ring-[#f0a202]/50" : ""}`}>
                     {owner?.firstName?.[0] ??
                       owner?.email?.[0]?.toUpperCase() ??
                       "K"}
                   </div>
                   <div>
-                    <p className="font-medium text-podeli-dark">
-                      {owner?.firstName && owner?.lastName
-                        ? `${owner.firstName} ${owner.lastName[0]}.`
-                        : "Komšija"}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-podeli-dark">
+                        {owner?.firstName && owner?.lastName
+                          ? `${owner.firstName} ${owner.lastName[0]}.`
+                          : "Komšija"}
+                      </p>
+                      {ownerProfile?.hasBadge && <DomacinBadge size="sm" />}
+                    </div>
                     <p className="text-sm text-muted-foreground">
                       Verifikovan korisnik
                     </p>

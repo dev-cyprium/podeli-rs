@@ -7,12 +7,15 @@ import {
   History,
   ChevronLeft,
   X,
+  Crown,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 interface DashboardSidebarProps {
   mode: "podeli" | "zakupi";
@@ -34,6 +37,35 @@ const baseItems: NavItem[] = [
   { id: "ocene", label: "Ocene", icon: Star, disabled: true },
   { id: "istorija", label: "Istorija", icon: History, disabled: true },
 ];
+
+function PlanIndicator() {
+  const limits = useQuery(api.profiles.getMyPlanLimits);
+
+  if (!limits) return null;
+
+  const isLifetime = limits.planSlug === "lifetime";
+
+  return (
+    <div className="mt-6 px-2">
+      <Link
+        href="/planovi"
+        className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm transition-colors hover:bg-muted"
+      >
+        {isLifetime ? (
+          <Crown className="h-4 w-4 text-[#f0a202]" />
+        ) : (
+          <div className="h-4 w-4 rounded-full bg-muted" />
+        )}
+        <div className="flex-1">
+          <p className="text-xs font-semibold text-[#02020a]">{limits.planName}</p>
+          {limits.hasBadge && limits.badgeLabel && (
+            <p className="text-[10px] font-bold text-[#f0a202]">{limits.badgeLabel}</p>
+          )}
+        </div>
+      </Link>
+    </div>
+  );
+}
 
 export function DashboardSidebar({
   mode,
@@ -117,6 +149,8 @@ export function DashboardSidebar({
           })}
         </nav>
       </div>
+
+      <PlanIndicator />
 
       <div className="mt-auto px-2 pt-6">
         <Button
