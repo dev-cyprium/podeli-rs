@@ -1,6 +1,5 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { PricingCards } from "@/components/planovi/PricingCards";
+import { BackButton } from "@/components/ui/back-button";
 
 export const metadata = {
   title: "Planovi | PODELI.rs",
@@ -11,13 +10,7 @@ export default function PlanoviPage() {
   return (
     <div className="min-h-screen bg-[#f8f7ff]">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <Link
-          href="/"
-          className="mb-8 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-[#f0a202]"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Nazad na početnu
-        </Link>
+        <BackButton />
 
         <div className="mb-12 text-center">
           <h1 className="text-3xl font-bold text-[#02020a] sm:text-4xl">
