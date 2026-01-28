@@ -63,14 +63,14 @@ export function DashboardSidebar({
         ];
 
   return (
-    <aside className="flex h-full w-full flex-col overflow-y-auto border-r border-slate-200 bg-white px-4 py-6 lg:h-screen lg:w-64">
+    <aside className="flex h-full w-full flex-col overflow-y-auto border-r border-border bg-card px-4 py-6 lg:h-screen lg:w-64">
       <div className="mb-8 flex items-center justify-between px-2">
         <Logo href="/" height={28} onClick={onClose} />
         {onClose && (
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 lg:hidden"
+            className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-podeli-dark lg:hidden"
           >
             <span className="sr-only">Close sidebar</span>
             <X className="h-6 w-6" />
@@ -79,7 +79,7 @@ export function DashboardSidebar({
       </div>
 
       <div className="space-y-2">
-        <p className="px-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+        <p className="px-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Navigacija
         </p>
         <nav className="space-y-1">
@@ -100,15 +100,15 @@ export function DashboardSidebar({
                 className={cn(
                   "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors",
                   isActive
-                    ? "bg-amber-50 text-amber-700"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
+                    ? "bg-podeli-accent/10 text-podeli-accent"
+                    : "text-muted-foreground hover:bg-muted hover:text-podeli-dark",
                   isDisabled && "cursor-not-allowed opacity-50",
                 )}
               >
                 <Icon className="h-4 w-4" />
                 <span>{item.label}</span>
                 {isDisabled ? (
-                  <span className="ml-auto rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
+                  <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
                     Uskoro
                   </span>
                 ) : null}

@@ -43,15 +43,15 @@ export function SearchPageContent() {
   );
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-podeli-light">
       {/* Header with search */}
-      <div className="border-b border-slate-200 bg-white py-8">
+      <div className="border-b border-border bg-card py-8">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-slate-900">
+            <h1 className="text-3xl font-bold text-podeli-dark">
               {query ? `Rezultati za "${query}"` : "Pretraži sve predmete"}
             </h1>
-            <p className="mt-2 text-slate-600">
+            <p className="mt-2 text-muted-foreground">
               Pronađi šta ti treba u komšiluku
             </p>
           </div>
@@ -67,7 +67,7 @@ export function SearchPageContent() {
       </div>
 
       {/* Category filter */}
-      <div className="border-b border-slate-200 bg-white py-4">
+      <div className="border-b border-border bg-card py-4">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <CategoryFilter
             selectedCategory={category}

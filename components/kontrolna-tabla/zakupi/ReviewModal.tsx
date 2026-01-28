@@ -58,18 +58,18 @@ export function ReviewModal({
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md" showCloseButton={false} accessibleTitle="Ostavi recenziju">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-          <h2 className="text-lg font-bold text-slate-900">Ostavi recenziju</h2>
+        <div className="flex items-center justify-between border-b border-border pb-4">
+          <h2 className="text-lg font-bold text-podeli-dark">Ostavi recenziju</h2>
           <button
             onClick={onClose}
-            className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            className="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-podeli-dark"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         <div className="py-4">
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-muted-foreground">
             Kako biste ocenili iznajmljivanje predmeta{" "}
             <strong>{itemTitle}</strong>?
           </p>
@@ -84,13 +84,13 @@ export function ReviewModal({
                   onClick={() => setRating(star)}
                   onMouseEnter={() => setHoveredRating(star)}
                   onMouseLeave={() => setHoveredRating(0)}
-                  className="rounded p-1 transition-colors hover:bg-amber-50"
+                  className="rounded p-1 transition-colors hover:bg-podeli-accent/10"
                 >
                   <Star
                     className={`h-8 w-8 ${
                       star <= displayRating
-                        ? "fill-amber-400 text-amber-400"
-                        : "fill-slate-200 text-slate-200"
+                        ? "fill-podeli-accent text-podeli-accent"
+                        : "fill-muted text-muted"
                     }`}
                   />
                 </button>
@@ -112,13 +112,13 @@ export function ReviewModal({
           </div>
 
           {error && (
-            <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">
+            <div className="mt-4 rounded-lg bg-podeli-red/10 p-3 text-sm text-podeli-red">
               {error}
             </div>
           )}
         </div>
 
-        <div className="flex gap-3 border-t border-slate-100 pt-4">
+        <div className="flex gap-3 border-t border-border pt-4">
           <Button
             variant="outline"
             className="flex-1"
@@ -128,7 +128,7 @@ export function ReviewModal({
             Otkaži
           </Button>
           <Button
-            className="flex-1 bg-amber-500 hover:bg-amber-600"
+            className="flex-1 bg-podeli-accent hover:bg-podeli-accent/90 text-podeli-dark"
             onClick={handleSubmit}
             disabled={isSubmitting || rating === 0}
           >

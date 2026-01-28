@@ -123,16 +123,16 @@ export function BookingForm({ item }: BookingFormProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <CalendarDays className="h-5 w-5 text-amber-500" />
+            <CalendarDays className="h-5 w-5 text-podeli-accent" />
             Rezerviši
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
-            <Label className="mb-2 block text-sm font-medium text-slate-700">
+            <Label className="mb-2 block text-sm font-medium text-podeli-dark">
               Izaberite period
             </Label>
-            <div className="rounded-lg border border-slate-200 p-3">
+            <div className="rounded-lg border border-border p-3">
               <Calendar
                 mode="range"
                 selected={dateRange}
@@ -145,7 +145,7 @@ export function BookingForm({ item }: BookingFormProps) {
           </div>
 
           <div>
-            <Label className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-700">
+            <Label className="mb-2 flex items-center gap-2 text-sm font-medium text-podeli-dark">
               <Truck className="h-4 w-4" />
               Način dostave
             </Label>
@@ -158,8 +158,8 @@ export function BookingForm({ item }: BookingFormProps) {
                     onClick={() => setDeliveryMethod(option.value)}
                     className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
                       deliveryMethod === option.value
-                        ? "border-amber-500 bg-amber-50 text-amber-700"
-                        : "border-slate-200 text-slate-600 hover:border-slate-300"
+                        ? "border-podeli-accent bg-podeli-accent/10 text-podeli-accent"
+                        : "border-border text-muted-foreground hover:border-podeli-accent/30"
                     }`}
                   >
                     {option.label}
@@ -171,8 +171,8 @@ export function BookingForm({ item }: BookingFormProps) {
                   onClick={() => setDeliveryMethod("licno")}
                   className={`col-span-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
                     deliveryMethod === "licno"
-                      ? "border-amber-500 bg-amber-50 text-amber-700"
-                      : "border-slate-200 text-slate-600 hover:border-slate-300"
+                      ? "border-podeli-accent bg-podeli-accent/10 text-podeli-accent"
+                      : "border-border text-muted-foreground hover:border-podeli-accent/30"
                   }`}
                 >
                   Lično preuzimanje
@@ -182,13 +182,13 @@ export function BookingForm({ item }: BookingFormProps) {
           </div>
 
           {totalDays > 0 && (
-            <div className="rounded-lg bg-slate-50 p-4">
+            <div className="rounded-lg bg-muted p-4">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-600">
+                <span className="text-muted-foreground">
                   {item.pricePerDay.toFixed(0)} RSD × {totalDays} dan
                   {totalDays > 1 && "a"}
                 </span>
-                <span className="font-semibold text-slate-900">
+                <span className="font-semibold text-podeli-dark">
                   {totalPrice.toFixed(0)} RSD
                 </span>
               </div>
@@ -196,25 +196,25 @@ export function BookingForm({ item }: BookingFormProps) {
           )}
 
           {error && (
-            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+            <div className="rounded-lg bg-podeli-red/10 p-3 text-sm text-podeli-red">
               {error}
             </div>
           )}
 
           {!isSignedIn ? (
-            <p className="text-center text-sm text-slate-500">
+            <p className="text-center text-sm text-muted-foreground">
               Prijavite se da biste rezervisali ovaj predmet.
             </p>
           ) : (
             <>
               {!canBook && (
-                <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-700">
+                <div className="rounded-lg bg-podeli-accent/10 p-3 text-sm text-podeli-accent">
                   Izaberite period iznajmljivanja na kalendaru (kliknite na
                   početni i krajnji datum).
                 </div>
               )}
               <Button
-                className="w-full bg-amber-500 hover:bg-amber-600"
+                className="w-full bg-podeli-accent hover:bg-podeli-accent/90 text-podeli-dark"
                 size="lg"
                 disabled={!canBook}
                 onClick={handleSubmit}

@@ -10,25 +10,25 @@ export async function NavBar() {
   const isSignedIn = !!userId;
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-stone-200 bg-white/80 backdrop-blur-md">
+    <nav className="sticky top-0 z-50 border-b border-border bg-podeli-light/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
         <Logo href="/" height={32} />
         <div className="hidden items-center gap-8 md:flex">
           <Link
             href="/kako-funkcionise"
-            className="text-sm font-medium text-slate-600 hover:text-amber-600"
+            className="text-sm font-medium text-muted-foreground hover:text-podeli-accent"
           >
             Kako funkcioniše
           </Link>
           <a
             href="#zasto-deljenje"
-            className="text-sm font-medium text-slate-600 hover:text-amber-600"
+            className="text-sm font-medium text-muted-foreground hover:text-podeli-accent"
           >
             Zašto deljenje
           </a>
           <a
             href="#ponuda"
-            className="text-sm font-medium text-slate-600 hover:text-amber-600"
+            className="text-sm font-medium text-muted-foreground hover:text-podeli-accent"
           >
             Ponuda
           </a>

@@ -45,7 +45,7 @@ function NoviPredmetContent() {
           <CardTitle>
             {itemId ? "Izmena predmeta" : "Dodavanje predmeta"}
           </CardTitle>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             {itemId
               ? "Ažurirajte detalje o predmetu."
               : "Unesite informacije o predmetu koji delite."}
@@ -53,19 +53,19 @@ function NoviPredmetContent() {
         </CardHeader>
         <CardContent>
           <SignedOut>
-            <div className="py-10 text-center text-sm text-slate-600">
+            <div className="py-10 text-center text-sm text-muted-foreground">
               Prijavite se da biste dodali predmet.
             </div>
           </SignedOut>
           <SignedIn>
             {itemId && item === undefined ? (
-              <div className="py-10 text-center text-sm text-slate-500">
+              <div className="py-10 text-center text-sm text-muted-foreground">
                 Učitavanje predmeta...
               </div>
             ) : (
               <>
                 {pageError ? (
-                  <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  <div className="mb-4 rounded-lg border border-podeli-red/30 bg-podeli-red/10 px-3 py-2 text-sm text-podeli-red">
                     {pageError}
                   </div>
                 ) : null}
@@ -89,7 +89,7 @@ export default function NoviPredmetPage() {
       fallback={
         <DashboardShell mode="podeli">
           <Card>
-            <CardContent className="py-10 text-center text-sm text-slate-500">
+            <CardContent className="py-10 text-center text-sm text-muted-foreground">
               Učitavanje forme...
             </CardContent>
           </Card>

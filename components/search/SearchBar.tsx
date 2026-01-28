@@ -163,10 +163,10 @@ export function SearchBar({
 
   return (
     <div ref={containerRef} className={`relative w-full ${className}`}>
-      <div className="rounded-2xl bg-white p-2 shadow-xl shadow-slate-200/50 ring-1 ring-slate-200 focus-within:ring-2 focus-within:ring-amber-500">
+      <div className="rounded-2xl bg-card p-2 shadow-xl shadow-podeli-dark/10 ring-1 ring-border focus-within:ring-2 focus-within:ring-podeli-accent">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-0">
           <div className="relative flex flex-1 items-center">
-            <Search className="pointer-events-none absolute left-3 h-5 w-5 text-slate-400" />
+            <Search className="pointer-events-none absolute left-3 h-5 w-5 text-muted-foreground" />
             <input
               ref={inputRef}
               type="text"
@@ -178,13 +178,13 @@ export function SearchBar({
                   setIsDropdownOpen(true);
                 }
               }}
-              className="h-12 w-full rounded-xl border-0 bg-slate-50 pl-10 pr-10 text-base text-slate-900 placeholder:text-slate-400 focus:bg-slate-100 focus:outline-none sm:bg-transparent sm:focus:bg-transparent"
+              className="h-12 w-full rounded-xl border-0 bg-muted pl-10 pr-10 text-base text-podeli-dark placeholder:text-muted-foreground focus:bg-muted focus:outline-none sm:bg-transparent sm:focus:bg-transparent"
               placeholder={placeholder}
             />
             {inputValue && (
               <button
                 onClick={clearInput}
-                className="absolute right-3 rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                className="absolute right-3 rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-podeli-dark"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -193,7 +193,7 @@ export function SearchBar({
           {showButton && (
             <button
               onClick={handleSearch}
-              className="h-12 rounded-xl bg-amber-500 px-6 text-base font-bold text-white transition-colors hover:bg-amber-600 active:bg-amber-700 sm:ml-2 sm:h-10 sm:px-8"
+              className="h-12 rounded-xl bg-podeli-accent px-6 text-base font-bold text-podeli-dark transition-colors hover:bg-podeli-accent/90 active:bg-podeli-accent/80 sm:ml-2 sm:h-10 sm:px-8"
             >
               Pronađi
             </button>
@@ -210,7 +210,7 @@ export function SearchBar({
             exit="exit"
             variants={dropdownVariants}
             transition={{ type: "spring", bounce: 0.25, duration: 0.3 }}
-            className="absolute z-50 mt-2 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg"
+            className="absolute z-50 mt-2 w-full overflow-hidden rounded-xl border border-border bg-card shadow-lg"
           >
             <ul className="py-2">
               {suggestions.map((suggestion, index) => (
@@ -226,17 +226,17 @@ export function SearchBar({
                     onMouseEnter={() => setSelectedIndex(index)}
                     className={`flex w-full items-center justify-between px-4 py-3 text-left transition-colors ${
                       selectedIndex === index
-                        ? "bg-amber-50 text-amber-900"
-                        : "hover:bg-slate-50"
+                        ? "bg-podeli-accent/10 text-podeli-dark"
+                        : "hover:bg-muted"
                     }`}
                   >
-                    <span className="font-medium text-slate-900">
+                    <span className="font-medium text-podeli-dark">
                       {suggestion.title}
                     </span>
                     <Badge
                       className={
                         selectedIndex === index
-                          ? "border-amber-200 bg-amber-100 text-amber-700"
+                          ? "border-podeli-accent/30 bg-podeli-accent/10 text-podeli-accent"
                           : ""
                       }
                     >
@@ -246,10 +246,10 @@ export function SearchBar({
                 </motion.li>
               ))}
             </ul>
-            <div className="border-t border-slate-100 px-4 py-2">
+            <div className="border-t border-border px-4 py-2">
               <button
                 onClick={handleSearch}
-                className="text-sm text-slate-500 hover:text-amber-600"
+                className="text-sm text-muted-foreground hover:text-podeli-accent"
               >
                 Vidi sve rezultate za &quot;{inputValue}&quot; &rarr;
               </button>

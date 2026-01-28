@@ -364,23 +364,23 @@ export function ItemWizardForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-sm font-semibold text-slate-900">
+            <p className="text-sm font-semibold text-podeli-dark">
               {steps[currentStep].title}
             </p>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               {steps[currentStep].description}
             </p>
           </div>
-          <div className="text-xs font-semibold text-slate-500">
+          <div className="text-xs font-semibold text-muted-foreground">
             Korak {currentStep + 1} / {steps.length}
           </div>
         </div>
-        <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+        <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted">
           <motion.div
-            className="h-full rounded-full bg-amber-500"
+            className="h-full rounded-full bg-podeli-accent"
             initial={{ width: "0%" }}
             animate={{
               width: `${((currentStep + 1) / steps.length) * 100}%`,
@@ -398,17 +398,17 @@ export function ItemWizardForm({
                 onClick={() => goToStep(index)}
                 className={`relative cursor-pointer rounded-lg border px-3 py-2 text-xs font-semibold transition-colors ${
                   index === currentStep
-                    ? "border-amber-200 bg-amber-50 text-amber-700"
+                    ? "border-podeli-accent/30 bg-podeli-accent/10 text-podeli-accent"
                     : isInvalid
-                      ? "border-red-200 bg-red-50 text-red-700"
-                      : "border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300 hover:bg-slate-100"
+                      ? "border-podeli-red/30 bg-podeli-red/10 text-podeli-red"
+                      : "border-border bg-muted text-muted-foreground hover:border-podeli-accent/30 hover:bg-podeli-accent/5"
                 }`}
               >
                 {index + 1}. {step.title}
                 {isInvalid && (
                   <span className="absolute right-2 top-1/2 -translate-y-1/2 flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500"></span>
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-podeli-red opacity-75"></span>
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-podeli-red"></span>
                   </span>
                 )}
               </motion.div>
@@ -442,7 +442,7 @@ export function ItemWizardForm({
                 <Label htmlFor="item-category">Kategorija</Label>
                 <select
                   id="item-category"
-                  className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
+                  className="flex h-10 w-full rounded-md border border-border bg-card px-3 text-sm text-podeli-dark shadow-sm focus:outline-none focus:ring-2 focus:ring-podeli-accent focus:ring-offset-2"
                   value={category}
                   onChange={(event) => setCategory(event.target.value)}
                 >
@@ -484,12 +484,12 @@ export function ItemWizardForm({
                 <Label>Fotografija</Label>
               </div>
               {isProcessingImages ? (
-                <div className="flex items-center justify-center rounded-lg border border-slate-200 bg-slate-50 p-12">
-                  <p className="text-sm text-slate-500">Učitavanje fotografije...</p>
+                <div className="flex items-center justify-center rounded-lg border border-border bg-muted p-12">
+                  <p className="text-sm text-muted-foreground">Učitavanje fotografije...</p>
                 </div>
               ) : null}
               {!isProcessingImages && images.length === 0 ? (
-                <label className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-12 text-center transition-colors hover:border-amber-400 hover:bg-amber-50/50 cursor-pointer">
+                <label className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted p-12 text-center transition-colors hover:border-podeli-accent hover:bg-podeli-accent/5 cursor-pointer">
                   <input
                     type="file"
                     accept="image/*"
@@ -498,7 +498,7 @@ export function ItemWizardForm({
                     }
                     className="hidden"
                   />
-                  <div className="mb-3 text-slate-400">
+                  <div className="mb-3 text-muted-foreground">
                     <svg
                       className="mx-auto h-12 w-12"
                       stroke="currentColor"
@@ -514,17 +514,17 @@ export function ItemWizardForm({
                       />
                     </svg>
                   </div>
-                  <p className="text-sm font-medium text-slate-700">
+                  <p className="text-sm font-medium text-podeli-dark">
                     Kliknite da dodate fotografiju
                   </p>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     PNG, JPG ili GIF do 10MB
                   </p>
                 </label>
               ) : null}
               {!isProcessingImages && images.length > 0 ? (
                 <div className="relative group">
-                  <div className="relative overflow-hidden rounded-lg border-2 border-slate-200 bg-slate-100">
+                  <div className="relative overflow-hidden rounded-lg border-2 border-border bg-muted">
                     {imageUrlsMap?.[images[0]] ? (
                       <img
                         src={imageUrlsMap[images[0]]}
@@ -532,13 +532,13 @@ export function ItemWizardForm({
                         className="h-[400px] w-full object-contain"
                       />
                     ) : (
-                      <div className="flex h-[400px] w-full items-center justify-center bg-slate-100 text-sm text-slate-500">
+                      <div className="flex h-[400px] w-full items-center justify-center bg-muted text-sm text-muted-foreground">
                         Učitavanje...
                       </div>
                     )}
                   </div>
                   <div className="mt-3 flex items-center justify-center gap-3">
-                    <label className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer">
+                    <label className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold text-podeli-dark hover:bg-muted transition-colors cursor-pointer">
                       <input
                         type="file"
                         accept="image/*"
@@ -552,7 +552,7 @@ export function ItemWizardForm({
                     <button
                       type="button"
                       onClick={removeImage}
-                      className="inline-flex items-center gap-2 rounded-md border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 transition-colors"
+                      className="inline-flex items-center gap-2 rounded-md border border-podeli-red/30 bg-card px-4 py-2 text-sm font-semibold text-podeli-red hover:bg-podeli-red/10 transition-colors"
                     >
                       <Trash2 className="h-4 w-4" />
                       Ukloni
@@ -578,7 +578,7 @@ export function ItemWizardForm({
               </div>
               <div className="space-y-3">
                 {availabilitySlots.length === 0 ? (
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-muted-foreground">
                     Još uvek nema definisanih termina.
                   </p>
                 ) : (
@@ -635,8 +635,8 @@ export function ItemWizardForm({
                     key={`${option.value ?? "coming-soon"}-${index}`}
                     className={`flex items-center gap-2 rounded-lg border px-2 py-1 text-sm ${
                       option.disabled
-                        ? "border-slate-200 bg-slate-50 opacity-60 cursor-not-allowed"
-                        : "border-slate-200 text-slate-700 cursor-pointer hover:bg-slate-50"
+                        ? "border-border bg-muted opacity-60 cursor-not-allowed"
+                        : "border-border text-podeli-dark cursor-pointer hover:bg-muted"
                     }`}
                   >
                     <Checkbox
@@ -645,11 +645,11 @@ export function ItemWizardForm({
                       disabled={option.disabled}
                     />
                     <span className="flex items-center gap-2">
-                      <span className={option.disabled ? "line-through text-slate-400" : ""}>
+                      <span className={option.disabled ? "line-through text-muted-foreground" : ""}>
                         {option.label}
                       </span>
                       {option.disabled && (
-                        <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
+                        <span className="rounded-full bg-podeli-accent/10 px-1.5 py-0.5 text-[10px] font-medium text-podeli-accent">
                           Uskoro
                         </span>
                       )}
@@ -663,7 +663,7 @@ export function ItemWizardForm({
       </AnimatePresence>
 
       {formError ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <div className="rounded-lg border border-podeli-red/30 bg-podeli-red/10 px-3 py-2 text-sm text-podeli-red">
           {formError}
         </div>
       ) : null}
@@ -677,7 +677,7 @@ export function ItemWizardForm({
         {currentStep < steps.length - 1 ? (
           <Button
             type="button"
-            className="bg-amber-500 text-white hover:bg-amber-600"
+            className="bg-podeli-accent text-podeli-dark hover:bg-podeli-accent/90"
             onClick={handleNext}
           >
             Nastavi
@@ -685,7 +685,7 @@ export function ItemWizardForm({
         ) : (
           <Button
             type="submit"
-            className="bg-amber-500 text-white hover:bg-amber-600"
+            className="bg-podeli-accent text-podeli-dark hover:bg-podeli-accent/90"
             disabled={isSubmitting || invalidSteps.size > 0}
           >
             {item ? "Sačuvaj izmene" : "Sačuvaj predmet"}
@@ -694,7 +694,7 @@ export function ItemWizardForm({
         {item && onCancel && currentStep < steps.length - 1 ? (
           <Button
             type="submit"
-            className="bg-amber-500 text-white hover:bg-amber-600"
+            className="bg-podeli-accent text-podeli-dark hover:bg-podeli-accent/90"
             disabled={isSubmitting}
           >
             Sačuvaj izmene

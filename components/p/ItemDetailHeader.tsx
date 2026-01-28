@@ -9,12 +9,12 @@ export function ItemDetailHeader() {
   const { isLoaded, isSignedIn } = useAuth();
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-stone-200 bg-white/80 backdrop-blur-md">
+    <nav className="sticky top-0 z-50 border-b border-border bg-podeli-light/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
         <Logo href="/" height={32} />
         <div className="flex items-center gap-4">
           {!isLoaded ? (
-            <div className="h-10 w-[100px] animate-pulse rounded-full bg-slate-200" />
+            <div className="h-10 w-[100px] animate-pulse rounded-full bg-muted" />
           ) : isSignedIn ? (
             <UserMenu />
           ) : (

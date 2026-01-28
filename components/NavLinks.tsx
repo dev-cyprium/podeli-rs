@@ -17,7 +17,7 @@ export function NavLinks({ isSignedIn }: NavLinksProps) {
     <div className="md:hidden">
       <button
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="p-2 text-slate-600 touch-manipulation"
+        className="p-2 text-muted-foreground touch-manipulation"
         aria-label="Toggle menu"
       >
         {isMobileMenuOpen ? (
@@ -28,26 +28,26 @@ export function NavLinks({ isSignedIn }: NavLinksProps) {
       </button>
 
       {isMobileMenuOpen && (
-        <div className="absolute left-0 right-0 top-full border-t border-stone-200 bg-white">
+        <div className="absolute left-0 right-0 top-full border-t border-border bg-card">
           <div className="flex flex-col gap-4 px-6 py-4">
             <Link
               href="/kako-funkcionise"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="text-sm font-medium text-slate-600 hover:text-amber-600"
+              className="text-sm font-medium text-muted-foreground hover:text-podeli-accent"
             >
               Kako funkcioniše
             </Link>
             <a
               href="#zasto-deljenje"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="text-sm font-medium text-slate-600 hover:text-amber-600"
+              className="text-sm font-medium text-muted-foreground hover:text-podeli-accent"
             >
               Zašto deljenje
             </a>
             <a
               href="#ponuda"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="text-sm font-medium text-slate-600 hover:text-amber-600"
+              className="text-sm font-medium text-muted-foreground hover:text-podeli-accent"
             >
               Ponuda
             </a>

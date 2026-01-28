@@ -25,7 +25,7 @@ export function IncomingBookings() {
     <>
       <SignedOut>
         <Card>
-          <CardContent className="py-10 text-center text-sm text-slate-600">
+          <CardContent className="py-10 text-center text-sm text-muted-foreground">
             Prijavite se da biste videli dolazne rezervacije.
           </CardContent>
         </Card>
@@ -42,7 +42,7 @@ function IncomingBookingsContent() {
 
   if (bookings === undefined) {
     return (
-      <div className="flex min-h-[200px] items-center justify-center text-sm text-slate-500">
+      <div className="flex min-h-[200px] items-center justify-center text-sm text-muted-foreground">
         Učitavanje rezervacija...
       </div>
     );
@@ -61,24 +61,24 @@ function IncomingBookingsContent() {
       <CardHeader>
         <div>
           <CardTitle className="flex items-center gap-2">
-            <Inbox className="h-5 w-5 text-amber-500" />
+            <Inbox className="h-5 w-5 text-podeli-accent" />
             Dolazne rezervacije
           </CardTitle>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             Rezervacije za vaše predmete.
           </p>
         </div>
       </CardHeader>
       <CardContent>
         {bookings.length === 0 ? (
-          <div className="py-8 text-center text-sm text-slate-500">
+          <div className="py-8 text-center text-sm text-muted-foreground">
             Nemate dolaznih rezervacija.
           </div>
         ) : (
           <div className="space-y-6">
             {pendingBookings.length > 0 && (
               <div>
-                <h3 className="mb-3 flex items-center gap-2 text-sm font-medium text-yellow-700">
+                <h3 className="mb-3 flex items-center gap-2 text-sm font-medium text-podeli-accent">
                   <Clock className="h-4 w-4" />
                   Zahtevi na čekanju ({pendingBookings.length})
                 </h3>
@@ -107,7 +107,7 @@ function IncomingBookingsContent() {
 
             {activeBookings.length > 0 && (
               <div>
-                <h3 className="mb-3 text-sm font-medium text-slate-700">
+                <h3 className="mb-3 text-sm font-medium text-muted-foreground">
                   Aktivne i potvrđene ({activeBookings.length})
                 </h3>
                 <div className="space-y-3">
@@ -135,7 +135,7 @@ function IncomingBookingsContent() {
 
             {completedBookings.length > 0 && (
               <div>
-                <h3 className="mb-3 text-sm font-medium text-slate-700">
+                <h3 className="mb-3 text-sm font-medium text-muted-foreground">
                   Istorija ({completedBookings.length})
                 </h3>
                 <div className="space-y-3">
@@ -191,10 +191,10 @@ function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
   const itemUrl = booking.item ? getItemUrl(booking.item) : "#";
 
   return (
-    <div className="flex gap-3 rounded-lg border border-slate-200 bg-white p-3">
+    <div className="flex gap-3 rounded-lg border border-border bg-card p-3">
       <Link
         href={itemUrl}
-        className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-slate-100"
+        className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-muted"
       >
         {imageUrl ? (
           <img
@@ -203,7 +203,7 @@ function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
+          <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
             Nema
           </div>
         )}
@@ -213,7 +213,7 @@ function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
         <div className="flex items-start justify-between">
           <Link
             href={itemUrl}
-            className="text-sm font-semibold text-slate-900 hover:text-amber-600"
+            className="text-sm font-semibold text-podeli-dark hover:text-podeli-accent"
           >
             {booking.item?.title ?? "Predmet nije dostupan"}
           </Link>
@@ -223,14 +223,14 @@ function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
           </div>
         </div>
 
-        <div className="mt-1 flex items-center gap-3 text-xs text-slate-500">
+        <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
           <div className="flex items-center gap-1">
             <Calendar className="h-3 w-3" />
             <span>
               {booking.startDate} - {booking.endDate}
             </span>
           </div>
-          <span className="font-medium text-amber-600">
+          <span className="font-medium text-podeli-accent">
             {booking.totalPrice.toFixed(0)} RSD
           </span>
         </div>
@@ -243,7 +243,7 @@ function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
                 variant="outline"
                 onClick={() => handleStatusChange("active")}
                 disabled={isUpdating}
-                className="text-green-600 hover:bg-green-50"
+                className="text-podeli-blue hover:bg-podeli-blue/10"
               >
                 <Check className="mr-1 h-3 w-3" />
                 Aktiviraj
@@ -255,7 +255,7 @@ function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
                 variant="outline"
                 onClick={() => handleStatusChange("completed")}
                 disabled={isUpdating}
-                className="text-green-600 hover:bg-green-50"
+                className="text-podeli-blue hover:bg-podeli-blue/10"
               >
                 <CheckCircle className="mr-1 h-3 w-3" />
                 Završi
@@ -267,7 +267,7 @@ function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
                 variant="outline"
                 onClick={() => handleStatusChange("cancelled")}
                 disabled={isUpdating}
-                className="text-red-600 hover:bg-red-50"
+                className="text-podeli-red hover:bg-podeli-red/10"
               >
                 <X className="mr-1 h-3 w-3" />
                 Otkaži
@@ -327,10 +327,10 @@ function PendingBookingCard({ booking }: { booking: BookingWithItem }) {
   const itemUrl = booking.item ? getItemUrl(booking.item) : "#";
 
   return (
-    <div className="flex gap-3 rounded-lg border border-yellow-200 bg-yellow-50 p-3">
+    <div className="flex gap-3 rounded-lg border border-podeli-accent/30 bg-podeli-accent/10 p-3">
       <Link
         href={itemUrl}
-        className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-slate-100"
+        className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-muted"
       >
         {imageUrl ? (
           <img
@@ -339,7 +339,7 @@ function PendingBookingCard({ booking }: { booking: BookingWithItem }) {
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
+          <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
             Nema
           </div>
         )}
@@ -349,27 +349,27 @@ function PendingBookingCard({ booking }: { booking: BookingWithItem }) {
         <div className="flex items-start justify-between">
           <Link
             href={itemUrl}
-            className="text-sm font-semibold text-slate-900 hover:text-amber-600"
+            className="text-sm font-semibold text-podeli-dark hover:text-podeli-accent"
           >
             {booking.item?.title ?? "Predmet nije dostupan"}
           </Link>
           <BookingStatusBadge status={booking.status} />
         </div>
 
-        <div className="mt-1 flex items-center gap-3 text-xs text-slate-500">
+        <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
           <div className="flex items-center gap-1">
             <Calendar className="h-3 w-3" />
             <span>
               {booking.startDate} - {booking.endDate}
             </span>
           </div>
-          <span className="font-medium text-amber-600">
+          <span className="font-medium text-podeli-accent">
             {booking.totalPrice.toFixed(0)} RSD
           </span>
         </div>
 
         {error && (
-          <div className="mt-2 rounded bg-red-50 p-2 text-xs text-red-600">
+          <div className="mt-2 rounded bg-podeli-red/10 p-2 text-xs text-podeli-red">
             {error}
           </div>
         )}
@@ -380,7 +380,7 @@ function PendingBookingCard({ booking }: { booking: BookingWithItem }) {
             variant="outline"
             onClick={handleApprove}
             disabled={isUpdating}
-            className="text-green-600 hover:bg-green-50"
+            className="text-podeli-blue hover:bg-podeli-blue/10"
           >
             <Check className="mr-1 h-3 w-3" />
             Odobri
@@ -390,7 +390,7 @@ function PendingBookingCard({ booking }: { booking: BookingWithItem }) {
             variant="outline"
             onClick={handleReject}
             disabled={isUpdating}
-            className="text-red-600 hover:bg-red-50"
+            className="text-podeli-red hover:bg-podeli-red/10"
           >
             <X className="mr-1 h-3 w-3" />
             Odbij

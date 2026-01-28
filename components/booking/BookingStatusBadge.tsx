@@ -14,11 +14,11 @@ const statusLabels: Record<BookingStatus, string> = {
 };
 
 const statusColors: Record<BookingStatus, string> = {
-  pending: "bg-yellow-100 text-yellow-700 border-yellow-200",
-  confirmed: "bg-blue-100 text-blue-700 border-blue-200",
-  active: "bg-green-100 text-green-700 border-green-200",
-  completed: "bg-slate-100 text-slate-700 border-slate-200",
-  cancelled: "bg-red-100 text-red-700 border-red-200",
+  pending: "bg-podeli-accent/10 text-podeli-accent border-podeli-accent/30",
+  confirmed: "bg-podeli-blue/10 text-podeli-blue border-podeli-blue/30",
+  active: "bg-podeli-blue/10 text-podeli-blue border-podeli-blue/30",
+  completed: "bg-muted text-muted-foreground border-border",
+  cancelled: "bg-podeli-red/10 text-podeli-red border-podeli-red/30",
 };
 
 const paymentLabels: Record<PaymentStatus, string> = {
@@ -28,9 +28,9 @@ const paymentLabels: Record<PaymentStatus, string> = {
 };
 
 const paymentColors: Record<PaymentStatus, string> = {
-  pending: "bg-amber-100 text-amber-700 border-amber-200",
-  paid: "bg-green-100 text-green-700 border-green-200",
-  refunded: "bg-slate-100 text-slate-700 border-slate-200",
+  pending: "bg-podeli-accent/10 text-podeli-accent border-podeli-accent/30",
+  paid: "bg-podeli-blue/10 text-podeli-blue border-podeli-blue/30",
+  refunded: "bg-muted text-muted-foreground border-border",
 };
 
 interface BookingStatusBadgeProps {

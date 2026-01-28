@@ -15,7 +15,7 @@ export function RenterBookingsList() {
     <>
       <SignedOut>
         <Card>
-          <CardContent className="py-10 text-center text-sm text-slate-600">
+          <CardContent className="py-10 text-center text-sm text-muted-foreground">
             Prijavite se da biste videli vaše rezervacije.
           </CardContent>
         </Card>
@@ -32,7 +32,7 @@ function RenterBookingsContent() {
 
   if (bookings === undefined) {
     return (
-      <div className="flex min-h-[360px] items-center justify-center text-sm text-slate-500">
+      <div className="flex min-h-[360px] items-center justify-center text-sm text-muted-foreground">
         Učitavanje rezervacija...
       </div>
     );
@@ -43,10 +43,10 @@ function RenterBookingsContent() {
       <CardHeader>
         <div>
           <CardTitle className="flex items-center gap-2">
-            <ShoppingBag className="h-5 w-5 text-amber-500" />
+            <ShoppingBag className="h-5 w-5 text-podeli-accent" />
             Moje rezervacije
           </CardTitle>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             Pregledajte status vaših iznajmljivanja.
           </p>
         </div>
@@ -80,18 +80,18 @@ function RenterBookingsContent() {
 function EmptyState() {
   return (
     <div className="flex min-h-[260px] flex-col items-center justify-center px-6 py-12 text-center">
-      <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-100 text-blue-600">
+      <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-podeli-blue/10 text-podeli-blue">
         <Search className="h-8 w-8" />
       </div>
-      <h3 className="text-lg font-semibold text-slate-900">
+      <h3 className="text-lg font-semibold text-podeli-dark">
         Nemate rezervacija
       </h3>
-      <p className="mt-2 max-w-sm text-sm text-slate-600">
+      <p className="mt-2 max-w-sm text-sm text-muted-foreground">
         Pretražite predmete koje komšije dele i iznajmite ono što vam treba.
       </p>
       <Button
         asChild
-        className="mt-6 bg-amber-500 hover:bg-amber-600"
+        className="mt-6 bg-podeli-accent hover:bg-podeli-accent/90 text-podeli-dark"
       >
         <Link href="/#ponuda">Pretraži ponudu</Link>
       </Button>

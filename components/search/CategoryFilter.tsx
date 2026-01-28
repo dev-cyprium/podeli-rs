@@ -21,14 +21,14 @@ export function CategoryFilter({
         onClick={() => onCategoryChange(null)}
         className={`relative rounded-full px-4 py-2 text-sm font-medium transition-colors ${
           selectedCategory === null
-            ? "text-amber-900"
-            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            ? "text-podeli-dark"
+            : "text-muted-foreground hover:bg-muted hover:text-podeli-dark"
         }`}
       >
         {selectedCategory === null && (
           <motion.div
             layoutId="category-pill"
-            className="absolute inset-0 rounded-full bg-amber-100"
+            className="absolute inset-0 rounded-full bg-podeli-accent/10"
             transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
           />
         )}
@@ -41,14 +41,14 @@ export function CategoryFilter({
           onClick={() => onCategoryChange(category)}
           className={`relative rounded-full px-4 py-2 text-sm font-medium transition-colors ${
             selectedCategory === category
-              ? "text-amber-900"
-              : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              ? "text-podeli-dark"
+              : "text-muted-foreground hover:bg-muted hover:text-podeli-dark"
           }`}
         >
           {selectedCategory === category && (
             <motion.div
               layoutId="category-pill"
-              className="absolute inset-0 rounded-full bg-amber-100"
+              className="absolute inset-0 rounded-full bg-podeli-accent/10"
               transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
             />
           )}

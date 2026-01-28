@@ -22,14 +22,14 @@ export function DashboardHeader({
   ];
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-slate-200 bg-white/80 px-4 shadow-sm backdrop-blur-md sm:gap-x-6 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-border bg-podeli-light/80 px-4 shadow-sm backdrop-blur-md sm:gap-x-6 sm:px-6 lg:px-8">
       {/* Mobile menu button */}
       {onMenuClick && (
         <>
           <button
             type="button"
             onClick={onMenuClick}
-            className="-m-2.5 p-2.5 text-slate-700 hover:text-slate-900 lg:hidden"
+            className="-m-2.5 p-2.5 text-muted-foreground hover:text-podeli-dark lg:hidden"
           >
             <span className="sr-only">Open sidebar</span>
             <Menu className="h-6 w-6" aria-hidden="true" />
@@ -37,7 +37,7 @@ export function DashboardHeader({
           {/* Separator */}
           <div
             aria-hidden="true"
-            className="h-6 w-px bg-slate-200 lg:hidden"
+            className="h-6 w-px bg-border lg:hidden"
           />
         </>
       )}
@@ -46,15 +46,15 @@ export function DashboardHeader({
         <DashboardBreadcrumbs items={breadcrumbs} />
 
         <div className="flex items-center gap-2 sm:gap-4">
-          <div className="rounded-full bg-slate-100 p-1">
+          <div className="rounded-full bg-muted p-1">
             <div className="flex">
               <button
                 onClick={() => onModeChange("podeli")}
                 className={cn(
                   "rounded-full px-3 py-1.5 text-xs font-medium transition-all sm:px-4 sm:py-2 sm:text-sm",
                   mode === "podeli"
-                    ? "bg-amber-500 text-white shadow-sm"
-                    : "text-slate-600 hover:text-slate-900"
+                    ? "bg-podeli-accent text-podeli-dark shadow-sm"
+                    : "text-muted-foreground hover:text-podeli-dark"
                 )}
               >
                 Podeli
@@ -64,8 +64,8 @@ export function DashboardHeader({
                 className={cn(
                   "rounded-full px-3 py-1.5 text-xs font-medium transition-all sm:px-4 sm:py-2 sm:text-sm",
                   mode === "zakupi"
-                    ? "bg-amber-500 text-white shadow-sm"
-                    : "text-slate-600 hover:text-slate-900"
+                    ? "bg-podeli-accent text-podeli-dark shadow-sm"
+                    : "text-muted-foreground hover:text-podeli-dark"
                 )}
               >
                 Zakupi

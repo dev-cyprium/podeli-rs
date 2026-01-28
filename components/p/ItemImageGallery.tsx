@@ -31,8 +31,8 @@ export function ItemImageGallery({ images, title }: ItemImageGalleryProps) {
 
   if (images.length === 0) {
     return (
-      <div className="flex h-64 items-center justify-center rounded-xl bg-slate-100 sm:h-80 md:h-96">
-        <span className="text-slate-400">Nema slika</span>
+      <div className="flex h-64 items-center justify-center rounded-xl bg-muted sm:h-80 md:h-96">
+        <span className="text-muted-foreground">Nema slika</span>
       </div>
     );
   }
@@ -41,7 +41,7 @@ export function ItemImageGallery({ images, title }: ItemImageGalleryProps) {
 
   return (
     <div className="space-y-4">
-      <div className="relative overflow-hidden rounded-xl bg-slate-100">
+      <div className="relative overflow-hidden rounded-xl bg-muted">
         <div className="relative h-64 w-full sm:h-80 md:h-96">
           {currentImageUrl ? (
             <Image
@@ -53,7 +53,7 @@ export function ItemImageGallery({ images, title }: ItemImageGalleryProps) {
             />
           ) : (
             <div className="flex h-full items-center justify-center">
-              <div className="h-12 w-12 animate-pulse rounded-full bg-slate-200" />
+              <div className="h-12 w-12 animate-pulse rounded-full bg-muted" />
             </div>
           )}
         </div>
@@ -63,7 +63,7 @@ export function ItemImageGallery({ images, title }: ItemImageGalleryProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white"
+              className="absolute left-2 top-1/2 -translate-y-1/2 bg-podeli-light/80 hover:bg-podeli-light"
               onClick={handlePrevious}
             >
               <ChevronLeft className="h-5 w-5" />
@@ -71,7 +71,7 @@ export function ItemImageGallery({ images, title }: ItemImageGalleryProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white"
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-podeli-light/80 hover:bg-podeli-light"
               onClick={handleNext}
             >
               <ChevronRight className="h-5 w-5" />
@@ -90,8 +90,8 @@ export function ItemImageGallery({ images, title }: ItemImageGalleryProps) {
                 onClick={() => setCurrentIndex(index)}
                 className={`relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-colors ${
                   index === currentIndex
-                    ? "border-amber-500"
-                    : "border-transparent hover:border-slate-300"
+                    ? "border-podeli-accent"
+                    : "border-transparent hover:border-podeli-accent/30"
                 }`}
               >
                 {thumbnailUrl ? (
@@ -102,7 +102,7 @@ export function ItemImageGallery({ images, title }: ItemImageGalleryProps) {
                     className="object-cover"
                   />
                 ) : (
-                  <div className="h-full w-full animate-pulse bg-slate-200" />
+                  <div className="h-full w-full animate-pulse bg-muted" />
                 )}
               </button>
             );

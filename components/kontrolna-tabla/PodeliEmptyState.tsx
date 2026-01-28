@@ -18,18 +18,18 @@ export function PodeliEmptyState({ onCreate, className }: PodeliEmptyStateProps)
       )}
     >
       <div className="mx-auto max-w-md text-center">
-        <div className="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-2xl bg-amber-100 text-amber-600">
+        <div className="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-2xl bg-podeli-accent/10 text-podeli-accent">
           <Package className="h-10 w-10" />
         </div>
-        <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+        <h2 className="text-2xl font-bold tracking-tight text-podeli-dark sm:text-3xl">
           Još nemaš objavljenih stvari
         </h2>
-        <p className="mt-4 text-lg text-slate-600">
+        <p className="mt-4 text-lg text-muted-foreground">
           Podeli stvari koje ne koristiš svaki dan i zaradi.
         </p>
         <Button
           onClick={onCreate}
-          className="mt-8 rounded-xl bg-amber-500 px-8 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-amber-600"
+          className="mt-8 rounded-xl bg-podeli-accent px-8 py-3.5 text-sm font-semibold text-podeli-dark shadow-sm hover:bg-podeli-accent/90"
         >
           Dodaj prvi predmet
         </Button>

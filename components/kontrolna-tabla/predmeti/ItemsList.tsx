@@ -36,7 +36,7 @@ export function ItemsList() {
     <>
       <SignedOut>
         <Card>
-          <CardContent className="py-10 text-center text-sm text-slate-600">
+          <CardContent className="py-10 text-center text-sm text-muted-foreground">
             Prijavite se da biste upravljali predmetima.
           </CardContent>
         </Card>
@@ -55,7 +55,7 @@ function ItemsListContent() {
 
   if (!items) {
     return (
-      <div className="flex min-h-[360px] items-center justify-center text-sm text-slate-500">
+      <div className="flex min-h-[360px] items-center justify-center text-sm text-muted-foreground">
         Učitavanje predmeta...
       </div>
     );
@@ -73,11 +73,11 @@ function ItemsListContent() {
       <CardHeader className="flex items-center justify-between">
         <div>
           <CardTitle>Moji predmeti</CardTitle>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             Upravljajte ponudom i dostupnošću.
           </p>
         </div>
-        <Button asChild className="bg-amber-500 text-white hover:bg-amber-600">
+        <Button asChild className="bg-podeli-accent text-podeli-dark hover:bg-podeli-accent/90">
           <Link href="/kontrolna-tabla/predmeti/novi">Novi predmet</Link>
         </Button>
       </CardHeader>
@@ -137,8 +137,8 @@ function ItemCard({
       : "Nema unetih termina";
 
   return (
-    <div className="flex gap-4 rounded-xl border border-slate-200 bg-white px-4 py-4">
-      <div className="h-20 w-20 overflow-hidden rounded-lg bg-slate-100">
+    <div className="flex gap-4 rounded-xl border border-border bg-card px-4 py-4">
+      <div className="h-20 w-20 overflow-hidden rounded-lg bg-muted">
         {imageUrl ? (
           <img
             src={imageUrl}
@@ -146,7 +146,7 @@ function ItemCard({
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
+          <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
             Nema slike
           </div>
         )}
@@ -154,20 +154,20 @@ function ItemCard({
 
       <div className="flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <h3 className="text-base font-semibold text-slate-900">
+          <h3 className="text-base font-semibold text-podeli-dark">
             {item.title}
           </h3>
           <Badge>{item.category}</Badge>
         </div>
-        <p className="mt-1 text-sm text-slate-600">{item.description}</p>
-        <div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-500">
-          <span className="rounded-full bg-slate-100 px-2 py-1">
+        <p className="mt-1 text-sm text-muted-foreground">{item.description}</p>
+        <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
+          <span className="rounded-full bg-muted px-2 py-1">
             {item.pricePerDay.toFixed(0)} RSD / dan
           </span>
-          <span className="rounded-full bg-slate-100 px-2 py-1">
+          <span className="rounded-full bg-muted px-2 py-1">
             Dostupnost: {availabilitySummary}
           </span>
-          <span className="rounded-full bg-slate-100 px-2 py-1">
+          <span className="rounded-full bg-muted px-2 py-1">
             Dostava:{" "}
             {item.deliveryMethods.length
               ? item.deliveryMethods.map(formatDelivery).join(", ")
@@ -184,7 +184,7 @@ function ItemCard({
           variant="destructive"
           size="sm"
           onClick={onDelete}
-          className="border border-red-200"
+          className="border border-podeli-red/30"
         >
           Obriši
         </Button>

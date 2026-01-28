@@ -25,8 +25,8 @@ function StarRating({ rating }: { rating: number }) {
           key={star}
           className={`h-4 w-4 ${
             star <= rating
-              ? "fill-amber-400 text-amber-400"
-              : "fill-slate-200 text-slate-200"
+              ? "fill-podeli-accent text-podeli-accent"
+              : "fill-muted text-muted"
           }`}
         />
       ))}
@@ -68,14 +68,14 @@ export function ReviewsList({ itemId }: ReviewsListProps) {
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-2">
-          <MessageSquare className="h-5 w-5 text-slate-400" />
-          <h3 className="text-lg font-semibold text-slate-900">Recenzije</h3>
+          <MessageSquare className="h-5 w-5 text-muted-foreground" />
+          <h3 className="text-lg font-semibold text-podeli-dark">Recenzije</h3>
         </div>
         <div className="animate-pulse space-y-3">
           {[1, 2].map((i) => (
-            <div key={i} className="rounded-lg bg-slate-100 p-4">
-              <div className="h-4 w-24 rounded bg-slate-200" />
-              <div className="mt-2 h-3 w-full rounded bg-slate-200" />
+            <div key={i} className="rounded-lg bg-muted p-4">
+              <div className="h-4 w-24 rounded bg-muted" />
+              <div className="mt-2 h-3 w-full rounded bg-muted" />
             </div>
           ))}
         </div>
@@ -85,9 +85,9 @@ export function ReviewsList({ itemId }: ReviewsListProps) {
 
   if (reviews.length === 0) {
     return (
-      <div className="rounded-lg bg-slate-50 p-6 text-center">
-        <MessageSquare className="mx-auto h-10 w-10 text-slate-300" />
-        <p className="mt-2 text-sm text-slate-500">
+      <div className="rounded-lg bg-muted p-6 text-center">
+        <MessageSquare className="mx-auto h-10 w-10 text-muted-foreground" />
+        <p className="mt-2 text-sm text-muted-foreground">
           Ovaj predmet još nema recenzija.
         </p>
       </div>
@@ -98,13 +98,13 @@ export function ReviewsList({ itemId }: ReviewsListProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <MessageSquare className="h-5 w-5 text-slate-400" />
-          <h3 className="text-lg font-semibold text-slate-900">Recenzije</h3>
+          <MessageSquare className="h-5 w-5 text-muted-foreground" />
+          <h3 className="text-lg font-semibold text-podeli-dark">Recenzije</h3>
         </div>
         {averageRating && (
           <div className="flex items-center gap-2">
             <StarRating rating={Math.round(averageRating.average)} />
-            <span className="text-sm text-slate-600">
+            <span className="text-sm text-muted-foreground">
               {averageRating.average.toFixed(1)} ({averageRating.count})
             </span>
           </div>
@@ -115,22 +115,22 @@ export function ReviewsList({ itemId }: ReviewsListProps) {
         {reviewsWithUsers?.map((review) => (
           <div
             key={review._id}
-            className="rounded-lg border border-slate-200 bg-white p-4"
+            className="rounded-lg border border-border bg-card p-4"
           >
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-200 text-sm font-medium text-slate-600">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-sm font-medium text-muted-foreground">
                   {review.reviewer?.firstName?.[0] ??
                     review.reviewer?.email?.[0]?.toUpperCase() ??
                     "K"}
                 </div>
                 <div>
-                  <p className="font-medium text-slate-900">
+                  <p className="font-medium text-podeli-dark">
                     {review.reviewer?.firstName && review.reviewer?.lastName
                       ? `${review.reviewer.firstName} ${review.reviewer.lastName[0]}.`
                       : "Korisnik"}
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-muted-foreground">
                     {formatDate(review.createdAt)}
                   </p>
                 </div>
@@ -138,7 +138,7 @@ export function ReviewsList({ itemId }: ReviewsListProps) {
               <StarRating rating={review.rating} />
             </div>
             {review.comment && (
-              <p className="mt-3 text-sm text-slate-600">{review.comment}</p>
+              <p className="mt-3 text-sm text-muted-foreground">{review.comment}</p>
             )}
           </div>
         ))}

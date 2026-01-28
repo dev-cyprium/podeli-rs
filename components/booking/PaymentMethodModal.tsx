@@ -41,37 +41,37 @@ export function PaymentMethodModal({
       <DialogContent className="sm:max-w-md" showCloseButton={false} accessibleTitle="Način plaćanja">
         {isComplete ? (
           <div className="py-8 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-              <CheckCircle className="h-8 w-8 text-green-600" />
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-podeli-blue/10">
+              <CheckCircle className="h-8 w-8 text-podeli-blue" />
             </div>
-            <h2 className="text-xl font-bold text-slate-900">
+            <h2 className="text-xl font-bold text-podeli-dark">
               Zahtev poslat!
             </h2>
-            <p className="mt-2 text-slate-600">
+            <p className="mt-2 text-muted-foreground">
               Vlasnik će pregledati vaš zahtev i obavestiti vas o odluci.
             </p>
           </div>
         ) : (
           <>
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <h2 className="flex items-center gap-2 text-lg font-bold text-slate-900">
-                <CreditCard className="h-5 w-5 text-amber-500" />
+            <div className="flex items-center justify-between border-b border-border pb-4">
+              <h2 className="flex items-center gap-2 text-lg font-bold text-podeli-dark">
+                <CreditCard className="h-5 w-5 text-podeli-accent" />
                 Način plaćanja
               </h2>
               <button
                 onClick={onCancel}
                 disabled={isSubmitting}
-                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 disabled:opacity-50"
+                className="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-podeli-dark disabled:opacity-50"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             <div className="py-6 space-y-4">
-              <div className="rounded-lg bg-slate-50 p-4">
+              <div className="rounded-lg bg-muted p-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-600">Ukupno za plaćanje</span>
-                  <span className="text-xl font-bold text-slate-900">
+                  <span className="text-muted-foreground">Ukupno za plaćanje</span>
+                  <span className="text-xl font-bold text-podeli-dark">
                     {totalPrice.toFixed(0)} RSD
                   </span>
                 </div>
@@ -82,20 +82,20 @@ export function PaymentMethodModal({
                 <button
                   type="button"
                   disabled
-                  className="relative w-full rounded-lg border border-slate-200 bg-slate-50 p-4 text-left opacity-60 cursor-not-allowed"
+                  className="relative w-full rounded-lg border border-border bg-muted p-4 text-left opacity-60 cursor-not-allowed"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-200">
-                      <CreditCard className="h-5 w-5 text-slate-400" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                      <CreditCard className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-slate-500">Karticom</span>
-                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                        <span className="font-medium text-muted-foreground">Karticom</span>
+                        <span className="rounded-full bg-podeli-accent/10 px-2 py-0.5 text-xs font-medium text-podeli-accent">
                           Uskoro
                         </span>
                       </div>
-                      <p className="text-sm text-slate-400">
+                      <p className="text-sm text-muted-foreground">
                         Online plaćanje karticom
                       </p>
                     </div>
@@ -108,33 +108,33 @@ export function PaymentMethodModal({
                   onClick={() => setSelectedMethod("cash")}
                   className={`relative w-full rounded-lg border p-4 text-left transition-colors ${
                     selectedMethod === "cash"
-                      ? "border-amber-500 bg-amber-50"
-                      : "border-slate-200 hover:border-slate-300"
+                      ? "border-podeli-accent bg-podeli-accent/10"
+                      : "border-border hover:border-podeli-accent/30"
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-                      selectedMethod === "cash" ? "bg-amber-100" : "bg-slate-100"
+                      selectedMethod === "cash" ? "bg-podeli-accent/10" : "bg-muted"
                     }`}>
                       <Banknote className={`h-5 w-5 ${
-                        selectedMethod === "cash" ? "text-amber-600" : "text-slate-500"
+                        selectedMethod === "cash" ? "text-podeli-accent" : "text-muted-foreground"
                       }`} />
                     </div>
                     <div className="flex-1">
                       <span className={`font-medium ${
-                        selectedMethod === "cash" ? "text-amber-700" : "text-slate-700"
+                        selectedMethod === "cash" ? "text-podeli-accent" : "text-podeli-dark"
                       }`}>
                         Kesom
                       </span>
                       <p className={`text-sm ${
-                        selectedMethod === "cash" ? "text-amber-600" : "text-slate-500"
+                        selectedMethod === "cash" ? "text-podeli-accent" : "text-muted-foreground"
                       }`}>
                         Platiti pri preuzimanju predmeta
                       </p>
                     </div>
                     {selectedMethod === "cash" && (
-                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-500">
-                        <CheckCircle className="h-4 w-4 text-white" />
+                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-podeli-accent">
+                        <CheckCircle className="h-4 w-4 text-podeli-dark" />
                       </div>
                     )}
                   </div>
@@ -142,13 +142,13 @@ export function PaymentMethodModal({
               </div>
 
               {error && (
-                <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+                <div className="rounded-lg bg-podeli-red/10 p-3 text-sm text-podeli-red">
                   {error}
                 </div>
               )}
             </div>
 
-            <div className="flex gap-3 border-t border-slate-100 pt-4">
+            <div className="flex gap-3 border-t border-border pt-4">
               <Button
                 variant="outline"
                 className="flex-1"
@@ -158,7 +158,7 @@ export function PaymentMethodModal({
                 Otkaži
               </Button>
               <Button
-                className="flex-1 bg-amber-500 hover:bg-amber-600"
+                className="flex-1 bg-podeli-accent hover:bg-podeli-accent/90 text-podeli-dark"
                 onClick={handleConfirm}
                 disabled={isSubmitting}
               >

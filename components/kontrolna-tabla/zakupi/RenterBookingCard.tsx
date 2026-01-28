@@ -60,10 +60,10 @@ export function RenterBookingCard({ booking }: RenterBookingCardProps) {
 
   return (
     <>
-      <div className="flex gap-4 rounded-xl border border-slate-200 bg-white p-4">
+      <div className="flex gap-4 rounded-xl border border-border bg-card p-4">
         <Link
           href={itemUrl}
-          className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-slate-100"
+          className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-muted"
         >
           {imageUrl ? (
             <img
@@ -72,7 +72,7 @@ export function RenterBookingCard({ booking }: RenterBookingCardProps) {
               className="h-full w-full object-cover"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
+            <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
               Nema slike
             </div>
           )}
@@ -83,11 +83,11 @@ export function RenterBookingCard({ booking }: RenterBookingCardProps) {
             <div>
               <Link
                 href={itemUrl}
-                className="font-semibold text-slate-900 hover:text-amber-600"
+                className="font-semibold text-podeli-dark hover:text-podeli-accent"
               >
                 {booking.item?.title ?? "Predmet nije dostupan"}
               </Link>
-              <div className="mt-1 flex items-center gap-2 text-sm text-slate-500">
+              <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
                 <MapPin className="h-3 w-3" />
                 <span>Beograd</span>
               </div>
@@ -99,19 +99,19 @@ export function RenterBookingCard({ booking }: RenterBookingCardProps) {
           </div>
 
           <div className="mt-3 flex flex-wrap items-center gap-4 text-sm">
-            <div className="flex items-center gap-1.5 text-slate-600">
+            <div className="flex items-center gap-1.5 text-muted-foreground">
               <Calendar className="h-4 w-4" />
               <span>
                 {booking.startDate} - {booking.endDate}
               </span>
             </div>
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+            <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
               {booking.totalDays} dan{booking.totalDays > 1 && "a"}
             </span>
           </div>
 
           <div className="mt-auto flex items-center justify-between pt-3">
-            <span className="font-bold text-amber-600">
+            <span className="font-bold text-podeli-accent">
               {booking.totalPrice.toFixed(0)} RSD
             </span>
 
@@ -122,7 +122,7 @@ export function RenterBookingCard({ booking }: RenterBookingCardProps) {
                   size="sm"
                   onClick={handleCancel}
                   disabled={isCancelling}
-                  className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                  className="text-podeli-red hover:bg-podeli-red/10 hover:text-podeli-red"
                 >
                   <X className="mr-1 h-4 w-4" />
                   {isCancelling ? "Otkazivanje..." : "Otkaži"}
@@ -139,7 +139,7 @@ export function RenterBookingCard({ booking }: RenterBookingCardProps) {
                 </Button>
               )}
               {existingReview && (
-                <span className="flex items-center gap-1 text-sm text-slate-500">
+                <span className="flex items-center gap-1 text-sm text-muted-foreground">
                   <MessageSquare className="h-4 w-4" />
                   Recenzija ostavljena
                 </span>

@@ -60,9 +60,9 @@ function ItemCard({
   const itemUrl = getItemUrl(item);
 
   return (
-    <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-md transition-all hover:-translate-y-1 hover:shadow-xl">
+    <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl bg-card shadow-md transition-all hover:-translate-y-1 hover:shadow-xl">
       <Link href={itemUrl}>
-        <div className="relative flex h-48 w-full items-center justify-center bg-slate-100 transition-colors group-hover:bg-amber-50">
+        <div className="relative flex h-48 w-full items-center justify-center bg-muted transition-colors group-hover:bg-podeli-accent/10">
           {imageUrl ? (
             <Image
               src={imageUrl}
@@ -74,7 +74,7 @@ function ItemCard({
           ) : (
             <CategoryIcon
               category={item.category}
-              className="h-20 w-20 text-slate-300 group-hover:text-amber-500"
+              className="h-20 w-20 text-muted group-hover:text-podeli-accent"
               strokeWidth={1.5}
             />
           )}
@@ -83,36 +83,36 @@ function ItemCard({
       <div className="flex h-full flex-col p-5">
         <Link href={itemUrl}>
           <div className="mb-2 flex items-start justify-between gap-2">
-            <h3 className="line-clamp-2 flex-1 font-semibold text-slate-900 hover:text-amber-600">
+            <h3 className="line-clamp-2 flex-1 font-semibold text-podeli-dark hover:text-podeli-accent">
               {item.title}
             </h3>
-            <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600">
+            <span className="shrink-0 rounded-full bg-muted px-2 py-1 text-xs font-bold text-muted-foreground">
               {item.category}
             </span>
           </div>
-          <div className="flex items-center gap-2 text-sm text-slate-500">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <MapPin className="h-3 w-3" />
             <span>Beograd</span>
           </div>
         </Link>
-        <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
+        <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
           <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded-full bg-slate-200"></div>
-            <span className="text-xs font-medium text-slate-600">
+            <div className="h-6 w-6 rounded-full bg-muted"></div>
+            <span className="text-xs font-medium text-muted-foreground">
               {owner && owner.firstName && owner.lastName
                 ? `${owner.firstName} ${owner.lastName[0]}.`
                 : "Komšija"}
             </span>
           </div>
-          <span className="font-bold text-amber-600">
+          <span className="font-bold text-podeli-accent">
             {item.pricePerDay.toFixed(0)} RSD
-            <span className="text-xs font-normal text-slate-400"> /dan</span>
+            <span className="text-xs font-normal text-muted-foreground"> /dan</span>
           </span>
         </div>
         <div className="mt-auto pt-4">
           <Button
             asChild
-            className="w-full bg-amber-500 text-white hover:bg-amber-600"
+            className="w-full bg-podeli-accent text-podeli-dark hover:bg-podeli-accent/90"
             size="sm"
           >
             <Link href={itemUrl}>Iznajmi</Link>
@@ -154,15 +154,15 @@ export function ItemsGrid({
         {Array.from({ length: 4 }).map((_, i) => (
           <div
             key={i}
-            className="group relative overflow-hidden rounded-2xl bg-white shadow-md"
+            className="group relative overflow-hidden rounded-2xl bg-card shadow-md"
           >
-            <div className="flex h-48 w-full items-center justify-center bg-slate-100">
-              <div className="h-20 w-20 animate-pulse rounded-full bg-slate-200"></div>
+            <div className="flex h-48 w-full items-center justify-center bg-muted">
+              <div className="h-20 w-20 animate-pulse rounded-full bg-muted"></div>
             </div>
             <div className="p-5">
-              <div className="mb-2 h-5 w-3/4 animate-pulse rounded bg-slate-200"></div>
-              <div className="mb-2 h-4 w-1/4 animate-pulse rounded bg-slate-200"></div>
-              <div className="mt-4 h-4 w-1/2 animate-pulse rounded bg-slate-200"></div>
+              <div className="mb-2 h-5 w-3/4 animate-pulse rounded bg-muted"></div>
+              <div className="mb-2 h-4 w-1/4 animate-pulse rounded bg-muted"></div>
+              <div className="mt-4 h-4 w-1/2 animate-pulse rounded bg-muted"></div>
             </div>
           </div>
         ))}
@@ -172,8 +172,8 @@ export function ItemsGrid({
 
   if (itemsWithUsers.length === 0) {
     return (
-      <div className="col-span-full rounded-2xl bg-white p-12 text-center shadow-md">
-        <p className="text-slate-600">
+      <div className="col-span-full rounded-2xl bg-card p-12 text-center shadow-md">
+        <p className="text-muted-foreground">
           Trenutno nema dostupnih predmeta. Budite prvi koji će objaviti
           predmet!
         </p>

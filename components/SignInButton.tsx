@@ -13,7 +13,7 @@ export function SignInButton() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-800">
+        <Button className="rounded-full bg-podeli-dark px-5 py-2.5 text-sm font-medium text-podeli-light transition-colors hover:bg-podeli-dark/90">
           Prijavi se
         </Button>
       </DialogTrigger>
