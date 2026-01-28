@@ -1,13 +1,12 @@
 import Link from "next/link";
+import { Logo } from "@/components/Logo";
 
 export default function KakoFunkcionisePage() {
   return (
     <div className="min-h-screen bg-stone-50 text-slate-900">
       <header className="border-b border-stone-200 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-          <Link href="/" className="text-lg font-bold tracking-tight">
-            PODELI.rs
-          </Link>
+          <Logo href="/" height={32} />
           <Link
             href="/"
             className="text-sm font-medium text-slate-600 hover:text-amber-600"
