@@ -38,25 +38,14 @@ export const getMyPlanLimits = query({
       .collect();
     const listingCount = myItems.length;
 
-    // Count active rentals (pending + confirmed + active)
-    const myBookings = await ctx.db
-      .query("bookings")
-      .withIndex("by_renter", (q) => q.eq("renterId", identity.subject))
-      .collect();
-    const activeRentalCount = myBookings.filter(
-      (b) => b.status === "pending" || b.status === "confirmed" || b.status === "active"
-    ).length;
-
     return {
       planName: plan.name,
       planSlug: plan.slug,
       maxListings: plan.maxListings,
-      maxActiveRentals: plan.maxActiveRentals,
       allowedDeliveryMethods: plan.allowedDeliveryMethods,
       hasBadge: plan.hasBadge,
       badgeLabel: plan.badgeLabel,
       listingCount,
-      activeRentalCount,
       planExpiresAt: profile.planExpiresAt,
       listingDurationDays: plan.listingDurationDays,
       isSubscription: plan.isSubscription,

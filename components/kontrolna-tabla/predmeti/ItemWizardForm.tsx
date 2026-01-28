@@ -27,12 +27,10 @@ type PlanLimits = {
   planName: string;
   planSlug: string;
   maxListings: number;
-  maxActiveRentals: number;
   allowedDeliveryMethods: string[];
   hasBadge: boolean;
   badgeLabel?: string;
   listingCount: number;
-  activeRentalCount: number;
   planExpiresAt?: number;
   listingDurationDays?: number;
   isSubscription: boolean;

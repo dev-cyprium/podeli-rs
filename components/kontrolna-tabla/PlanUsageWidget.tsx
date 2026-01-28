@@ -25,11 +25,8 @@ export function PlanUsageWidget() {
   if (limits === null) return null;
 
   const isUnlimitedListings = limits.maxListings === -1;
-  const isUnlimitedRentals = limits.maxActiveRentals === -1;
   const atListingLimit =
     !isUnlimitedListings && limits.listingCount >= limits.maxListings;
-  const atRentalLimit =
-    !isUnlimitedRentals && limits.activeRentalCount >= limits.maxActiveRentals;
   const isLifetime = limits.planSlug === "lifetime";
   const isSingleListing = limits.planSlug === "single_listing";
 
@@ -85,16 +82,6 @@ export function PlanUsageWidget() {
                     style={{ width: `${Math.min(listingProgress, 100)}%` }}
                   />
                 </div>
-              )}
-            </div>
-
-            <div className="text-xs text-muted-foreground">
-              Aktivni zakupi: {limits.activeRentalCount}
-              {isUnlimitedRentals ? " / ∞" : ` / ${limits.maxActiveRentals}`}
-              {atRentalLimit && (
-                <span className="ml-2 text-[#f0a202]">
-                  (limit dostignut)
-                </span>
               )}
             </div>
 

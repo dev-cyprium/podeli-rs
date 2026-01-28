@@ -80,7 +80,9 @@ export const migrateExistingUsers = internalMutation({
       .first();
 
     if (!lifetimePlan) {
-      throw new Error("Doživotni plan nije pronađen. Pokrenite inicijalizaciju planova prvo.");
+      throw new Error(
+        "Doživotni plan nije pronađen. Pokrenite inicijalizaciju planova prvo.",
+      );
     }
 
     // Get all unique owner IDs from items

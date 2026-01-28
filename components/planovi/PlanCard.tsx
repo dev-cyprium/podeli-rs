@@ -43,9 +43,6 @@ export function PlanCard({ plan, isCurrentPlan }: PlanCardProps) {
     plan.maxListings === -1
       ? "Neograničen broj oglasa"
       : `${plan.maxListings} oglas${plan.maxListings > 1 ? "a" : ""}`,
-    plan.maxActiveRentals === -1
-      ? "Neograničen broj zakupa"
-      : `${plan.maxActiveRentals} aktivan zakup`,
     ...plan.allowedDeliveryMethods.map(
       (m) => DELIVERY_LABELS[m] ?? m
     ),
