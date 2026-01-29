@@ -1,9 +1,4 @@
-import {
-  HeartHandshake,
-  ShieldCheck,
-  Leaf,
-  PiggyBank,
-} from "lucide-react";
+import { HeartHandshake, ShieldCheck, Leaf, PiggyBank } from "lucide-react";
 import Link from "next/link";
 import { NavBar } from "@/components/NavBar";
 import { ItemsGrid } from "@/components/ItemsGrid";
@@ -109,6 +104,63 @@ async function ProductShowcaseSection() {
   );
 }
 
+function WhySharingSection() {
+  return (
+    <section id="zasto-deljenje" className="bg-podeli-accent/5 py-24">
+      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-3xl font-bold tracking-tight text-podeli-dark sm:text-4xl">
+            Zašto deljenje ima smisla?
+          </h2>
+          <p className="mt-4 text-lg text-muted-foreground">
+            Manje stvari u ormaru, više novca u džepu. I bolji odnos sa
+            komšijama.
+          </p>
+        </div>
+
+        <div className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-3">
+          <div className="group rounded-2xl bg-podeli-light p-8 shadow-sm transition-shadow hover:shadow-md">
+            <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-podeli-red/10 text-podeli-red">
+              <PiggyBank className="h-7 w-7" />
+            </div>
+            <h3 className="text-xl font-bold text-podeli-dark">Uštedi novac</h3>
+            <p className="mt-3 leading-7 text-muted-foreground">
+              Zašto plaćati punu cenu za nešto što ti treba retko?
+              Iznajmljivanje je 10x jeftinije od kupovine.
+            </p>
+          </div>
+
+          <div className="group rounded-2xl bg-podeli-light p-8 shadow-sm transition-shadow hover:shadow-md">
+            <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-podeli-green/10 text-podeli-green">
+              <Leaf className="h-7 w-7" />
+            </div>
+            <h3 className="text-xl font-bold text-podeli-dark">
+              Čuvaj planetu
+            </h3>
+            <p className="mt-3 leading-7 text-muted-foreground">
+              Jedna bušilica se u proseku koristi samo 13 minuta tokom svog
+              životnog veka. Deljenjem smanjujemo otpad.
+            </p>
+          </div>
+
+          <div className="group rounded-2xl bg-podeli-light p-8 shadow-sm transition-shadow hover:shadow-md">
+            <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-podeli-blue/10 text-podeli-blue">
+              <HeartHandshake className="h-7 w-7" />
+            </div>
+            <h3 className="text-xl font-bold text-podeli-dark">
+              Upoznaj komšije
+            </h3>
+            <p className="mt-3 leading-7 text-muted-foreground">
+              Podeli je više od transakcije. To je prilika da upoznaš ljude koji
+              žive oko tebe i izgradiš poverenje.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default async function Home() {
   return (
     <div className="min-h-screen bg-podeli-light font-sans text-podeli-dark selection:bg-podeli-accent/20 selection:text-podeli-dark">
@@ -120,59 +172,7 @@ export default async function Home() {
         <ProductShowcaseSection />
       </Suspense>
 
-      {/* Why Sharing Matters (Redesigned) */}
-      <section id="zasto-deljenje" className="bg-card py-24">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-podeli-dark sm:text-4xl">
-              Zašto deljenje ima smisla?
-            </h2>
-            <p className="mt-4 text-lg text-muted-foreground">
-              Manje stvari u ormaru, više novca u džepu. I bolji odnos sa
-              komšijama.
-            </p>
-          </div>
-
-          <div className="mt-16 grid grid-cols-1 gap-12 sm:grid-cols-3">
-            <div className="flex flex-col items-center text-center">
-              <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#0ea5e9]/10 text-[#0ea5e9]">
-                <PiggyBank className="h-8 w-8" />
-              </div>
-              <h3 className="text-xl font-bold text-podeli-dark">Uštedi novac</h3>
-              <p className="mt-3 leading-7 text-muted-foreground">
-                Zašto plaćati punu cenu za nešto što ti treba retko?
-                Iznajmljivanje je 10x jeftinije od kupovine.
-              </p>
-            </div>
-
-            <div className="flex flex-col items-center text-center">
-              <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#16a34a]/10 text-[#16a34a]">
-                <Leaf className="h-8 w-8" />
-              </div>
-              <h3 className="text-xl font-bold text-podeli-dark">
-                Čuvaj planetu
-              </h3>
-              <p className="mt-3 leading-7 text-muted-foreground">
-                Jedna bušilica se u proseku koristi samo 13 minuta tokom svog
-                životnog veka. Deljenjem smanjujemo otpad.
-              </p>
-            </div>
-
-            <div className="flex flex-col items-center text-center">
-              <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#9333ea]/10 text-[#9333ea]">
-                <HeartHandshake className="h-8 w-8" />
-              </div>
-              <h3 className="text-xl font-bold text-podeli-dark">
-                Upoznaj komšije
-              </h3>
-              <p className="mt-3 leading-7 text-muted-foreground">
-                Podeli je više od transakcije. To je prilika da upoznaš ljude
-                koji žive oko tebe i izgradiš poverenje.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+      <WhySharingSection />
 
       {/* Trust Section */}
       <section className="bg-podeli-dark py-24 text-podeli-light">
