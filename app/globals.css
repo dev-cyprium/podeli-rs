@@ -16,7 +16,7 @@ html {
   --card-foreground: #02020a;
   --popover: #f8f7ff;
   --popover-foreground: #02020a;
-  --primary: #e98a00;
+  --primary: #E87000;
   --primary-foreground: #02020a;
   --secondary: #e8e6ff;
   --secondary-foreground: #02020a;
@@ -137,6 +137,12 @@ html {
   }
 }
 
+button,
+[role="button"],
+a {
+  cursor: pointer;
+}
+
 @keyframes shimmer {
   0% {
     transform: translateX(-100%);
@@ -158,4 +164,5 @@ html {
   @apply prose-blockquote:border-podeli-accent prose-blockquote:text-muted-foreground;
   @apply prose-hr:border-border;
 }
+
 

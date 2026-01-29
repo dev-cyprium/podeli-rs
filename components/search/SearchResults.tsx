@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { DomacinBadge } from "@/components/DomacinBadge";
 import { getItemUrl } from "@/lib/utils";
 import { Drill, Tent, Gamepad2, Bike, MapPin, Loader2 } from "lucide-react";
+import { AntIcon } from "@/components/icons/Icons";
 import { SearchResultsSkeleton } from "./SearchResultsSkeleton";
 
 type UserSnapshot = {
@@ -54,11 +55,14 @@ type OwnerProfile = {
 function ItemCard({
   item,
 }: {
-  item: Doc<"items"> & { owner: UserSnapshot | undefined; ownerProfile?: OwnerProfile };
+  item: Doc<"items"> & {
+    owner: UserSnapshot | undefined;
+    ownerProfile?: OwnerProfile;
+  };
 }) {
   const imageUrl = useQuery(
     api.items.getImageUrl,
-    item.images[0] ? { storageId: item.images[0] as Id<"_storage"> } : "skip"
+    item.images[0] ? { storageId: item.images[0] as Id<"_storage"> } : "skip",
   );
   const owner = item.owner;
   const ownerProfile = item.ownerProfile;
@@ -66,7 +70,9 @@ function ItemCard({
   const itemUrl = getItemUrl(item);
 
   return (
-    <div className={`group relative flex h-full flex-col overflow-hidden rounded-2xl bg-card shadow-md transition-all hover:-translate-y-1 hover:shadow-xl ${hasBadge ? "ring-2 ring-[#f0a202]/50 shadow-[0_4px_24px_0_rgba(240,162,2,0.10)]" : ""}`}>
+    <div
+      className={`group relative flex h-full flex-col overflow-hidden rounded-2xl bg-card shadow-md transition-all hover:-translate-y-1 hover:shadow-xl ${hasBadge ? "ring-2 ring-[#f0a202]/50 shadow-[0_4px_24px_0_rgba(240,162,2,0.10)]" : ""}`}
+    >
       <Link href={itemUrl}>
         <div className="relative flex h-48 w-full items-center justify-center bg-muted transition-colors group-hover:bg-podeli-accent/10">
           {imageUrl ? (
@@ -103,7 +109,7 @@ function ItemCard({
         </Link>
         <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
           <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded-full bg-muted"></div>
+            <AntIcon className="p-[4px] border border-border rounded-full h-9 w-9 shrink-0" />
             <span className="text-xs font-medium text-muted-foreground">
               {owner && owner.firstName && owner.lastName
                 ? `${owner.firstName} ${owner.lastName[0]}.`
@@ -113,7 +119,10 @@ function ItemCard({
           </div>
           <span className="font-bold text-podeli-accent">
             {item.pricePerDay.toFixed(0)} RSD
-            <span className="text-xs font-normal text-muted-foreground"> /dan</span>
+            <span className="text-xs font-normal text-muted-foreground">
+              {" "}
+              /dan
+            </span>
           </span>
         </div>
         <div className="mt-auto pt-4">
@@ -169,7 +178,7 @@ function SearchResultsInner({ query, category }: SearchResultsInnerProps) {
       lastProcessedCursor.current = cursor;
       const existingIds = new Set(accumulatedItems.map((item) => item._id));
       const newItems = searchResult.page.filter(
-        (item) => !existingIds.has(item._id)
+        (item) => !existingIds.has(item._id),
       );
       if (newItems.length > 0) {
         setAccumulatedItems((prev) => [...prev, ...newItems]);
@@ -181,7 +190,9 @@ function SearchResultsInner({ query, category }: SearchResultsInnerProps) {
   // Fetch users for displayed items
   useEffect(() => {
     if (accumulatedItems.length > 0) {
-      const userIds = [...new Set(accumulatedItems.map((item) => item.ownerId))];
+      const userIds = [
+        ...new Set(accumulatedItems.map((item) => item.ownerId)),
+      ];
       getUsersByIds({ userIds }).then(setUsers).catch(console.error);
     }
   }, [accumulatedItems, getUsersByIds]);
@@ -203,7 +214,7 @@ function SearchResultsInner({ query, category }: SearchResultsInnerProps) {
           setCursor(searchResult.continueCursor);
         }
       },
-      { rootMargin: "100px" }
+      { rootMargin: "100px" },
     );
 
     observer.observe(currentRef);
@@ -216,14 +227,12 @@ function SearchResultsInner({ query, category }: SearchResultsInnerProps) {
 
   const ownerProfiles = useQuery(
     api.profiles.getProfilesByUserIds,
-    ownerIds.length > 0 ? { userIds: ownerIds } : "skip"
+    ownerIds.length > 0 ? { userIds: ownerIds } : "skip",
   );
 
   const itemsWithUsers = useMemo(() => {
     const userMap = new Map(users.map((user) => [user.id, user]));
-    const profileMap = new Map(
-      (ownerProfiles ?? []).map((p) => [p.userId, p])
-    );
+    const profileMap = new Map((ownerProfiles ?? []).map((p) => [p.userId, p]));
     return accumulatedItems.map((item) => ({
       ...item,
       owner: userMap.get(item.ownerId),

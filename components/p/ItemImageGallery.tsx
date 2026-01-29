@@ -85,13 +85,14 @@ export function ItemImageGallery({ images, title }: ItemImageGalleryProps) {
           {images.map((imageId, index) => {
             const thumbnailUrl = imageUrls?.[imageId];
             return (
-              <button
+              <Button
                 key={imageId}
+                variant="ghost"
                 onClick={() => setCurrentIndex(index)}
-                className={`relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-colors ${
+                className={`relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border-2 p-0 transition-colors ${
                   index === currentIndex
                     ? "border-podeli-accent"
-                    : "border-transparent hover:border-podeli-accent/30"
+                    : "border-transparent hover:border-podeli-accent/30 hover:bg-transparent"
                 }`}
               >
                 {thumbnailUrl ? (
@@ -104,7 +105,7 @@ export function ItemImageGallery({ images, title }: ItemImageGalleryProps) {
                 ) : (
                   <div className="h-full w-full animate-pulse bg-muted" />
                 )}
-              </button>
+              </Button>
             );
           })}
         </div>

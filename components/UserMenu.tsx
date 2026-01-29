@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 function getInitials(firstName?: string | null, lastName?: string | null): string {
   const first = firstName?.charAt(0)?.toUpperCase() || "";
@@ -50,11 +51,12 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button
-          className={`flex h-10 w-10 items-center justify-center rounded-full ${colorClass} text-sm font-semibold text-podeli-light transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-podeli-accent focus:ring-offset-2`}
+        <Button
+          variant="ghost"
+          className={`flex h-10 w-10 items-center justify-center rounded-full ${colorClass} text-sm font-semibold text-podeli-light transition-transform hover:scale-105 hover:${colorClass} focus:outline-none focus:ring-2 focus:ring-podeli-accent focus:ring-offset-2`}
         >
           {initials}
-        </button>
+        </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
         <div className="px-2 py-1.5">

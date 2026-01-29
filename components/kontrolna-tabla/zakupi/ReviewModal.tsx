@@ -60,12 +60,14 @@ export function ReviewModal({
       <DialogContent className="sm:max-w-md" showCloseButton={false} accessibleTitle="Ostavi recenziju">
         <div className="flex items-center justify-between border-b border-border pb-4">
           <h2 className="text-lg font-bold text-podeli-dark">Ostavi recenziju</h2>
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onClose}
-            className="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-podeli-dark"
+            className="size-auto rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-podeli-dark"
           >
             <X className="h-5 w-5" />
-          </button>
+          </Button>
         </div>
 
         <div className="py-4">
@@ -78,13 +80,15 @@ export function ReviewModal({
             <Label className="mb-2 block text-sm font-medium">Ocena</Label>
             <div className="flex gap-1">
               {[1, 2, 3, 4, 5].map((star) => (
-                <button
+                <Button
                   key={star}
                   type="button"
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setRating(star)}
                   onMouseEnter={() => setHoveredRating(star)}
                   onMouseLeave={() => setHoveredRating(0)}
-                  className="rounded p-1 transition-colors hover:bg-podeli-accent/10"
+                  className="size-auto rounded p-1 transition-colors hover:bg-podeli-accent/10"
                 >
                   <Star
                     className={`h-8 w-8 ${
@@ -93,7 +97,7 @@ export function ReviewModal({
                         : "fill-muted text-muted"
                     }`}
                   />
-                </button>
+                </Button>
               ))}
             </div>
           </div>

@@ -8,6 +8,7 @@ import { useDebounce } from "@/lib/hooks/useDebounce";
 import { Search, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { getItemUrl } from "@/lib/utils";
 import posthog from "posthog-js";
 
@@ -184,21 +185,23 @@ export function SearchBar({
               placeholder={placeholder}
             />
             {inputValue && (
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={clearInput}
-                className="absolute right-3 rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-podeli-dark"
+                className="absolute right-3 size-auto rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-podeli-dark"
               >
                 <X className="h-4 w-4" />
-              </button>
+              </Button>
             )}
           </div>
           {showButton && (
-            <button
+            <Button
               onClick={handleSearch}
-              className="h-12 rounded-xl bg-podeli-accent px-6 text-base font-bold text-podeli-dark transition-colors hover:bg-podeli-accent/90 active:bg-podeli-accent/80 sm:ml-2 sm:h-10 sm:px-8"
+              className="h-12 bg-podeli-accent px-6 text-base font-bold text-podeli-dark hover:bg-podeli-accent/90 active:bg-podeli-accent/80 sm:ml-2 sm:h-10 sm:px-8"
             >
               Pronađi
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -223,10 +226,11 @@ export function SearchBar({
                   initial="hidden"
                   animate="visible"
                 >
-                  <button
+                  <Button
+                    variant="ghost"
                     onClick={() => handleSelectSuggestion(suggestion)}
                     onMouseEnter={() => setSelectedIndex(index)}
-                    className={`flex w-full items-center justify-between px-4 py-3 text-left transition-colors ${
+                    className={`flex h-auto w-full items-center justify-between rounded-none px-4 py-3 text-left transition-colors ${
                       selectedIndex === index
                         ? "bg-podeli-accent/10 text-podeli-dark"
                         : "hover:bg-muted"
@@ -244,17 +248,18 @@ export function SearchBar({
                     >
                       {suggestion.category}
                     </Badge>
-                  </button>
+                  </Button>
                 </motion.li>
               ))}
             </ul>
             <div className="border-t border-border px-4 py-2">
-              <button
+              <Button
+                variant="ghost"
                 onClick={handleSearch}
-                className="text-sm text-muted-foreground hover:text-podeli-accent"
+                className="h-auto p-0 text-sm text-muted-foreground hover:bg-transparent hover:text-podeli-accent"
               >
                 Vidi sve rezultate za &quot;{inputValue}&quot; &rarr;
-              </button>
+              </Button>
             </div>
           </motion.div>
         )}

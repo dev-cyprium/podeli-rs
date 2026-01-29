@@ -3,6 +3,7 @@
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
 
 interface CategoryFilterProps {
   selectedCategory: string | null;
@@ -17,7 +18,8 @@ export function CategoryFilter({
 
   return (
     <div className="flex flex-wrap gap-2">
-      <button
+      <Button
+        variant="ghost"
         onClick={() => onCategoryChange(null)}
         className={`relative rounded-full px-4 py-2 text-sm font-medium transition-colors ${
           selectedCategory === null
@@ -33,10 +35,11 @@ export function CategoryFilter({
           />
         )}
         <span className="relative z-10">Sve</span>
-      </button>
+      </Button>
 
       {categories.map((category) => (
-        <button
+        <Button
+          variant="ghost"
           key={category}
           onClick={() => onCategoryChange(category)}
           className={`relative rounded-full px-4 py-2 text-sm font-medium transition-colors ${
@@ -53,7 +56,7 @@ export function CategoryFilter({
             />
           )}
           <span className="relative z-10">{category}</span>
-        </button>
+        </Button>
       ))}
     </div>
   );

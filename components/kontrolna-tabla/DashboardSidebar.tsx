@@ -99,14 +99,16 @@ export function DashboardSidebar({
       <div className="mb-8 flex items-center justify-between px-2">
         <Logo href="/" height={28} onClick={onClose} />
         {onClose && (
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={onClose}
             className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-podeli-dark lg:hidden"
           >
             <span className="sr-only">Close sidebar</span>
             <X className="h-6 w-6" />
-          </button>
+          </Button>
         )}
       </div>
 
@@ -121,8 +123,9 @@ export function DashboardSidebar({
             const Icon = item.icon;
 
             return (
-              <button
+              <Button
                 key={item.id}
+                variant="ghost"
                 onClick={() => {
                   if (item.mode) {
                     onModeChange(item.mode);
@@ -130,9 +133,9 @@ export function DashboardSidebar({
                 }}
                 disabled={isDisabled}
                 className={cn(
-                  "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors",
+                  "flex h-auto w-full items-center justify-start gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors",
                   isActive
-                    ? "bg-podeli-accent/10 text-podeli-accent"
+                    ? "bg-podeli-accent/10 text-podeli-accent hover:bg-podeli-accent/10"
                     : "text-muted-foreground hover:bg-muted hover:text-podeli-dark",
                   isDisabled && "cursor-not-allowed opacity-50",
                 )}
@@ -144,7 +147,7 @@ export function DashboardSidebar({
                     Uskoro
                   </span>
                 ) : null}
-              </button>
+              </Button>
             );
           })}
         </nav>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { SignInButton } from "./SignInButton";
 import { UserMenu } from "./UserMenu";
+import { Button } from "@/components/ui/button";
 
 interface NavLinksProps {
   isSignedIn: boolean;
@@ -15,7 +16,9 @@ export function NavLinks({ isSignedIn }: NavLinksProps) {
 
   return (
     <div className="md:hidden">
-      <button
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         className="p-2 text-muted-foreground touch-manipulation"
         aria-label="Toggle menu"
@@ -25,7 +28,7 @@ export function NavLinks({ isSignedIn }: NavLinksProps) {
         ) : (
           <Menu className="h-6 w-6" />
         )}
-      </button>
+      </Button>
 
       {isMobileMenuOpen && (
         <div className="absolute left-0 right-0 top-full border-t border-border bg-card">

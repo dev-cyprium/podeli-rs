@@ -152,31 +152,33 @@ export function BookingForm({ item }: BookingFormProps) {
             <div className="grid grid-cols-2 gap-2">
               {availableDeliveryMethods.length > 0 ? (
                 availableDeliveryMethods.map((option) => (
-                  <button
+                  <Button
                     key={option.value}
                     type="button"
+                    variant="ghost"
                     onClick={() => setDeliveryMethod(option.value)}
                     className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
                       deliveryMethod === option.value
-                        ? "border-podeli-accent bg-podeli-accent/10 text-podeli-accent"
-                        : "border-border text-muted-foreground hover:border-podeli-accent/30"
+                        ? "border-podeli-accent bg-podeli-accent/10 text-podeli-accent hover:bg-podeli-accent/10"
+                        : "border-border text-muted-foreground hover:border-podeli-accent/30 hover:bg-transparent"
                     }`}
                   >
                     {option.label}
-                  </button>
+                  </Button>
                 ))
               ) : (
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
                   onClick={() => setDeliveryMethod("licno")}
                   className={`col-span-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
                     deliveryMethod === "licno"
-                      ? "border-podeli-accent bg-podeli-accent/10 text-podeli-accent"
-                      : "border-border text-muted-foreground hover:border-podeli-accent/30"
+                      ? "border-podeli-accent bg-podeli-accent/10 text-podeli-accent hover:bg-podeli-accent/10"
+                      : "border-border text-muted-foreground hover:border-podeli-accent/30 hover:bg-transparent"
                   }`}
                 >
                   Lično preuzimanje
-                </button>
+                </Button>
               )}
             </div>
           </div>

@@ -8,12 +8,12 @@ export const metadata = {
 
 export default function PlanoviPage() {
   return (
-    <div className="min-h-screen bg-[#f8f7ff]">
+    <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <BackButton />
 
         <div className="mb-12 text-center">
-          <h1 className="text-3xl font-bold text-[#02020a] sm:text-4xl">
+          <h1 className="text-3xl font-bold text-foreground sm:text-4xl">
             Izaberite plan
           </h1>
           <p className="mt-4 text-lg text-muted-foreground">
@@ -28,7 +28,7 @@ export default function PlanoviPage() {
             Imate pitanja? Kontaktirajte nas na{" "}
             <a
               href="mailto:kontakt@podeli.rs"
-              className="font-medium text-[#006992] hover:underline"
+              className="font-medium text-accent hover:underline"
             >
               kontakt@podeli.rs
             </a>

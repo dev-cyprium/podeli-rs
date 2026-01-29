@@ -4,6 +4,7 @@ import { Menu } from "lucide-react";
 import { UserMenu } from "@/components/UserMenu";
 import { cn } from "@/lib/utils";
 import { DashboardBreadcrumbs } from "./DashboardBreadcrumbs";
+import { Button } from "@/components/ui/button";
 
 interface DashboardHeaderProps {
   mode: "podeli" | "zakupi";
@@ -26,14 +27,16 @@ export function DashboardHeader({
       {/* Mobile menu button */}
       {onMenuClick && (
         <>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={onMenuClick}
             className="-m-2.5 p-2.5 text-muted-foreground hover:text-podeli-dark lg:hidden"
           >
             <span className="sr-only">Open sidebar</span>
             <Menu className="h-6 w-6" aria-hidden="true" />
-          </button>
+          </Button>
           {/* Separator */}
           <div
             aria-hidden="true"
@@ -48,28 +51,30 @@ export function DashboardHeader({
         <div className="flex items-center gap-2 sm:gap-4">
           <div className="rounded-full bg-muted p-1">
             <div className="flex">
-              <button
+              <Button
+                variant="ghost"
                 onClick={() => onModeChange("podeli")}
                 className={cn(
                   "rounded-full px-3 py-1.5 text-xs font-medium transition-all sm:px-4 sm:py-2 sm:text-sm",
                   mode === "podeli"
-                    ? "bg-podeli-accent text-podeli-dark shadow-sm"
+                    ? "bg-podeli-accent text-podeli-dark shadow-sm hover:bg-podeli-accent"
                     : "text-muted-foreground hover:text-podeli-dark"
                 )}
               >
                 Podeli
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="ghost"
                 onClick={() => onModeChange("zakupi")}
                 className={cn(
                   "rounded-full px-3 py-1.5 text-xs font-medium transition-all sm:px-4 sm:py-2 sm:text-sm",
                   mode === "zakupi"
-                    ? "bg-podeli-accent text-podeli-dark shadow-sm"
+                    ? "bg-podeli-accent text-podeli-dark shadow-sm hover:bg-podeli-accent"
                     : "text-muted-foreground hover:text-podeli-dark"
                 )}
               >
                 Zakupi
-              </button>
+              </Button>
             </div>
           </div>
           <UserMenu />

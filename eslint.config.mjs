@@ -14,6 +14,24 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     "convex/_generated/**",
   ]),
+  // Custom rules
+  {
+    rules: {
+      // Forbid native <button> elements - use Button component instead
+      "react/forbid-elements": [
+        "error",
+        {
+          forbid: [
+            {
+              element: "button",
+              message:
+                "Use <Button> from @/components/ui/button instead of native <button>",
+            },
+          ],
+        },
+      ],
+    },
+  },
 ]);
 
 export default eslintConfig;

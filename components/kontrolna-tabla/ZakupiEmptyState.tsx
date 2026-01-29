@@ -1,6 +1,7 @@
 "use client";
 
 import { Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function ZakupiEmptyState() {
   return (
@@ -15,12 +16,12 @@ export function ZakupiEmptyState() {
         <p className="mt-4 text-lg text-muted-foreground">
           Pretraži stvari koje komšije dele u tvojoj blizini.
         </p>
-        <button
+        <Button
           disabled
-          className="mt-8 inline-flex items-center justify-center rounded-xl bg-podeli-accent px-8 py-3.5 text-sm font-semibold text-podeli-dark shadow-sm transition-colors hover:bg-podeli-accent/90 disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-8 bg-podeli-accent px-8 py-3.5 text-sm font-semibold text-podeli-dark shadow-sm hover:bg-podeli-accent/90"
         >
           Pretraži ponudu
-        </button>
+        </Button>
         <p className="mt-3 text-sm text-muted-foreground">
           Uskoro dostupno
         </p>

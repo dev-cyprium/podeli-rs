@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { DomacinBadge } from "@/components/DomacinBadge";
 import { getItemUrl } from "@/lib/utils";
 import { Drill, Tent, Gamepad2, Bike, MapPin } from "lucide-react";
+import { AntIcon } from "@/components/icons/Icons";
 
 type UserSnapshot = {
   id: string;
@@ -58,7 +59,10 @@ type OwnerProfile = {
 function ItemCard({
   item,
 }: {
-  item: Doc<"items"> & { owner: UserSnapshot | undefined; ownerProfile?: OwnerProfile };
+  item: Doc<"items"> & {
+    owner: UserSnapshot | undefined;
+    ownerProfile?: OwnerProfile;
+  };
 }) {
   const imageUrl = useQuery(
     api.items.getImageUrl,
@@ -70,7 +74,9 @@ function ItemCard({
   const itemUrl = getItemUrl(item);
 
   return (
-    <div className={`group relative flex h-full flex-col overflow-hidden rounded-2xl bg-card shadow-md transition-all hover:-translate-y-1 hover:shadow-xl ${hasBadge ? "ring-2 ring-[#f0a202]/50 shadow-[0_4px_24px_0_rgba(240,162,2,0.10)]" : ""}`}>
+    <div
+      className={`group relative flex h-full flex-col overflow-hidden rounded-2xl bg-card shadow-md transition-all hover:-translate-y-1 hover:shadow-xl ${hasBadge ? "ring-2 ring-[#f0a202]/50 shadow-[0_4px_24px_0_rgba(240,162,2,0.10)]" : ""}`}
+    >
       <Link href={itemUrl}>
         <div className="relative flex h-48 w-full items-center justify-center bg-muted transition-colors group-hover:bg-podeli-accent/10">
           {imageUrl ? (
@@ -107,7 +113,7 @@ function ItemCard({
         </Link>
         <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
           <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded-full bg-muted"></div>
+            <AntIcon className="p-[4px] border border-border rounded-full h-9 w-9 shrink-0" />
             <span className="text-xs font-medium text-muted-foreground">
               {owner && owner.firstName && owner.lastName
                 ? `${owner.firstName} ${owner.lastName[0]}.`
@@ -117,7 +123,10 @@ function ItemCard({
           </div>
           <span className="font-bold text-podeli-accent">
             {item.pricePerDay.toFixed(0)} RSD
-            <span className="text-xs font-normal text-muted-foreground"> /dan</span>
+            <span className="text-xs font-normal text-muted-foreground">
+              {" "}
+              /dan
+            </span>
           </span>
         </div>
         <div className="mt-auto pt-4">
@@ -150,7 +159,7 @@ export function ItemsGrid({
 
   const ownerProfiles = useQuery(
     api.profiles.getProfilesByUserIds,
-    ownerIds.length > 0 ? { userIds: ownerIds } : "skip"
+    ownerIds.length > 0 ? { userIds: ownerIds } : "skip",
   );
 
   useEffect(() => {
@@ -163,9 +172,7 @@ export function ItemsGrid({
   const itemsWithUsers = useMemo(() => {
     if (!items) return undefined;
     const userMap = new Map(users.map((user) => [user.id, user]));
-    const profileMap = new Map(
-      (ownerProfiles ?? []).map((p) => [p.userId, p])
-    );
+    const profileMap = new Map((ownerProfiles ?? []).map((p) => [p.userId, p]));
     return items.map((item) => ({
       ...item,
       owner: userMap.get(item.ownerId),

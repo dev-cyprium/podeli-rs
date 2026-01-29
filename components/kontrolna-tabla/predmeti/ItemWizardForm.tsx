@@ -589,14 +589,15 @@ export function ItemWizardForm({
                       />
                       Zameni fotografiju
                     </label>
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
                       onClick={removeImage}
-                      className="inline-flex items-center gap-2 rounded-md border border-podeli-red/30 bg-card px-4 py-2 text-sm font-semibold text-podeli-red hover:bg-podeli-red/10 transition-colors"
+                      className="inline-flex items-center gap-2 rounded-md border border-podeli-red/30 bg-card px-4 py-2 text-sm font-semibold text-podeli-red hover:bg-podeli-red/10"
                     >
                       <Trash2 className="h-4 w-4" />
                       Ukloni
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ) : null}

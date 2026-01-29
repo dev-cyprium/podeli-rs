@@ -4,9 +4,10 @@ import {
   Leaf,
   PiggyBank,
   Instagram,
-  MessageCircle,
 } from "lucide-react";
 import Link from "next/link";
+import { DiscordIcon } from "@/components/icons/Icons";
+import { Button } from "@/components/ui/button";
 import { NavBar } from "@/components/NavBar";
 import { ItemsGrid } from "@/components/ItemsGrid";
 import { ItemsGridSkeleton } from "@/components/ItemsGridSkeleton";
@@ -92,13 +93,13 @@ function HeroSection() {
                 Instagram
               </a>
               <a
-                href="https://join.podeli.rs"
+                href="https://discord.gg/69MBaCTEnz"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-sm font-medium text-podeli-dark hover:text-podeli-accent transition-colors"
                 aria-label="Discord"
               >
-                <MessageCircle className="h-5 w-5" />
+                <DiscordIcon className="h-5 w-5" />
                 Discord
               </a>
             </div>
@@ -340,12 +341,12 @@ export default async function Home() {
                   placeholder="tvoja@email.adresa"
                   className="flex-1 rounded-xl border border-border px-5 py-3.5 text-podeli-dark placeholder:text-muted-foreground focus:border-podeli-accent focus:outline-none focus:ring-2 focus:ring-podeli-accent/30"
                 />
-                <button
+                <Button
                   type="submit"
-                  className="flex-none rounded-xl bg-podeli-accent px-8 py-3.5 text-sm font-semibold text-podeli-dark shadow-sm hover:bg-podeli-accent/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-podeli-accent"
+                  className="flex-none bg-podeli-accent px-8 py-3.5 text-sm font-semibold text-podeli-dark shadow-sm hover:bg-podeli-accent/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-podeli-accent"
                 >
                   Prijavi se
-                </button>
+                </Button>
               </div>
             </div>
             <p className="mt-4 text-xs text-podeli-light/60">
@@ -382,13 +383,13 @@ export default async function Home() {
               Instagram
             </a>
             <a
-              href="https://join.podeli.rs"
+              href="https://discord.gg/69MBaCTEnz"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 hover:text-podeli-dark"
               aria-label="Discord"
             >
-              <MessageCircle className="h-4 w-4" />
+              <DiscordIcon className="h-4 w-4" />
               Discord
             </a>
           </div>

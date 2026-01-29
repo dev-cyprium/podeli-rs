@@ -23,15 +23,15 @@ export function PlanCard({ plan, isCurrentPlan }: PlanCardProps) {
   const cardClasses = [
     "relative flex flex-col rounded-2xl border p-6 transition-all",
     isLifetime
-      ? "bg-gradient-to-b from-[#f0a202]/10 to-[#f8f7ff] border-[#f0a202] shadow-[0_4px_32px_0_rgba(240,162,2,0.15)]"
+      ? "bg-gradient-to-b from-primary/10 to-card border-primary shadow-[0_4px_32px_0_rgba(233,138,0,0.15)]"
       : isStarter
-        ? "border-[#f0a202]/30 bg-[#f8f7ff]"
+        ? "border-primary/30 bg-card"
         : isUltimate
-          ? "border-[#f0a202]/60 bg-[#f8f7ff]"
+          ? "border-primary/60 bg-card"
           : isSingleListing
-            ? "border-border bg-[#f8f7ff] opacity-90"
-            : "border-border bg-[#f8f7ff]",
-    isCurrentPlan && "ring-2 ring-[#006992]",
+            ? "border-border bg-card opacity-90"
+            : "border-border bg-card",
+    isCurrentPlan && "ring-2 ring-accent",
   ]
     .filter(Boolean)
     .join(" ");
@@ -56,32 +56,32 @@ export function PlanCard({ plan, isCurrentPlan }: PlanCardProps) {
   return (
     <div className={cardClasses}>
       {isStarter && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#f0a202] px-3 py-1 text-xs font-bold text-white">
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-xs font-bold text-white">
           Najpopularniji
         </div>
       )}
 
       {isCurrentPlan && (
-        <div className="absolute -top-3 right-4 rounded-full bg-[#006992] px-3 py-1 text-xs font-bold text-white">
+        <div className="absolute -top-3 right-4 rounded-full bg-accent px-3 py-1 text-xs font-bold text-white">
           Vaš plan
         </div>
       )}
 
       <div className="mb-4">
         <div className="flex items-center gap-2">
-          {isLifetime && <Crown className="h-5 w-5 text-[#f0a202]" />}
-          <h3 className={`text-lg font-bold ${isSingleListing ? "text-muted-foreground" : "text-[#02020a]"}`}>
+          {isLifetime && <Crown className="h-5 w-5 text-primary" />}
+          <h3 className={`text-lg font-bold ${isSingleListing ? "text-muted-foreground" : "text-foreground"}`}>
             {plan.name}
           </h3>
         </div>
-        <p className={`mt-1 text-sm ${isSingleListing ? "text-muted-foreground" : "text-muted-foreground"}`}>
+        <p className="mt-1 text-sm text-muted-foreground">
           {plan.description}
         </p>
       </div>
 
       <div className="mb-6">
         <div className="flex items-baseline gap-1">
-          <span className={`text-3xl font-bold ${isSingleListing ? "text-muted-foreground" : "text-[#02020a]"}`}>
+          <span className={`text-3xl font-bold ${isSingleListing ? "text-muted-foreground" : "text-foreground"}`}>
             {plan.priceAmount === 0 ? "Besplatno" : `${plan.priceAmount}`}
           </span>
           {plan.priceAmount > 0 && (
@@ -94,8 +94,8 @@ export function PlanCard({ plan, isCurrentPlan }: PlanCardProps) {
 
       <ul className="mb-6 flex-1 space-y-2">
         {features.map((feature) => (
-          <li key={feature} className="flex items-center gap-2 text-sm text-[#02020a]">
-            <Check className="h-4 w-4 shrink-0 text-[#f0a202]" />
+          <li key={feature} className="flex items-center gap-2 text-sm text-foreground">
+            <Check className="h-4 w-4 shrink-0 text-primary" />
             {feature}
           </li>
         ))}
@@ -119,11 +119,7 @@ export function PlanCard({ plan, isCurrentPlan }: PlanCardProps) {
       ) : (
         <Button
           asChild
-          className={
-            isLifetime || isStarter
-              ? "w-full bg-[#f0a202] text-white hover:bg-[#f0a202]/90"
-              : "w-full bg-[#02020a] text-white hover:bg-[#02020a]/90"
-          }
+          className="w-full bg-primary text-white hover:bg-primary/90"
         >
           <a href="mailto:kontakt@podeli.rs?subject=Zainteresovan/a sam za plan: ${plan.name}">
             Kontaktirajte nas

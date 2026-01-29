@@ -58,13 +58,15 @@ export function PaymentMethodModal({
                 <CreditCard className="h-5 w-5 text-podeli-accent" />
                 Način plaćanja
               </h2>
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={onCancel}
                 disabled={isSubmitting}
-                className="rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-podeli-dark disabled:opacity-50"
+                className="size-auto rounded-lg p-1 text-muted-foreground hover:bg-muted hover:text-podeli-dark disabled:opacity-50"
               >
                 <X className="h-5 w-5" />
-              </button>
+              </Button>
             </div>
 
             <div className="py-6 space-y-4">
@@ -79,10 +81,11 @@ export function PaymentMethodModal({
 
               <div className="space-y-3">
                 {/* Card option - disabled */}
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
                   disabled
-                  className="relative w-full rounded-lg border border-border bg-muted p-4 text-left opacity-60 cursor-not-allowed"
+                  className="relative h-auto w-full rounded-lg border border-border bg-muted p-4 text-left opacity-60"
                 >
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
@@ -100,16 +103,17 @@ export function PaymentMethodModal({
                       </p>
                     </div>
                   </div>
-                </button>
+                </Button>
 
                 {/* Cash option - pre-selected */}
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
                   onClick={() => setSelectedMethod("cash")}
-                  className={`relative w-full rounded-lg border p-4 text-left transition-colors ${
+                  className={`relative h-auto w-full rounded-lg border p-4 text-left transition-colors ${
                     selectedMethod === "cash"
-                      ? "border-podeli-accent bg-podeli-accent/10"
-                      : "border-border hover:border-podeli-accent/30"
+                      ? "border-podeli-accent bg-podeli-accent/10 hover:bg-podeli-accent/10"
+                      : "border-border hover:border-podeli-accent/30 hover:bg-transparent"
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -138,7 +142,7 @@ export function PaymentMethodModal({
                       </div>
                     )}
                   </div>
-                </button>
+                </Button>
               </div>
 
               {error && (
