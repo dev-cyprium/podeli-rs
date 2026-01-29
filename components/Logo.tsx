@@ -8,7 +8,7 @@ interface LogoProps {
 }
 
 export function Logo({ className = "", href = "/", height = 32, onClick }: LogoProps) {
-  const accentFill = "#f0a202"; // podeli accent
+  const accentFill = "var(--primary)"; // podeli accent from CSS
 
   const logoContent = (
     <svg

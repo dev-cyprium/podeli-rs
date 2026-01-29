@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -15,7 +16,7 @@ html {
   --card-foreground: #02020a;
   --popover: #f8f7ff;
   --popover-foreground: #02020a;
-  --primary: #f0a202;
+  --primary: #e98a00;
   --primary-foreground: #02020a;
   --secondary: #e8e6ff;
   --secondary-foreground: #02020a;
@@ -27,20 +28,20 @@ html {
   --destructive-foreground: #f8f7ff;
   --border: #d4d2e0;
   --input: #d4d2e0;
-  --ring: #f0a202;
-  --chart-1: #f0a202;
+  --ring: #e98a00;
+  --chart-1: #e98a00;
   --chart-2: #006992;
   --chart-3: #02020a;
   --chart-4: #dd1c1a;
   --chart-5: #4a4758;
   --sidebar: #f8f7ff;
   --sidebar-foreground: #02020a;
-  --sidebar-primary: #f0a202;
+  --sidebar-primary: #e98a00;
   --sidebar-primary-foreground: #02020a;
   --sidebar-accent: #e8e6ff;
   --sidebar-accent-foreground: #02020a;
   --sidebar-border: #d4d2e0;
-  --sidebar-ring: #f0a202;
+  --sidebar-ring: #e98a00;
 }
 
 .dark {
@@ -50,7 +51,7 @@ html {
   --card-foreground: #f8f7ff;
   --popover: #0d0d14;
   --popover-foreground: #f8f7ff;
-  --primary: #f0a202;
+  --primary: #e98a00;
   --primary-foreground: #02020a;
   --secondary: #1a1a24;
   --secondary-foreground: #f8f7ff;
@@ -61,25 +62,25 @@ html {
   --destructive: #dd1c1a;
   --border: rgba(248, 247, 255, 0.1);
   --input: rgba(248, 247, 255, 0.15);
-  --ring: #f0a202;
-  --chart-1: #f0a202;
+  --ring: #e98a00;
+  --chart-1: #e98a00;
   --chart-2: #006992;
   --chart-3: #f8f7ff;
   --chart-4: #dd1c1a;
   --chart-5: #a09fb8;
   --sidebar: #0d0d14;
   --sidebar-foreground: #f8f7ff;
-  --sidebar-primary: #f0a202;
+  --sidebar-primary: #e98a00;
   --sidebar-primary-foreground: #02020a;
   --sidebar-accent: #1a1a24;
   --sidebar-accent-foreground: #f8f7ff;
   --sidebar-border: rgba(248, 247, 255, 0.1);
-  --sidebar-ring: #f0a202;
+  --sidebar-ring: #e98a00;
 }
 
 @theme inline {
   /* Palette: f0a202, 02020a, f8f7ff, 006992, dd1c1a */
-  --color-podeli-accent: #e98a00;
+  --color-podeli-accent: var(--primary);
   --color-podeli-dark: #110b11;
   --color-podeli-light: #fffbfc;
   --color-podeli-blue: #3d52d5;
@@ -143,5 +144,18 @@ html {
   100% {
     transform: translateX(100%);
   }
+}
+
+/* Blog prose styles */
+.prose-podeli {
+  @apply prose prose-lg max-w-none;
+  @apply prose-headings:text-podeli-dark prose-headings:font-semibold;
+  @apply prose-p:text-muted-foreground prose-p:leading-relaxed;
+  @apply prose-a:text-podeli-accent prose-a:no-underline hover:prose-a:underline;
+  @apply prose-strong:text-podeli-dark prose-strong:font-semibold;
+  @apply prose-ul:text-muted-foreground prose-ol:text-muted-foreground;
+  @apply prose-li:leading-relaxed;
+  @apply prose-blockquote:border-podeli-accent prose-blockquote:text-muted-foreground;
+  @apply prose-hr:border-border;
 }
 

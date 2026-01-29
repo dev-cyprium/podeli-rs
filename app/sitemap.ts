@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
+import { getAllPosts } from "@/lib/blog";
 
 // Make this a knob you can change later.
 // 1 hour is a good starting point for a marketplace.
@@ -44,10 +45,29 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const now = new Date();
 
+  // Get blog posts
+  const blogPosts = getAllPosts();
+
   return [
     // Include your core pages too
     { url: `${SITE}/`, lastModified: now },
     { url: `${SITE}/kako-funkcionise`, lastModified: now },
+
+    // Blog index
+    {
+      url: `${SITE}/blog`,
+      lastModified: now,
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    },
+
+    // Blog posts
+    ...blogPosts.map((post) => ({
+      url: `${SITE}/blog/${post.slug}`,
+      lastModified: new Date(post.date),
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
+    })),
 
     // Listings
     ...listings.map((l) => {
