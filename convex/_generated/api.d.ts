@@ -15,6 +15,7 @@ import type * as clerk from "../clerk.js";
 import type * as items from "../items.js";
 import type * as plans from "../plans.js";
 import type * as profiles from "../profiles.js";
+import type * as promotionalCodes from "../promotionalCodes.js";
 import type * as reviews from "../reviews.js";
 
 import type {
@@ -31,6 +32,7 @@ declare const fullApi: ApiFromModules<{
   items: typeof items;
   plans: typeof plans;
   profiles: typeof profiles;
+  promotionalCodes: typeof promotionalCodes;
   reviews: typeof reviews;
 }>;
 

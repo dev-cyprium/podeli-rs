@@ -1,6 +1,32 @@
 import { v } from "convex/values";
 import { internalMutation } from "./_generated/server";
 
+/** Set superAdmin flag on a profile. Call from Convex dashboard only. */
+export const setSuperAdmin = internalMutation({
+  args: {
+    userId: v.string(),
+    superAdmin: v.boolean(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .first();
+
+    if (!profile) {
+      throw new Error(`Profil za korisnika "${args.userId}" nije pronađen.`);
+    }
+
+    await ctx.db.patch(profile._id, {
+      superAdmin: args.superAdmin,
+      updatedAt: Date.now(),
+    });
+
+    return null;
+  },
+});
+
 export const setUserPlan = internalMutation({
   args: {
     userId: v.string(),

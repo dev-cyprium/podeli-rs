@@ -54,6 +54,16 @@ export default defineSchema({
     .index("by_order", ["order"])
     .index("by_isActive", ["isActive"]),
 
+  promotionalCodes: defineTable({
+    code: v.string(),
+    forPlanId: v.id("plans"),
+    durationMonths: v.optional(v.number()),
+    comment: v.optional(v.string()),
+    isUsed: v.boolean(),
+    usedBy: v.optional(v.string()),
+    validUntil: v.number(),
+  }).index("by_code", ["code"]),
+
   profiles: defineTable({
     userId: v.string(),
     planId: v.id("plans"),
@@ -67,6 +77,7 @@ export default defineSchema({
     email: v.optional(v.string()),
     hasBadge: v.boolean(),
     badgeLabel: v.optional(v.string()),
+    superAdmin: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

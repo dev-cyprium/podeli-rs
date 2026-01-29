@@ -1,4 +1,10 @@
-import { clerkClient } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
+
+export async function getConvexAuthToken(): Promise<string | undefined> {
+  const authObj = await auth();
+  const token = await authObj.getToken({ template: "convex" });
+  return token ?? undefined;
+}
 
 export async function getUsersByIdsUncaped(ids: string[]) {
   const client = await clerkClient();

@@ -8,10 +8,34 @@ export const getMyProfile = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return null;
 
-    return await ctx.db
+    const profile = await ctx.db
       .query("profiles")
       .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
       .first();
+
+    if (!profile) return null;
+
+    // Never expose superAdmin to clients
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- intentionally omitted from response
+    const { superAdmin, ...rest } = profile;
+    return rest;
+  },
+});
+
+/** Returns whether the current user is a super admin. Does not expose superAdmin field. */
+export const getIsCurrentUserSuperAdmin = query({
+  args: {},
+  returns: v.boolean(),
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return false;
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
+      .first();
+
+    return profile?.superAdmin === true;
   },
 });
 

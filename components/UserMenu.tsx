@@ -1,7 +1,7 @@
 "use client";
 
 import { useUser, useClerk } from "@clerk/nextjs";
-import { LogOut, LayoutDashboard } from "lucide-react";
+import { LogOut, LayoutDashboard, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -11,6 +11,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 function getInitials(firstName?: string | null, lastName?: string | null): string {
   const first = firstName?.charAt(0)?.toUpperCase() || "";
@@ -36,6 +38,7 @@ function getColorFromName(name: string): string {
 export function UserMenu() {
   const { user, isLoaded } = useUser();
   const { signOut } = useClerk();
+  const isSuperAdmin = useQuery(api.profiles.getIsCurrentUserSuperAdmin);
 
   // Server already determined user is signed in, but we need user data to load
   // Show skeleton while loading user details
@@ -74,6 +77,17 @@ export function UserMenu() {
             <span>Kontrolna tabla</span>
           </Link>
         </DropdownMenuItem>
+        {isSuperAdmin === true && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/super-admin" className="flex items-center gap-2 cursor-pointer">
+                <ShieldCheck className="h-4 w-4" />
+                <span>Super admin</span>
+              </Link>
+            </DropdownMenuItem>
+          </>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() => signOut()}

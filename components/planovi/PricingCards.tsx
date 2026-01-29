@@ -1,10 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { PlanCard } from "./PlanCard";
+import { RedeemCodeModal } from "./RedeemCodeModal";
+import { Button } from "@/components/ui/button";
+import { Ticket } from "lucide-react";
 
 export function PricingCards() {
+  const [redeemModalOpen, setRedeemModalOpen] = useState(false);
   const plans = useQuery(api.plans.list);
   const profile = useQuery(api.profiles.getMyProfile);
 
@@ -32,14 +37,33 @@ export function PricingCards() {
   }
 
   return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-      {plans.map((plan) => (
-        <PlanCard
-          key={plan._id}
-          plan={plan}
-          isCurrentPlan={profile?.planSlug === plan.slug}
-        />
-      ))}
-    </div>
+    <>
+      <div className="mb-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+        <p className="text-sm text-muted-foreground">
+          Imate promotivni kod?
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          className="gap-2 border-[#006992]/30 text-[#006992] hover:bg-[#006992]/10"
+          onClick={() => setRedeemModalOpen(true)}
+        >
+          <Ticket className="h-4 w-4" />
+          Unesi kod
+        </Button>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        {plans.map((plan) => (
+          <PlanCard
+            key={plan._id}
+            plan={plan}
+            isCurrentPlan={profile?.planSlug === plan.slug}
+          />
+        ))}
+      </div>
+
+      <RedeemCodeModal open={redeemModalOpen} onOpenChange={setRedeemModalOpen} />
+    </>
   );
 }

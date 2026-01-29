@@ -22,7 +22,10 @@ export function DashboardShell({ mode, children }: DashboardShellProps) {
       router.push("/kontrolna-tabla/predmeti");
       return;
     }
-    router.push("/kontrolna-tabla/zakupi");
+    if (nextMode === "zakupi") {
+      router.push("/kontrolna-tabla/zakupi");
+      return;
+    }
   }
 
   return (
