@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Calendar, User } from "lucide-react";
 import type { BlogPostMeta } from "@/lib/blog";
+import { BlurImage } from "./BlurImage";
 
 interface BlogPostCardProps {
   post: BlogPostMeta;
@@ -17,12 +18,11 @@ export function BlogPostCard({ post }: BlogPostCardProps) {
     <Link href={`/blog/${post.slug}`} className="group block">
       <article className="h-full rounded-2xl bg-card p-6 shadow-sm transition-shadow hover:shadow-md">
         {post.image && (
-          <div className="mb-4 aspect-video overflow-hidden rounded-xl bg-muted">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+          <div className="relative mb-4 aspect-video overflow-hidden rounded-xl bg-muted">
+            <BlurImage
               src={post.image}
               alt={post.title}
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              className="transition-transform duration-300 group-hover:scale-105"
             />
           </div>
         )}

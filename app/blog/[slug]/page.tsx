@@ -5,6 +5,7 @@ import { MDXRemote } from "next-mdx-remote/rsc";
 import { Calendar, User, ArrowLeft } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { mdxComponents } from "@/components/blog/MDXComponents";
+import { BlurImage } from "@/components/blog/BlurImage";
 import { getPostBySlug, getAllPostSlugs } from "@/lib/blog";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://podeli.rs";
@@ -164,13 +165,8 @@ export default async function BlogPostPage({ params }: PageProps) {
             </header>
 
             {post.image && (
-              <div className="mb-10 aspect-video overflow-hidden rounded-2xl bg-muted">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={post.image}
-                  alt={post.title}
-                  className="h-full w-full object-cover"
-                />
+              <div className="relative mb-10 aspect-video overflow-hidden rounded-2xl bg-muted">
+                <BlurImage src={post.image} alt={post.title} priority />
               </div>
             )}
 

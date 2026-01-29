@@ -20,12 +20,12 @@ export async function NavBar() {
           >
             Kako funkcioniše
           </Link>
-          <a
-            href="#zasto-deljenje"
+          <Link
+            href="/blog"
             className="text-sm font-medium text-muted-foreground hover:text-podeli-accent"
           >
-            Zašto deljenje
-          </a>
+            Blog
+          </Link>
           <a
             href="#ponuda"
             className="text-sm font-medium text-muted-foreground hover:text-podeli-accent"

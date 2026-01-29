@@ -37,13 +37,13 @@ export function NavLinks({ isSignedIn }: NavLinksProps) {
             >
               Kako funkcioniše
             </Link>
-            <a
-              href="#zasto-deljenje"
+            <Link
+              href="/blog"
               onClick={() => setIsMobileMenuOpen(false)}
               className="text-sm font-medium text-muted-foreground hover:text-podeli-accent"
             >
-              Zašto deljenje
-            </a>
+              Blog
+            </Link>
             <a
               href="#ponuda"
               onClick={() => setIsMobileMenuOpen(false)}
