@@ -5,6 +5,7 @@ import { ConvexClientProvider } from "../components/ConvexClientProvider";
 import { ClerkProvider } from "@clerk/nextjs";
 import { srLocalization } from "@/lib/clerk-localization";
 import { Analytics } from "@vercel/analytics/next";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,6 +35,7 @@ export default function RootLayout({
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
           <ConvexClientProvider>{children}</ConvexClientProvider>
+          <Toaster />
           <Analytics />
         </body>
       </html>
