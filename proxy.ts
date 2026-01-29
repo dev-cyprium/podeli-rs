@@ -1,8 +1,18 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
 const isProtectedRoute = createRouteMatcher(["/kontrolna-tabla(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
+  const host = req.headers.get("host") || "";
+
+  if (host === "join.podeli.rs") {
+    return NextResponse.redirect(
+      new URL(`https://discord.gg/69MBaCTEnz`, req.url),
+      307,
+    );
+  }
+
   if (isProtectedRoute(req)) {
     await auth.protect();
   }

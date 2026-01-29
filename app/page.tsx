@@ -1,9 +1,18 @@
-import { HeartHandshake, ShieldCheck, Leaf, PiggyBank } from "lucide-react";
+import {
+  HeartHandshake,
+  ShieldCheck,
+  Leaf,
+  PiggyBank,
+  Instagram,
+  MessageCircle,
+} from "lucide-react";
 import Link from "next/link";
 import { NavBar } from "@/components/NavBar";
 import { ItemsGrid } from "@/components/ItemsGrid";
 import { ItemsGridSkeleton } from "@/components/ItemsGridSkeleton";
 import { SearchBar } from "@/components/search/SearchBar";
+import { BlogPostCard } from "@/components/blog/BlogPostCard";
+import { getAllPosts } from "@/lib/blog";
 import { preloadQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
 import { Suspense } from "react";
@@ -70,6 +79,28 @@ function HeroSection() {
               >
                 Društvene igre
               </Link>
+            </div>
+            <div className="mt-6 flex justify-center gap-6">
+              <a
+                href="https://www.instagram.com/podeli_rs/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm font-medium text-podeli-dark hover:text-podeli-accent transition-colors"
+                aria-label="Instagram"
+              >
+                <Instagram className="h-5 w-5" />
+                Instagram
+              </a>
+              <a
+                href="https://join.podeli.rs"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm font-medium text-podeli-dark hover:text-podeli-accent transition-colors"
+                aria-label="Discord"
+              >
+                <MessageCircle className="h-5 w-5" />
+                Discord
+              </a>
             </div>
           </div>
         </div>
@@ -161,6 +192,35 @@ function WhySharingSection() {
   );
 }
 
+async function LatestBlogSection() {
+  const posts = getAllPosts().slice(0, 3);
+  if (posts.length === 0) return null;
+
+  return (
+    <section className="py-16 sm:py-24">
+      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
+          <h2 className="text-2xl font-bold tracking-tight text-podeli-dark sm:text-3xl">
+            Najnovije sa bloga
+          </h2>
+          <Link
+            href="/blog"
+            className="text-sm font-semibold text-podeli-accent hover:text-podeli-accent/90"
+          >
+            Svi članci &rarr;
+          </Link>
+        </div>
+
+        <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {posts.map((post) => (
+            <BlogPostCard key={post.slug} post={post} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default async function Home() {
   return (
     <div className="min-h-screen bg-podeli-light font-sans text-podeli-dark selection:bg-podeli-accent/20 selection:text-podeli-dark">
@@ -173,6 +233,9 @@ export default async function Home() {
       </Suspense>
 
       <WhySharingSection />
+
+      {/* Latest from blog */}
+      <LatestBlogSection />
 
       {/* Trust Section */}
       <section className="bg-podeli-dark py-24 text-podeli-light">
@@ -298,7 +361,7 @@ export default async function Home() {
           <p>
             &copy; {new Date().getFullYear()} PODELI.rs - Sva prava zadržana.
           </p>
-          <div className="mt-4 flex justify-center gap-6">
+          <div className="mt-4 flex flex-wrap justify-center gap-6">
             <a href="#" className="hover:text-podeli-dark">
               O nama
             </a>
@@ -307,6 +370,26 @@ export default async function Home() {
             </a>
             <a href="#" className="hover:text-podeli-dark">
               Kontakt
+            </a>
+            <a
+              href="https://www.instagram.com/podeli_rs/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 hover:text-podeli-dark"
+              aria-label="Instagram"
+            >
+              <Instagram className="h-4 w-4" />
+              Instagram
+            </a>
+            <a
+              href="https://join.podeli.rs"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 hover:text-podeli-dark"
+              aria-label="Discord"
+            >
+              <MessageCircle className="h-4 w-4" />
+              Discord
             </a>
           </div>
         </div>
