@@ -15,6 +15,7 @@ export const listForSuperAdmin = query({
       isUsed: v.boolean(),
       usedBy: v.optional(v.string()),
       usedByDisplayName: v.optional(v.string()),
+      usedByEmail: v.optional(v.string()),
       comment: v.optional(v.string()),
     }),
   ),
@@ -34,17 +35,21 @@ export const listForSuperAdmin = query({
       codes.map(async (row) => {
         const plan = await ctx.db.get(row.forPlanId);
         let usedByDisplayName: string | undefined;
+        let usedByEmail: string | undefined;
         const usedByUserId = row.usedBy;
         if (usedByUserId) {
           const usedByProfile = await ctx.db
             .query("profiles")
             .withIndex("by_userId", (q) => q.eq("userId", usedByUserId))
             .first();
-          if (usedByProfile?.firstName != null || usedByProfile?.lastName != null) {
-            usedByDisplayName = [usedByProfile.firstName, usedByProfile.lastName]
-              .filter(Boolean)
-              .join(" ")
-              .trim();
+          if (usedByProfile) {
+            usedByEmail = usedByProfile.email ?? undefined;
+            if (usedByProfile.firstName != null || usedByProfile.lastName != null) {
+              usedByDisplayName = [usedByProfile.firstName, usedByProfile.lastName]
+                .filter(Boolean)
+                .join(" ")
+                .trim();
+            }
           }
         }
         return {
@@ -57,6 +62,7 @@ export const listForSuperAdmin = query({
           isUsed: row.isUsed,
           usedBy: row.usedBy,
           usedByDisplayName: usedByDisplayName ?? undefined,
+          usedByEmail: usedByEmail ?? undefined,
           comment: row.comment,
         };
       }),

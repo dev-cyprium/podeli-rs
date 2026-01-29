@@ -6,6 +6,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { srLocalization } from "@/lib/clerk-localization";
 import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from "@/components/ui/sonner";
+import { SSOCallbackHashRedirect } from "@/components/SSOCallbackHashRedirect";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,6 +35,7 @@ export default function RootLayout({
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
+          <SSOCallbackHashRedirect />
           <ConvexClientProvider>{children}</ConvexClientProvider>
           <Toaster />
           <Analytics />

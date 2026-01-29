@@ -199,7 +199,7 @@ export function CouponsPanel() {
                       </td>
                       <td className="py-3 pr-4 text-muted-foreground">
                         {c.isUsed
-                          ? c.usedByDisplayName ?? c.usedBy ?? "—"
+                          ? c.usedByEmail ?? c.usedByDisplayName ?? c.usedBy ?? "—"
                           : "—"}
                       </td>
                       <td className="py-3 text-muted-foreground">

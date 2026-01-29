@@ -53,10 +53,16 @@ export function PlanCard({ plan, isCurrentPlan }: PlanCardProps) {
       : null,
   ].filter(Boolean) as string[];
 
+  const hasTopBadges = isStarter || isCurrentPlan;
+
   return (
     <div className={cardClasses}>
       {isStarter && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-xs font-bold text-white">
+        <div
+          className={`absolute -top-3 rounded-full bg-primary px-3 py-1 text-xs font-bold text-white ${
+            isCurrentPlan ? "left-4" : "left-1/2 -translate-x-1/2"
+          }`}
+        >
           Najpopularniji
         </div>
       )}
@@ -67,7 +73,7 @@ export function PlanCard({ plan, isCurrentPlan }: PlanCardProps) {
         </div>
       )}
 
-      <div className="mb-4">
+      <div className={`mb-4 ${hasTopBadges ? "pt-2" : ""}`}>
         <div className="flex items-center gap-2">
           {isLifetime && <Crown className="h-5 w-5 text-primary" />}
           <h3 className={`text-lg font-bold ${isSingleListing ? "text-muted-foreground" : "text-foreground"}`}>
