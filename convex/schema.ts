@@ -130,6 +130,16 @@ export default defineSchema({
     userId: v.string(),
     message: v.string(),
     read: v.optional(v.boolean()),
+    type: v.optional(
+      v.union(
+        v.literal("booking_pending"),
+        v.literal("booking_approved"),
+        v.literal("booking_rejected"),
+        v.literal("plan_changed"),
+        v.literal("system"),
+      ),
+    ),
+    link: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

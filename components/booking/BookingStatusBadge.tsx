@@ -15,7 +15,7 @@ const statusLabels: Record<BookingStatus, string> = {
 
 const statusColors: Record<BookingStatus, string> = {
   pending: "bg-podeli-accent/10 text-podeli-accent border-podeli-accent/30",
-  confirmed: "bg-podeli-blue/10 text-podeli-blue border-podeli-blue/30",
+  confirmed: "bg-green-100 text-green-700 border-green-300",
   active: "bg-podeli-blue/10 text-podeli-blue border-podeli-blue/30",
   completed: "bg-muted text-muted-foreground border-border",
   cancelled: "bg-podeli-red/10 text-podeli-red border-podeli-red/30",

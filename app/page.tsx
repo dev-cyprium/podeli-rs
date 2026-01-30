@@ -323,18 +323,18 @@ export default async function Home() {
             backgroundSize: "24px 24px",
           }}
         ></div>
-        <div className="relative mx-auto max-w-2xl px-6">
+        <div className="relative mx-auto flex max-w-2xl flex-col items-center px-6">
           <h2 className="text-3xl font-bold tracking-tight text-podeli-light sm:text-4xl">
             Spreman da živiš pametnije?
           </h2>
-          <p className="mx-auto mt-6 max-w-xl text-lg text-podeli-light/80">
+          <p className="mt-6 max-w-xl text-center text-lg text-podeli-light/80">
             Pridruži se listi čekanja za Beograd. Obavestićemo te čim platforma
             postane aktivna u tvom kraju.
           </p>
 
-          <form className="mx-auto mt-10 max-w-md">
-            <div className="rounded-2xl bg-podeli-light p-2 shadow-xl shadow-podeli-dark/30">
-              <div className="flex flex-col gap-3 sm:flex-row">
+          <form className="mx-auto mt-10 flex max-w-md flex-col items-center">
+            <div className="w-full rounded-2xl bg-podeli-light p-2 shadow-xl shadow-podeli-dark/30">
+              <div className="flex flex-col items-center gap-3 sm:flex-row">
                 <input
                   type="email"
                   required
@@ -366,9 +366,9 @@ export default async function Home() {
             <a href="#" className="hover:text-podeli-dark">
               O nama
             </a>
-            <a href="#" className="hover:text-podeli-dark">
-              Pravila korišćenja
-            </a>
+            <Link href="/terms-of-service" className="hover:text-podeli-dark">
+              Uslovi korišćenja
+            </Link>
             <a href="#" className="hover:text-podeli-dark">
               Kontakt
             </a>

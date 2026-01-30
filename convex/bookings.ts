@@ -102,6 +102,8 @@ export const createBooking = mutation({
     await ctx.db.insert("notifications", {
       userId: item.ownerId,
       message: `Nova rezervacija za "${item.title}" čeka vaše odobrenje.`,
+      type: "booking_pending",
+      link: "/kontrolna-tabla/predmeti",
       createdAt: now,
       updatedAt: now,
     });
@@ -346,6 +348,8 @@ export const approveBooking = mutation({
     await ctx.db.insert("notifications", {
       userId: booking.renterId,
       message: `Vaša rezervacija za "${item?.title ?? "predmet"}" je odobrena!`,
+      type: "booking_approved",
+      link: "/kontrolna-tabla/zakupi",
       createdAt: now,
       updatedAt: now,
     });
@@ -384,6 +388,8 @@ export const rejectBooking = mutation({
     await ctx.db.insert("notifications", {
       userId: booking.renterId,
       message: `Vaša rezervacija za "${item?.title ?? "predmet"}" je odbijena.`,
+      type: "booking_rejected",
+      link: "/kontrolna-tabla/zakupi",
       createdAt: now,
       updatedAt: now,
     });

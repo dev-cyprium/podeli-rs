@@ -8,6 +8,16 @@ const notificationValidator = v.object({
   userId: v.string(),
   message: v.string(),
   read: v.optional(v.boolean()),
+  type: v.optional(
+    v.union(
+      v.literal("booking_pending"),
+      v.literal("booking_approved"),
+      v.literal("booking_rejected"),
+      v.literal("plan_changed"),
+      v.literal("system"),
+    ),
+  ),
+  link: v.optional(v.string()),
   createdAt: v.number(),
   updatedAt: v.number(),
 });
@@ -58,6 +68,22 @@ export const markAllAsRead = mutation({
       if (!notification.read) {
         await ctx.db.patch(notification._id, { read: true, updatedAt: now });
       }
+    }
+    return null;
+  },
+});
+
+export const deleteAll = mutation({
+  args: {},
+  returns: v.null(),
+  handler: async (ctx) => {
+    const identity = await requireIdentity(ctx);
+    const notifications = await ctx.db
+      .query("notifications")
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .collect();
+    for (const notification of notifications) {
+      await ctx.db.delete(notification._id);
     }
     return null;
   },

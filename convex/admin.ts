@@ -72,6 +72,8 @@ export const setUserPlan = internalMutation({
         await ctx.db.insert("notifications", {
           userId: args.userId,
           message: `Vaš plan je promenjen na "${plan.name}". Imate ${userItems.length} oglas(a), a dozvoljeno je ${plan.maxListings}. Nećete moći da kreirate nove oglase dok ne smanjite broj.`,
+          type: "plan_changed",
+          link: "/kontrolna-tabla/predmeti",
           createdAt: now,
           updatedAt: now,
         });
