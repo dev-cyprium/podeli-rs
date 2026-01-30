@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { Logo } from "@/components/Logo";
+import { NavBar } from "@/components/NavBar";
 import { BlogPostCard } from "@/components/blog/BlogPostCard";
 import { getAllPosts } from "@/lib/blog";
 
@@ -35,17 +34,7 @@ export default function BlogPage() {
 
   return (
     <div className="min-h-screen bg-podeli-light text-podeli-dark">
-      <header className="border-b border-border bg-podeli-light/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-          <Logo href="/" height={32} />
-          <Link
-            href="/"
-            className="text-sm font-medium text-muted-foreground hover:text-podeli-accent"
-          >
-            Nazad na pocetnu
-          </Link>
-        </div>
-      </header>
+      <NavBar />
 
       <main className="mx-auto max-w-4xl px-6 py-16 sm:py-20">
         <section className="text-center">

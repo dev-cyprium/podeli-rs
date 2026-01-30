@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { NavLinks } from "./NavLinks";
 import { NotificationBell } from "./NotificationBell";
+import { PonudaLink } from "./PonudaLink";
 import { SignInButton } from "./SignInButton";
 import { UserMenu } from "./UserMenu";
 import { Logo } from "./Logo";
@@ -17,22 +18,17 @@ export async function NavBar() {
         <div className="hidden items-center gap-8 md:flex">
           <Link
             href="/kako-funkcionise"
-            className="text-sm font-medium text-muted-foreground hover:text-podeli-accent"
+            className="text-sm font-semibold text-muted-foreground hover:text-podeli-accent"
           >
             Kako funkcioniše
           </Link>
           <Link
             href="/blog"
-            className="text-sm font-medium text-muted-foreground hover:text-podeli-accent"
+            className="text-sm font-semibold text-muted-foreground hover:text-podeli-accent"
           >
             Blog
           </Link>
-          <a
-            href="#ponuda"
-            className="text-sm font-medium text-muted-foreground hover:text-podeli-accent"
-          >
-            Ponuda
-          </a>
+          <PonudaLink />
           {isSignedIn ? (
             <div className="flex items-center gap-2">
               <NotificationBell />

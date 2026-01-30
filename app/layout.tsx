@@ -33,7 +33,7 @@ export default function RootLayout({
     <ClerkProvider localization={srLocalization}>
       <html lang="sr">
         <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
         >
           <SSOCallbackHashRedirect />
           <ConvexClientProvider>{children}</ConvexClientProvider>

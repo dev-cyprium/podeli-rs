@@ -1,3 +1,4 @@
+import { NavBar } from "@/components/NavBar";
 import { PricingCards } from "@/components/planovi/PricingCards";
 import { BackButton } from "@/components/ui/back-button";
 
@@ -9,6 +10,7 @@ export const metadata = {
 export default function PlanoviPage() {
   return (
     <div className="min-h-screen bg-background">
+      <NavBar />
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <BackButton />
 

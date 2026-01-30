@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { NotificationBell } from "./NotificationBell";
+import { PonudaLink } from "./PonudaLink";
 import { SignInButton } from "./SignInButton";
 import { UserMenu } from "./UserMenu";
 import { Button } from "@/components/ui/button";
@@ -37,28 +38,24 @@ export function NavLinks({ isSignedIn }: NavLinksProps) {
             <Link
               href="/kako-funkcionise"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="text-sm font-medium text-muted-foreground hover:text-podeli-accent"
+              className="text-sm font-semibold text-muted-foreground hover:text-podeli-accent"
             >
               Kako funkcioniše
             </Link>
             <Link
               href="/blog"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="text-sm font-medium text-muted-foreground hover:text-podeli-accent"
+              className="text-sm font-semibold text-muted-foreground hover:text-podeli-accent"
             >
               Blog
             </Link>
-            <a
-              href="#ponuda"
+            <PonudaLink
               onClick={() => setIsMobileMenuOpen(false)}
-              className="text-sm font-medium text-muted-foreground hover:text-podeli-accent"
-            >
-              Ponuda
-            </a>
+            />
             <Link
               href="/planovi"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="text-sm font-medium text-muted-foreground hover:text-podeli-accent"
+              className="text-sm font-semibold text-muted-foreground hover:text-podeli-accent"
             >
               Planovi
             </Link>

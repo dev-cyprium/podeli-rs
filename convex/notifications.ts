@@ -16,7 +16,10 @@ export const listForUser = query({
   args: {},
   returns: v.array(notificationValidator),
   handler: async (ctx) => {
-    const identity = await requireIdentity(ctx);
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
     const notifications = await ctx.db
       .query("notifications")
       .withIndex("by_user", (q) => q.eq("userId", identity.subject))

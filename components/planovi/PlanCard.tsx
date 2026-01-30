@@ -127,7 +127,7 @@ export function PlanCard({ plan, isCurrentPlan }: PlanCardProps) {
           asChild
           className="w-full bg-primary text-white hover:bg-primary/90"
         >
-          <a href="mailto:kontakt@podeli.rs?subject=Zainteresovan/a sam za plan: ${plan.name}">
+          <a href={`mailto:kontakt@podeli.rs?subject=${encodeURIComponent(`Zainteresovan/a sam za plan: ${plan.name} (${plan.slug})`)}`}>
             Kontaktirajte nas
           </a>
         </Button>
