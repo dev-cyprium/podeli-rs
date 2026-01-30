@@ -395,3 +395,40 @@ export const rejectBooking = mutation({
     });
   },
 });
+
+/**
+ * Admin-only: Delete orphaned bookings (bookings whose items no longer exist)
+ */
+export const clearOrphanedBookings = mutation({
+  args: {},
+  returns: v.object({
+    deleted: v.number(),
+    total: v.number(),
+  }),
+  handler: async (ctx) => {
+    const identity = await requireIdentity(ctx);
+
+    // Check if user is a superAdmin
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
+      .first();
+
+    if (!profile?.superAdmin) {
+      throw new ConvexError("Samo administratori mogu izvršiti ovu akciju.");
+    }
+
+    const allBookings = await ctx.db.query("bookings").collect();
+    let deleted = 0;
+
+    for (const booking of allBookings) {
+      const item = await ctx.db.get(booking.itemId);
+      if (!item) {
+        await ctx.db.delete(booking._id);
+        deleted++;
+      }
+    }
+
+    return { deleted, total: allBookings.length };
+  },
+});

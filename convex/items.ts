@@ -174,6 +174,12 @@ export const create = mutation({
       throw new Error("Plan nije pronađen.");
     }
 
+    // Check preferred contact types
+    const prefs = profile.preferredContactTypes ?? [];
+    if (prefs.length === 0) {
+      throw new Error("Postavite način kontakta pre objavljivanja.");
+    }
+
     // Check single listing expiration
     if (profile.planSlug === "single_listing" && profile.planExpiresAt && profile.planExpiresAt < Date.now()) {
       throw new Error("Vaš pojedinačni oglas je istekao. Nadogradite plan da biste kreirali nove oglase.");
@@ -400,6 +406,14 @@ export const remove = mutation({
     }
     if (item.ownerId !== identity.subject) {
       throw new Error("Nemate dozvolu da obrišete ovaj predmet.");
+    }
+    // Delete associated bookings
+    const bookings = await ctx.db
+      .query("bookings")
+      .withIndex("by_item", (q) => q.eq("itemId", args.id))
+      .collect();
+    for (const booking of bookings) {
+      await ctx.db.delete(booking._id);
     }
     // Delete associated image files
     for (const imageId of item.images) {
