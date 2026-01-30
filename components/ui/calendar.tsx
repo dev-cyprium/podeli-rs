@@ -12,6 +12,7 @@ import {
   type DayButton,
 } from "react-day-picker"
 
+import { formatSerbianDate, SERBIAN_LOCALE } from "@/lib/serbian-date"
 import { cn } from "@/lib/utils"
 import { Button, buttonVariants } from "@/components/ui/button"
 
@@ -41,7 +42,7 @@ function Calendar({
       captionLayout={captionLayout}
       formatters={{
         formatMonthDropdown: (date) =>
-          date.toLocaleString("default", { month: "short" }),
+          date.toLocaleString(SERBIAN_LOCALE, { month: "short" }),
         ...formatters,
       }}
       classNames={{
@@ -198,7 +199,7 @@ function CalendarDayButton({
       type="button"
       variant="ghost"
       size="icon"
-      data-day={day.date.toLocaleDateString()}
+      data-day={formatSerbianDate(day.date, "numeric")}
       data-selected-single={
         modifiers.selected &&
         !modifiers.range_start &&

@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { formatSerbianDate } from "@/lib/serbian-date";
 import { cn } from "@/lib/utils";
 
 function formatRelativeTime(createdAt: number): string {
@@ -26,10 +27,7 @@ function formatRelativeTime(createdAt: number): string {
   if (diffHours < 24) return `pre ${diffHours} h`;
   if (diffDays < 2) return "juče";
   if (diffDays < 7) return `pre ${diffDays} dana`;
-  return new Date(createdAt).toLocaleDateString("sr-RS", {
-    day: "numeric",
-    month: "short",
-  });
+  return formatSerbianDate(createdAt, "short");
 }
 
 export function NotificationBell() {
@@ -61,7 +59,7 @@ export function NotificationBell() {
         <Button
           variant="ghost"
           size="icon"
-          className="relative h-10 w-10 min-h-[44px] min-w-[44px] touch-manipulation text-[#02020a] hover:bg-[#f0a202]/10 hover:text-[#f0a202]"
+          className="relative h-10 w-10 min-h-[44px] min-w-[44px] touch-manipulation rounded-lg bg-transparent text-[#02020a] hover:bg-[#f0a202]/10 hover:text-[#f0a202] focus-visible:ring-0 focus-visible:ring-offset-0"
           aria-label="Obaveštenja"
         >
           <Bell className="h-5 w-5" aria-hidden="true" />
@@ -79,12 +77,12 @@ export function NotificationBell() {
         align="end"
         side="bottom"
         sideOffset={8}
-        className="max-h-[min(70vh,24rem)] w-[min(90vw,22rem)] overflow-hidden rounded-md border border-border bg-[#f8f7ff] p-0 text-[#02020a] shadow-md"
+        className="max-w-[min(90vw,22rem)] w-[min(90vw,22rem)] overflow-hidden rounded-md border border-border bg-[#f8f7ff] p-0 text-[#02020a] shadow-md"
       >
         <div className="border-b border-border px-3 py-2">
           <h3 className="text-sm font-semibold">Obaveštenja</h3>
         </div>
-        <div className="max-h-[min(60vh,18rem)] overflow-y-auto">
+        <div className="overflow-hidden">
           {notifications === undefined ? (
             <div className="px-3 py-6 text-center text-sm text-muted-foreground">
               Učitavanje…
@@ -94,28 +92,29 @@ export function NotificationBell() {
               Nema novih obaveštenja
             </div>
           ) : (
-            <ul className="py-1">
+            <ul className="min-w-0 py-1">
               {notifications.map((notification) => (
-                <li key={notification._id}>
-                  <button
+                <li key={notification._id} className="min-w-0">
+                  <Button
                     type="button"
+                    variant="ghost"
                     onClick={() => {
                       handleMarkAsRead(notification._id);
                       setOpen(false);
                     }}
                     className={cn(
-                      "flex w-full flex-col gap-0.5 px-3 py-3 text-left text-sm transition-colors min-h-[44px] touch-manipulation",
-                      "hover:bg-[#f0a202]/10 focus:bg-[#f0a202]/10 focus:outline-none",
+                      "flex w-full min-w-0 flex-col items-start gap-0.5 rounded-none px-4 py-3 text-left text-sm font-normal transition-colors min-h-[44px] touch-manipulation h-auto whitespace-normal",
+                      "bg-transparent text-[#02020a] hover:bg-[#f0a202]/10 focus:bg-[#f0a202]/10 focus-visible:ring-0 focus-visible:ring-offset-0",
                       !notification.read && "bg-[#f0a202]/5"
                     )}
                   >
-                    <span className="text-[#02020a]">
+                    <span className="w-full min-w-0 wrap-break-word whitespace-normal text-left text-[#02020a]">
                       {notification.message}
                     </span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-left text-xs text-muted-foreground">
                       {formatRelativeTime(notification.createdAt)}
                     </span>
-                  </button>
+                  </Button>
                 </li>
               ))}
             </ul>
@@ -128,7 +127,7 @@ export function NotificationBell() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="w-full justify-center text-[#006992] hover:bg-[#006992]/10 hover:text-[#006992]"
+                className="w-full justify-center rounded-md bg-transparent text-[#006992] hover:bg-[#006992]/10 hover:text-[#006992] focus-visible:ring-0 focus-visible:ring-offset-0"
                 onClick={handleMarkAllAsRead}
               >
                 Označi sve kao pročitano

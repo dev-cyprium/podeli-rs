@@ -2,18 +2,13 @@ import Link from "next/link";
 import { Calendar, User } from "lucide-react";
 import type { BlogPostMeta } from "@/lib/blog";
 import { BlurImage } from "./BlurImage";
+import { DateDisplay } from "@/components/ui/date-display";
 
 interface BlogPostCardProps {
   post: BlogPostMeta;
 }
 
 export function BlogPostCard({ post }: BlogPostCardProps) {
-  const formattedDate = new Date(post.date).toLocaleDateString("sr-Latn-RS", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-
   return (
     <Link href={`/blog/${post.slug}`} className="group block">
       <article className="h-full rounded-2xl bg-card p-6 shadow-sm transition-shadow hover:shadow-md">
@@ -49,7 +44,7 @@ export function BlogPostCard({ post }: BlogPostCardProps) {
         <div className="mt-4 flex items-center gap-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <Calendar className="h-3.5 w-3.5" />
-            {formattedDate}
+            <DateDisplay value={post.date} format="long" />
           </span>
           <span className="flex items-center gap-1">
             <User className="h-3.5 w-3.5" />

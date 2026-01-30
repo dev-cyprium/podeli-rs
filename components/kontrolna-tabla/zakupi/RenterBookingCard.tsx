@@ -12,6 +12,7 @@ import {
 } from "@/components/booking/BookingStatusBadge";
 import { Calendar, MapPin, Star, X, MessageSquare } from "lucide-react";
 import { ReviewModal } from "./ReviewModal";
+import { DateDisplay } from "@/components/ui/date-display";
 import { getItemUrl } from "@/lib/utils";
 
 type BookingWithItem = Doc<"bookings"> & {
@@ -102,7 +103,8 @@ export function RenterBookingCard({ booking }: RenterBookingCardProps) {
             <div className="flex items-center gap-1.5 text-muted-foreground">
               <Calendar className="h-4 w-4" />
               <span>
-                {booking.startDate} - {booking.endDate}
+                <DateDisplay value={booking.startDate} format="short" /> –{" "}
+                <DateDisplay value={booking.endDate} format="short" />
               </span>
             </div>
             <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">

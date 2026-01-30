@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { DateDisplay } from "@/components/ui/date-display";
 import { toast } from "sonner";
 
 export function CouponsPanel() {
@@ -180,11 +181,7 @@ export function CouponsPanel() {
                         {c.durationMonths != null ? `${c.durationMonths} meseci` : "—"}
                       </td>
                       <td className="py-3 pr-4 text-muted-foreground">
-                        {new Date(c.validUntil).toLocaleDateString("sr-RS", {
-                          day: "2-digit",
-                          month: "2-digit",
-                          year: "numeric",
-                        })}
+                        <DateDisplay value={c.validUntil} format="numeric" />
                       </td>
                       <td className="py-3 pr-4">
                         {c.isUsed ? (

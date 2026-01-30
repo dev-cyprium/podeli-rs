@@ -14,6 +14,7 @@ import {
   PaymentStatusBadge,
 } from "@/components/booking/BookingStatusBadge";
 import { Calendar, Clock, Inbox, X, Check, CheckCircle } from "lucide-react";
+import { DateDisplay } from "@/components/ui/date-display";
 import { getItemUrl } from "@/lib/utils";
 
 type BookingWithItem = Doc<"bookings"> & {
@@ -227,7 +228,8 @@ function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
           <div className="flex items-center gap-1">
             <Calendar className="h-3 w-3" />
             <span>
-              {booking.startDate} - {booking.endDate}
+              <DateDisplay value={booking.startDate} format="short" /> –{" "}
+              <DateDisplay value={booking.endDate} format="short" />
             </span>
           </div>
           <span className="font-medium text-podeli-accent">
@@ -360,7 +362,8 @@ function PendingBookingCard({ booking }: { booking: BookingWithItem }) {
           <div className="flex items-center gap-1">
             <Calendar className="h-3 w-3" />
             <span>
-              {booking.startDate} - {booking.endDate}
+              <DateDisplay value={booking.startDate} format="short" /> –{" "}
+              <DateDisplay value={booking.endDate} format="short" />
             </span>
           </div>
           <span className="font-medium text-podeli-accent">

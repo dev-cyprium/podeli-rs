@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PodeliEmptyState } from "@/components/kontrolna-tabla/PodeliEmptyState";
+import { formatSerbianDate } from "@/lib/serbian-date";
 import { AlertTriangle } from "lucide-react";
 
 type DeliveryMethod = "licno" | "glovo" | "wolt" | "cargo";
@@ -29,7 +30,7 @@ function formatDelivery(method: string) {
 }
 
 function formatSlot(slot: { startDate: string; endDate: string }) {
-  return `${slot.startDate} – ${slot.endDate}`;
+  return `${formatSerbianDate(slot.startDate, "short")} – ${formatSerbianDate(slot.endDate, "short")}`;
 }
 
 export function ItemsList() {

@@ -8,8 +8,9 @@ import { DomacinBadge } from "@/components/DomacinBadge";
 import { ItemImageGallery } from "@/components/p/ItemImageGallery";
 import { BookingForm } from "@/components/p/BookingForm";
 import { ReviewsList } from "@/components/p/ReviewsList";
-import { ItemDetailHeader } from "@/components/p/ItemDetailHeader";
+import { NavBar } from "@/components/NavBar";
 import { Badge } from "@/components/ui/badge";
+import { DateDisplay } from "@/components/ui/date-display";
 import { Metadata } from "next";
 
 type UserSnapshot = {
@@ -68,7 +69,7 @@ export default async function ItemDetailPage({ params }: PageProps) {
   if (!item) {
     return (
       <div className="min-h-screen bg-podeli-light">
-        <ItemDetailHeader />
+        <NavBar />
         <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <div className="rounded-xl bg-card p-12 text-center shadow-sm">
             <h1 className="text-2xl font-bold text-podeli-dark">
@@ -116,7 +117,7 @@ export default async function ItemDetailPage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-podeli-light">
-      <ItemDetailHeader />
+      <NavBar />
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <Link
@@ -181,13 +182,20 @@ export default async function ItemDetailPage({ params }: PageProps) {
                     <Calendar className="h-4 w-4" />
                     Dostupnost
                   </h2>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Ovo prikazuje dostupnost{" "}
+                    <strong className="text-podeli-dark">bez trenutnih aktivnih rezervacija</strong>.
+                    Pogledajte <strong className="text-podeli-dark">kalendar</strong> ispod za
+                    rezervacije i više detalja.
+                  </p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {item.availabilitySlots.map((slot, index) => (
                       <span
                         key={index}
                         className="rounded-full bg-podeli-blue/10 px-3 py-1 text-sm text-podeli-blue"
                       >
-                        {slot.startDate} - {slot.endDate}
+                        <DateDisplay value={slot.startDate} format="short" /> –{" "}
+                        <DateDisplay value={slot.endDate} format="short" />
                       </span>
                     ))}
                   </div>

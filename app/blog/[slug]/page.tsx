@@ -3,9 +3,10 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { Calendar, User, ArrowLeft } from "lucide-react";
-import { Logo } from "@/components/Logo";
+import { NavBar } from "@/components/NavBar";
 import { mdxComponents } from "@/components/blog/MDXComponents";
 import { BlurImage } from "@/components/blog/BlurImage";
+import { DateDisplay } from "@/components/ui/date-display";
 import { getPostBySlug, getAllPostSlugs } from "@/lib/blog";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://podeli.rs";
@@ -77,12 +78,6 @@ export default async function BlogPostPage({ params }: PageProps) {
     notFound();
   }
 
-  const formattedDate = new Date(post.date).toLocaleDateString("sr-Latn-RS", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-
   // JSON-LD structured data
   const jsonLd = {
     "@context": "https://schema.org",
@@ -117,18 +112,7 @@ export default async function BlogPostPage({ params }: PageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <div className="min-h-screen bg-podeli-light text-podeli-dark">
-        <header className="border-b border-border bg-podeli-light/80 backdrop-blur-md">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-            <Logo href="/" height={32} />
-            <Link
-              href="/blog"
-              className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-podeli-accent"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Svi članci
-            </Link>
-          </div>
-        </header>
+        <NavBar />
 
         <main className="mx-auto max-w-4xl px-6 py-16 sm:py-20 lg:px-8">
           <article>
@@ -155,7 +139,7 @@ export default async function BlogPostPage({ params }: PageProps) {
               <div className="mt-6 flex items-center gap-4 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1.5">
                   <Calendar className="h-4 w-4" />
-                  {formattedDate}
+                  <DateDisplay value={post.date} format="long" />
                 </span>
                 <span className="flex items-center gap-1.5">
                   <User className="h-4 w-4" />

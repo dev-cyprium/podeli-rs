@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo } from "react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Star, MessageSquare } from "lucide-react";
+import { DateDisplay } from "@/components/ui/date-display";
 
 type UserSnapshot = {
   id: string;
@@ -32,14 +33,6 @@ function StarRating({ rating }: { rating: number }) {
       ))}
     </div>
   );
-}
-
-function formatDate(timestamp: number): string {
-  return new Date(timestamp).toLocaleDateString("sr-Latn-RS", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
 }
 
 export function ReviewsList({ itemId }: ReviewsListProps) {
@@ -131,7 +124,7 @@ export function ReviewsList({ itemId }: ReviewsListProps) {
                       : "Korisnik"}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {formatDate(review.createdAt)}
+                    <DateDisplay value={review.createdAt} format="long" />
                   </p>
                 </div>
               </div>
