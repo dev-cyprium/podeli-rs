@@ -20,6 +20,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     return [
       { url: `${SITE}/`, lastModified: new Date() },
       { url: `${SITE}/kako-funkcionise`, lastModified: new Date() },
+      { url: `${SITE}/terms-of-service`, lastModified: new Date() },
     ];
   }
 
@@ -52,6 +53,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Include your core pages too
     { url: `${SITE}/`, lastModified: now },
     { url: `${SITE}/kako-funkcionise`, lastModified: now },
+
+    // Legal
+    {
+      url: `${SITE}/terms-of-service`,
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.5,
+    },
 
     // Blog index
     {
