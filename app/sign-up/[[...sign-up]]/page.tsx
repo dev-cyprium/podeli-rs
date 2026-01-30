@@ -25,11 +25,7 @@ function SignUpContent() {
   return (
     <>
       <div id="clerk-captcha" />
-      <SignUp
-        signUpForceRedirectUrl="/"
-        signUpFallbackRedirectUrl="/"
-        signInForceRedirectUrl="/"
-      />
+      <SignUp />
     </>
   );
 }
