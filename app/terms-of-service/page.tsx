@@ -117,8 +117,10 @@ export default function TermsOfServicePage() {
               razumemo kako se platforma koristi i da donosimo odluke o
               razvoju. <strong>Ne prodajemo</strong>{" "}
               vaše podatke trećim stranama. Više o
-              privatnosti možete naći u našoj Politici privatnosti, kada bude
-              objavljena.
+              privatnosti možete naći u našoj{" "}
+              <Link href="/privacy-policy" className="text-podeli-accent hover:underline">
+                Politici privatnosti
+              </Link>.
             </p>
           </section>
 
