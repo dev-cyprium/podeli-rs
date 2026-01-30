@@ -169,7 +169,37 @@ export default function TermsOfServicePage() {
 
           <section>
             <h2 className="text-xl font-semibold text-podeli-dark sm:text-2xl">
-              9. Izmene uslova
+              9. Zabranjen sadržaj
+            </h2>
+            <p>
+              Na platformi je <strong>strogo zabranjeno</strong> objavljivanje, deljenje ili
+              promovisanje sledećeg sadržaja:
+            </p>
+            <ul className="mt-4 list-disc space-y-2 pl-6">
+              <li>
+                <strong>Seksualni sadržaj:</strong> pornografski materijali,
+                erotski sadržaj, predmeti namenjeni seksualnim aktivnostima ili
+                bilo koji sadržaj za odrasle
+              </li>
+              <li>
+                <strong>Nasilje i govor mržnje:</strong> sadržaj koji promoviše
+                nasilje, diskriminaciju ili mržnju prema bilo kojoj grupi
+              </li>
+              <li>
+                <strong>Ilegalni predmeti:</strong> droge, oružje, ukradena roba
+                ili bilo koji predmeti čija prodaja ili iznajmljivanje je
+                zakonom zabranjena
+              </li>
+            </ul>
+            <p className="mt-4">
+              Kršenje ove odredbe rezultiraće <strong>trenutnim ukidanjem naloga</strong>{" "}
+              bez prethodne najave i mogućim prijavljivanjem nadležnim organima.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-semibold text-podeli-dark sm:text-2xl">
+              10. Izmene uslova
             </h2>
             <p>
               Možemo povremeno menjati ove uslove. O značajnim izmenama
@@ -183,7 +213,7 @@ export default function TermsOfServicePage() {
 
           <section>
             <h2 className="text-xl font-semibold text-podeli-dark sm:text-2xl">
-              10. Kontakt
+              11. Kontakt
             </h2>
             <p>
               Za pitanja u vezi sa uslovima korišćenja možete nas kontaktirati{" "}
