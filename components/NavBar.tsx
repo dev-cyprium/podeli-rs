@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { NavLinks } from "./NavLinks";
+import { NotificationBell } from "./NotificationBell";
 import { SignInButton } from "./SignInButton";
 import { UserMenu } from "./UserMenu";
 import { Logo } from "./Logo";
@@ -32,7 +33,14 @@ export async function NavBar() {
           >
             Ponuda
           </a>
-          {isSignedIn ? <UserMenu /> : <SignInButton />}
+          {isSignedIn ? (
+            <div className="flex items-center gap-2">
+              <NotificationBell />
+              <UserMenu />
+            </div>
+          ) : (
+            <SignInButton />
+          )}
         </div>
         <NavLinks isSignedIn={isSignedIn} />
       </div>

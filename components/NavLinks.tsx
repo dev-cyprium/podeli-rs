@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
+import { NotificationBell } from "./NotificationBell";
 import { SignInButton } from "./SignInButton";
 import { UserMenu } from "./UserMenu";
 import { Button } from "@/components/ui/button";
@@ -61,7 +62,12 @@ export function NavLinks({ isSignedIn }: NavLinksProps) {
             >
               Planovi
             </Link>
-            <div className="pt-2">
+            <div className="flex flex-col gap-2 pt-2">
+              {isSignedIn && (
+                <div className="flex items-center gap-2">
+                  <NotificationBell />
+                </div>
+              )}
               {isSignedIn ? <UserMenu /> : <SignInButton />}
             </div>
           </div>

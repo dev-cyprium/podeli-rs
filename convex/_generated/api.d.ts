@@ -13,6 +13,7 @@ import type * as bookings from "../bookings.js";
 import type * as categories from "../categories.js";
 import type * as clerk from "../clerk.js";
 import type * as items from "../items.js";
+import type * as notifications from "../notifications.js";
 import type * as plans from "../plans.js";
 import type * as profiles from "../profiles.js";
 import type * as promotionalCodes from "../promotionalCodes.js";
@@ -30,6 +31,7 @@ declare const fullApi: ApiFromModules<{
   categories: typeof categories;
   clerk: typeof clerk;
   items: typeof items;
+  notifications: typeof notifications;
   plans: typeof plans;
   profiles: typeof profiles;
   promotionalCodes: typeof promotionalCodes;

@@ -1,0 +1,142 @@
+"use client";
+
+import { useUser } from "@clerk/nextjs";
+import { Bell } from "lucide-react";
+import { useState } from "react";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+function formatRelativeTime(createdAt: number): string {
+  const now = Date.now();
+  const diffMs = now - createdAt;
+  const diffMins = Math.floor(diffMs / 60_000);
+  const diffHours = Math.floor(diffMs / 3_600_000);
+  const diffDays = Math.floor(diffMs / 86_400_000);
+
+  if (diffMins < 1) return "upravo";
+  if (diffMins < 60) return `pre ${diffMins} min`;
+  if (diffHours < 24) return `pre ${diffHours} h`;
+  if (diffDays < 2) return "juče";
+  if (diffDays < 7) return `pre ${diffDays} dana`;
+  return new Date(createdAt).toLocaleDateString("sr-RS", {
+    day: "numeric",
+    month: "short",
+  });
+}
+
+export function NotificationBell() {
+  const { isSignedIn } = useUser();
+  const notifications = useQuery(api.notifications.listForUser);
+  const markAsRead = useMutation(api.notifications.markAsRead);
+  const markAllAsRead = useMutation(api.notifications.markAllAsRead);
+  const [open, setOpen] = useState(false);
+
+  if (!isSignedIn) {
+    return null;
+  }
+
+  const unreadCount =
+    notifications?.filter((n) => !n.read).length ?? 0;
+
+  const handleMarkAsRead = (id: Id<"notifications">) => {
+    markAsRead({ notificationId: id });
+  };
+
+  const handleMarkAllAsRead = () => {
+    markAllAsRead({});
+    setOpen(false);
+  };
+
+  return (
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative h-10 w-10 min-h-[44px] min-w-[44px] touch-manipulation text-[#02020a] hover:bg-[#f0a202]/10 hover:text-[#f0a202]"
+          aria-label="Obaveštenja"
+        >
+          <Bell className="h-5 w-5" aria-hidden="true" />
+          {unreadCount > 0 && (
+            <span
+              className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#dd1c1a] px-1 text-[10px] font-medium text-white"
+              aria-hidden="true"
+            >
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        side="bottom"
+        sideOffset={8}
+        className="max-h-[min(70vh,24rem)] w-[min(90vw,22rem)] overflow-hidden rounded-md border border-border bg-[#f8f7ff] p-0 text-[#02020a] shadow-md"
+      >
+        <div className="border-b border-border px-3 py-2">
+          <h3 className="text-sm font-semibold">Obaveštenja</h3>
+        </div>
+        <div className="max-h-[min(60vh,18rem)] overflow-y-auto">
+          {notifications === undefined ? (
+            <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+              Učitavanje…
+            </div>
+          ) : notifications.length === 0 ? (
+            <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+              Nema novih obaveštenja
+            </div>
+          ) : (
+            <ul className="py-1">
+              {notifications.map((notification) => (
+                <li key={notification._id}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleMarkAsRead(notification._id);
+                      setOpen(false);
+                    }}
+                    className={cn(
+                      "flex w-full flex-col gap-0.5 px-3 py-3 text-left text-sm transition-colors min-h-[44px] touch-manipulation",
+                      "hover:bg-[#f0a202]/10 focus:bg-[#f0a202]/10 focus:outline-none",
+                      !notification.read && "bg-[#f0a202]/5"
+                    )}
+                  >
+                    <span className="text-[#02020a]">
+                      {notification.message}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {formatRelativeTime(notification.createdAt)}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        {notifications && notifications.length > 0 && unreadCount > 0 && (
+          <>
+            <div className="border-t border-border" />
+            <div className="p-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-center text-[#006992] hover:bg-[#006992]/10 hover:text-[#006992]"
+                onClick={handleMarkAllAsRead}
+              >
+                Označi sve kao pročitano
+              </Button>
+            </div>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}

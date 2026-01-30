@@ -1,6 +1,7 @@
 "use client";
 
 import { Menu } from "lucide-react";
+import { NotificationBell } from "@/components/NotificationBell";
 import { UserMenu } from "@/components/UserMenu";
 import { cn } from "@/lib/utils";
 import { DashboardBreadcrumbs } from "./DashboardBreadcrumbs";
@@ -77,6 +78,7 @@ export function DashboardHeader({
               </Button>
             </div>
           </div>
+          <NotificationBell />
           <UserMenu />
         </div>
       </div>

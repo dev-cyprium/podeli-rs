@@ -1,6 +1,7 @@
 "use client";
 
 import { Menu } from "lucide-react";
+import { NotificationBell } from "@/components/NotificationBell";
 import { UserMenu } from "@/components/UserMenu";
 import { DashboardBreadcrumbs } from "@/components/kontrolna-tabla/DashboardBreadcrumbs";
 import { Button } from "@/components/ui/button";
@@ -34,7 +35,10 @@ export function SuperAdminHeader({ onMenuClick }: SuperAdminHeaderProps) {
       )}
       <div className="flex flex-1 items-center justify-between gap-x-4 self-stretch lg:gap-x-6">
         <DashboardBreadcrumbs items={breadcrumbs} />
-        <UserMenu />
+        <div className="flex items-center gap-2">
+          <NotificationBell />
+          <UserMenu />
+        </div>
       </div>
     </header>
   );

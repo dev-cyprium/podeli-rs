@@ -129,6 +129,7 @@ export default defineSchema({
   notifications: defineTable({
     userId: v.string(),
     message: v.string(),
+    read: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
