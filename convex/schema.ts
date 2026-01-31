@@ -198,6 +198,14 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_created_at", ["createdAt"]),
 
+  notificationPreferences: defineTable({
+    userId: v.string(),
+    emailOnBookingRequest: v.boolean(),
+    emailOnNewMessage: v.boolean(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_userId", ["userId"]),
+
   categories: defineTable({
     name: v.string(),
     order: v.optional(v.number()),

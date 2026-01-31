@@ -1,7 +1,7 @@
 "use client";
 
 import { useUser, useClerk } from "@clerk/nextjs";
-import { LogOut, LayoutDashboard, ShieldCheck, UserCog } from "lucide-react";
+import { LogOut, LayoutDashboard, ShieldCheck, UserCog, Bell } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -97,6 +97,12 @@ export function UserMenu() {
           <Link href="/kontrolna-tabla/profil" className="flex items-center gap-2 cursor-pointer">
             <UserCog className="h-4 w-4" />
             <span>Podešavanja profila</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/kontrolna-tabla/obavestenja" className="flex items-center gap-2 cursor-pointer">
+            <Bell className="h-4 w-4" />
+            <span>Obaveštenja</span>
           </Link>
         </DropdownMenuItem>
         {isSuperAdmin === true && (

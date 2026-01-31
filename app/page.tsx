@@ -427,7 +427,7 @@ export default async function Home() {
             <Link href="/terms-of-service" className="hover:text-podeli-dark">
               Uslovi korišćenja
             </Link>
-            <a href="#" className="hover:text-podeli-dark">
+            <a href="mailto:kontakt@podeli.rs" className="hover:text-podeli-dark">
               Kontakt
             </a>
             <a

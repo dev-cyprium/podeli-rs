@@ -1,5 +1,6 @@
 import { v, ConvexError } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { requireIdentity } from "@/lib/convex-auth";
 import { parseDateString } from "@/lib/date-utils";
 
@@ -110,6 +111,37 @@ export const createBooking = mutation({
       createdAt: now,
       updatedAt: now,
     });
+
+    // Check if owner wants email notifications and send email
+    const ownerPreferences = await ctx.db
+      .query("notificationPreferences")
+      .withIndex("by_userId", (q) => q.eq("userId", item.ownerId))
+      .first();
+
+    if (ownerPreferences?.emailOnBookingRequest) {
+      const ownerProfile = await ctx.db
+        .query("profiles")
+        .withIndex("by_userId", (q) => q.eq("userId", item.ownerId))
+        .first();
+
+      const renterProfile = await ctx.db
+        .query("profiles")
+        .withIndex("by_userId", (q) => q.eq("userId", renterId))
+        .first();
+
+      if (ownerProfile?.email) {
+        await ctx.scheduler.runAfter(0, internal.emails.sendBookingRequestEmail, {
+          to: ownerProfile.email,
+          ownerName: ownerProfile.firstName ?? "Korisniče",
+          renterName: renterProfile?.firstName ?? "Korisnik",
+          itemTitle: item.title,
+          startDate: args.startDate,
+          endDate: args.endDate,
+          totalPrice,
+          actionUrl: `https://podeli.rs/kontrolna-tabla/predmeti`,
+        });
+      }
+    }
 
     return bookingId;
   },

@@ -1,5 +1,6 @@
 import { v, ConvexError } from "convex/values";
 import { mutation, query, internalQuery } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { requireIdentity } from "@/lib/convex-auth";
 
 // Statuses that allow messaging
@@ -98,6 +99,30 @@ export const sendMessage = mutation({
         createdAt: now,
         updatedAt: now,
       });
+
+      // Check if recipient wants email notifications for new messages
+      const recipientPreferences = await ctx.db
+        .query("notificationPreferences")
+        .withIndex("by_userId", (q) => q.eq("userId", recipientId))
+        .first();
+
+      if (recipientPreferences?.emailOnNewMessage) {
+        const recipientProfile = await ctx.db
+          .query("profiles")
+          .withIndex("by_userId", (q) => q.eq("userId", recipientId))
+          .first();
+
+        if (recipientProfile?.email) {
+          await ctx.scheduler.runAfter(0, internal.emails.sendNewMessageEmail, {
+            to: recipientProfile.email,
+            recipientName: recipientProfile.firstName ?? "Korisniče",
+            senderName,
+            itemTitle: item?.title ?? "predmet",
+            messagePreview: content,
+            actionUrl: `https://podeli.rs${chatLink}`,
+          });
+        }
+      }
     }
 
     return messageId;
