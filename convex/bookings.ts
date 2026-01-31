@@ -428,14 +428,16 @@ export const agreeToBooking = mutation({
       });
     }
 
-    // Check if both have now agreed
+    // Check if both have now agreed (re-read fresh state)
     const updatedBooking = await ctx.db.get(args.id);
-    const bothAgreed =
-      (isRenter ? true : updatedBooking?.renterAgreed) &&
-      (isOwner ? true : updatedBooking?.ownerAgreed);
+    
+    // Both must have agreed AND status must still be "confirmed" to transition
+    // This prevents race conditions where both parties transition simultaneously
+    const bothAgreed = updatedBooking?.renterAgreed && updatedBooking?.ownerAgreed;
+    const shouldTransition = bothAgreed && updatedBooking?.status === "confirmed";
 
-    if (bothAgreed) {
-      // Transition to agreed status
+    if (shouldTransition) {
+      // Transition to agreed status only if still in confirmed state
       await ctx.db.patch(args.id, {
         status: "agreed",
         agreedAt: now,
