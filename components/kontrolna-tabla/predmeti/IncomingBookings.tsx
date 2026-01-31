@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { SignedIn, SignedOut } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
@@ -341,13 +342,15 @@ function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
     <div className="flex gap-3 rounded-lg border border-border bg-card p-3">
       <Link
         href={itemUrl}
-        className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-muted"
+        className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted"
       >
         {imageUrl ? (
-          <img
+          <Image
             src={imageUrl}
             alt={booking.item?.title ?? "Predmet"}
-            className="h-full w-full object-cover"
+            fill
+            sizes="64px"
+            className="object-cover"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
@@ -382,12 +385,14 @@ function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
 
         {/* Renter info */}
         <div className="mt-2 flex items-center gap-2 text-xs">
-          <div className="flex h-5 w-5 items-center justify-center overflow-hidden rounded-full bg-muted">
+          <div className="relative flex h-5 w-5 items-center justify-center overflow-hidden rounded-full bg-muted">
             {booking.renter?.imageUrl ? (
-              <img
+              <Image
                 src={booking.renter.imageUrl}
                 alt={booking.renter.firstName ?? "Zakupac"}
-                className="h-full w-full object-cover"
+                fill
+                sizes="20px"
+                className="object-cover"
               />
             ) : (
               <User className="h-2.5 w-2.5 text-muted-foreground" />
@@ -555,6 +560,7 @@ function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
             </p>
             <div className="mb-3 flex gap-1">
               {[1, 2, 3, 4, 5].map((star) => (
+                // eslint-disable-next-line react/forbid-elements
                 <button
                   key={star}
                   type="button"
@@ -652,13 +658,15 @@ function PendingBookingCard({ booking }: { booking: BookingWithItem }) {
     <div className="flex gap-3 rounded-lg border border-podeli-accent/30 bg-podeli-accent/10 p-3">
       <Link
         href={itemUrl}
-        className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-muted"
+        className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-muted"
       >
         {imageUrl ? (
-          <img
+          <Image
             src={imageUrl}
             alt={booking.item?.title ?? "Predmet"}
-            className="h-full w-full object-cover"
+            fill
+            sizes="64px"
+            className="object-cover"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
@@ -693,12 +701,14 @@ function PendingBookingCard({ booking }: { booking: BookingWithItem }) {
 
         {/* Renter info */}
         <div className="mt-2 flex items-center gap-2 rounded-md bg-white/50 px-2 py-1.5">
-          <div className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-muted">
+          <div className="relative flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-muted">
             {booking.renter?.imageUrl ? (
-              <img
+              <Image
                 src={booking.renter.imageUrl}
                 alt={booking.renter.firstName ?? "Zakupac"}
-                className="h-full w-full object-cover"
+                fill
+                sizes="24px"
+                className="object-cover"
               />
             ) : (
               <User className="h-3 w-3 text-muted-foreground" />

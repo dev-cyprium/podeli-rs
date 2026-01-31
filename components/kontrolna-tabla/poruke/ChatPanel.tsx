@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
@@ -105,14 +106,14 @@ export function ChatPanel({ bookingId }: ChatPanelProps) {
     <Card className="flex h-[600px] flex-col overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-3 border-b border-border p-4">
-        <Button variant="ghost" size="icon" asChild className="flex-shrink-0">
+        <Button variant="ghost" size="icon" asChild className="shrink-0">
           <Link href="/kontrolna-tabla/poruke">
             <ArrowLeft className="h-5 w-5" />
           </Link>
         </Button>
 
         <div className="flex flex-1 items-center gap-3 overflow-hidden">
-          <Link href={itemUrl} className="flex-shrink-0">
+          <Link href={itemUrl} className="shrink-0">
             <ItemThumbnail images={item?.images ?? []} />
           </Link>
 
@@ -124,7 +125,7 @@ export function ChatPanel({ bookingId }: ChatPanelProps) {
               >
                 {item?.title ?? "Predmet"}
               </Link>
-              <ExternalLink className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
+              <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground" />
             </div>
             <p className="text-xs text-muted-foreground">
               {isOwner ? "Zakupac" : "Vlasnik"}:{" "}
@@ -238,12 +239,14 @@ function ItemThumbnail({ images }: { images: Id<"_storage">[] }) {
   );
 
   return (
-    <div className="h-10 w-10 overflow-hidden rounded-lg bg-muted">
+    <div className="relative h-10 w-10 overflow-hidden rounded-lg bg-muted">
       {imageUrl ? (
-        <img
+        <Image
           src={imageUrl}
           alt="Predmet"
-          className="h-full w-full object-cover"
+          fill
+          sizes="40px"
+          className="object-cover"
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">

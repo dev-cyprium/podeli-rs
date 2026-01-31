@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -101,13 +102,15 @@ export function RenterBookingCard({ booking }: RenterBookingCardProps) {
       <div className="flex gap-4 rounded-xl border border-border bg-card p-4">
         <Link
           href={itemUrl}
-          className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-muted"
+          className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-muted"
         >
           {imageUrl ? (
-            <img
+            <Image
               src={imageUrl}
               alt={booking.item?.title ?? "Predmet"}
-              className="h-full w-full object-cover"
+              fill
+              sizes="96px"
+              className="object-cover"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
