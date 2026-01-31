@@ -222,15 +222,15 @@ export const markMessagesAsRead = mutation({
       .withIndex("by_booking", (q) => q.eq("bookingId", args.bookingId))
       .collect();
 
-    let markedCount = 0;
-    for (const message of messages) {
-      if (message.senderId === otherPartyId && !message.read) {
-        await ctx.db.patch(message._id, { read: true });
-        markedCount++;
-      }
-    }
+    const unreadMessages = messages.filter(
+      (m) => m.senderId === otherPartyId && !m.read
+    );
 
-    return markedCount;
+    await Promise.all(
+      unreadMessages.map((m) => ctx.db.patch(m._id, { read: true }))
+    );
+
+    return unreadMessages.length;
   },
 });
 

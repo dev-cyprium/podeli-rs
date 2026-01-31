@@ -17,6 +17,7 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
+import { parseDateString, formatDateString } from "@/lib/date-utils";
 
 type DeliveryMethod = "licno" | "glovo" | "wolt" | "cargo";
 
@@ -29,14 +30,6 @@ const DELIVERY_OPTIONS: { value: DeliveryMethod; label: string }[] = [
 
 interface BookingFormProps {
   item: Doc<"items">;
-}
-
-function formatDate(date: Date): string {
-  return date.toISOString().split("T")[0];
-}
-
-function parseDate(dateStr: string): Date {
-  return new Date(dateStr + "T00:00:00");
 }
 
 export function BookingForm({ item }: BookingFormProps) {
@@ -60,8 +53,8 @@ export function BookingForm({ item }: BookingFormProps) {
 
     const dates: Date[] = [];
     for (const booking of bookedDates) {
-      const start = parseDate(booking.startDate);
-      const end = parseDate(booking.endDate);
+      const start = parseDateString(booking.startDate);
+      const end = parseDateString(booking.endDate);
       const current = new Date(start);
 
       while (current <= end) {
@@ -94,8 +87,8 @@ export function BookingForm({ item }: BookingFormProps) {
     try {
       await createBooking({
         itemId: item._id,
-        startDate: formatDate(dateRange.from),
-        endDate: formatDate(dateRange.to),
+        startDate: formatDateString(dateRange.from),
+        endDate: formatDateString(dateRange.to),
         deliveryMethod,
       });
       setIsComplete(true);

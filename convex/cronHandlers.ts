@@ -1,6 +1,7 @@
 import { internalMutation, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { requireIdentity } from "@/lib/convex-auth";
+import { parseDateString } from "@/lib/date-utils";
 
 const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
 const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
@@ -48,7 +49,7 @@ export const checkReturnReminders = internalMutation({
       }
 
       // Parse end date (return day starts at midnight) and check if within 24 hours
-      const returnDayStart = new Date(booking.endDate + "T00:00:00");
+      const returnDayStart = parseDateString(booking.endDate);
       const returnDayTime = returnDayStart.getTime();
       const timeUntilReturnDay = returnDayTime - now;
 
@@ -182,7 +183,7 @@ export const triggerReturnReminders = mutation({
       }
 
       // Parse end date (return day starts at midnight) and check if within 24 hours
-      const returnDayStart = new Date(booking.endDate + "T00:00:00");
+      const returnDayStart = parseDateString(booking.endDate);
       const returnDayTime = returnDayStart.getTime();
       const timeUntilReturnDay = returnDayTime - now;
       const hoursUntil = timeUntilReturnDay / (60 * 60 * 1000);

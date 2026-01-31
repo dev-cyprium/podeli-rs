@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { DateDisplay } from "@/components/ui/date-display";
 import { getItemUrl } from "@/lib/utils";
+import { parseDateString } from "@/lib/date-utils";
 
 type BookingWithItem = Doc<"bookings"> & {
   item: Doc<"items"> | null;
@@ -234,7 +235,7 @@ function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
   // Can mark as returned on the last day (end date) or after
   // Use time override if set (for debugging), otherwise use current time
   const currentTime = timeOverride?.timestamp ? new Date(timeOverride.timestamp) : new Date();
-  const isReturnDay = new Date(booking.endDate + "T00:00:00") <= currentTime;
+  const isReturnDay = parseDateString(booking.endDate) <= currentTime;
   const canMarkReturned = booking.status === "isporucen" && isReturnDay;
 
   const canCancel =

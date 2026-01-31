@@ -1,10 +1,7 @@
 import { v, ConvexError } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireIdentity } from "@/lib/convex-auth";
-
-function parseDate(dateStr: string): Date {
-  return new Date(dateStr + "T00:00:00");
-}
+import { parseDateString } from "@/lib/date-utils";
 
 function datesOverlap(
   start1: string,
@@ -12,16 +9,16 @@ function datesOverlap(
   start2: string,
   end2: string
 ): boolean {
-  const s1 = parseDate(start1);
-  const e1 = parseDate(end1);
-  const s2 = parseDate(start2);
-  const e2 = parseDate(end2);
+  const s1 = parseDateString(start1);
+  const e1 = parseDateString(end1);
+  const s2 = parseDateString(start2);
+  const e2 = parseDateString(end2);
   return s1 <= e2 && s2 <= e1;
 }
 
 function calculateDays(startDate: string, endDate: string): number {
-  const start = parseDate(startDate);
-  const end = parseDate(endDate);
+  const start = parseDateString(startDate);
+  const end = parseDateString(endDate);
   const diffTime = end.getTime() - start.getTime();
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 }
