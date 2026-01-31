@@ -55,6 +55,10 @@ function ItemsListContent() {
   const items = useQuery(api.items.listMine, {});
   const removeItem = useMutation(api.items.remove);
   const limits = useQuery(api.profiles.getMyPlanLimits);
+  const profile = useQuery(api.profiles.getMyProfile);
+
+  const preferredContactTypes = profile?.preferredContactTypes ?? [];
+  const hasContactPrefs = preferredContactTypes.length > 0;
 
   if (!items) {
     return (
@@ -99,6 +103,16 @@ function ItemsListContent() {
               <Link href="/planovi">Nadogradite</Link>
             </Button>
           </div>
+        ) : !hasContactPrefs ? (
+          <Button
+            disabled
+            size="sm"
+            variant="outline"
+            className="cursor-not-allowed opacity-60"
+            title="Postavite način kontakta gore da biste dodali predmet"
+          >
+            Novi predmet
+          </Button>
         ) : (
           <Button asChild className="bg-podeli-accent text-podeli-dark hover:bg-podeli-accent/90">
             <Link href="/kontrolna-tabla/predmeti/novi">Novi predmet</Link>
@@ -110,6 +124,7 @@ function ItemsListContent() {
           <PodeliEmptyState
             onCreate={() => router.push("/kontrolna-tabla/predmeti/novi")}
             className="min-h-[260px]"
+            createDisabled={!hasContactPrefs}
           />
         ) : (
           <div className="space-y-4">

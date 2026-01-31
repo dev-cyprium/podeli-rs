@@ -3,24 +3,40 @@
 import { Menu } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 import { UserMenu } from "@/components/UserMenu";
+import { TimeTravelWidget } from "@/components/debug/TimeTravelWidget";
 import { cn } from "@/lib/utils";
 import { DashboardBreadcrumbs } from "./DashboardBreadcrumbs";
 import { Button } from "@/components/ui/button";
 
+// Context: podeli (owner/sharing) or zakupi (renter)
+type Context = "podeli" | "zakupi";
+
+// Section within each context
+type Section = "main" | "poruke" | "ocene" | "istorija";
+
 interface DashboardHeaderProps {
-  mode: "podeli" | "zakupi";
-  onModeChange: (mode: "podeli" | "zakupi") => void;
+  context: Context;
+  section: Section;
+  onContextChange: (context: Context) => void;
   onMenuClick?: () => void;
 }
 
+const sectionLabels: Record<Section, Record<Context, string>> = {
+  main: { podeli: "Predmeti", zakupi: "Zakupi" },
+  poruke: { podeli: "Poruke", zakupi: "Poruke" },
+  ocene: { podeli: "Ocene predmeta", zakupi: "Moje ocene" },
+  istorija: { podeli: "Istorija", zakupi: "Istorija" },
+};
+
 export function DashboardHeader({
-  mode,
-  onModeChange,
+  context,
+  section,
+  onContextChange,
   onMenuClick,
 }: DashboardHeaderProps) {
   const breadcrumbs = [
     "Kontrolna tabla",
-    mode === "podeli" ? "Predmeti" : "Zakupi",
+    sectionLabels[section][context],
   ];
 
   return (
@@ -50,14 +66,15 @@ export function DashboardHeader({
         <DashboardBreadcrumbs items={breadcrumbs} />
 
         <div className="flex items-center gap-2 sm:gap-4">
+          <TimeTravelWidget />
           <div className="rounded-full bg-muted p-1">
             <div className="flex">
               <Button
                 variant="ghost"
-                onClick={() => onModeChange("podeli")}
+                onClick={() => onContextChange("podeli")}
                 className={cn(
                   "rounded-full px-3 py-1.5 text-xs font-medium transition-all sm:px-4 sm:py-2 sm:text-sm",
-                  mode === "podeli"
+                  context === "podeli"
                     ? "bg-podeli-accent text-podeli-dark shadow-sm hover:bg-podeli-accent"
                     : "text-muted-foreground hover:text-podeli-dark"
                 )}
@@ -66,10 +83,10 @@ export function DashboardHeader({
               </Button>
               <Button
                 variant="ghost"
-                onClick={() => onModeChange("zakupi")}
+                onClick={() => onContextChange("zakupi")}
                 className={cn(
                   "rounded-full px-3 py-1.5 text-xs font-medium transition-all sm:px-4 sm:py-2 sm:text-sm",
-                  mode === "zakupi"
+                  context === "zakupi"
                     ? "bg-podeli-accent text-podeli-dark shadow-sm hover:bg-podeli-accent"
                     : "text-muted-foreground hover:text-podeli-dark"
                 )}

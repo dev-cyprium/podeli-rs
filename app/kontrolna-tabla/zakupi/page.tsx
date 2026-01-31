@@ -3,7 +3,7 @@ import { RenterBookingsList } from "@/components/kontrolna-tabla/zakupi/RenterBo
 
 export default function ZakupiPage() {
   return (
-    <DashboardShell mode="zakupi">
+    <DashboardShell context="zakupi" section="main">
       <RenterBookingsList />
     </DashboardShell>
   );

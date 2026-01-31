@@ -5,26 +5,29 @@ import { useRouter } from "next/navigation";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardSidebar } from "./DashboardSidebar";
-
 import { BackgroundPattern } from "./BackgroundPattern";
 
+// Context: podeli (owner/sharing) or zakupi (renter)
+type Context = "podeli" | "zakupi";
+
+// Section within each context
+type Section = "main" | "poruke" | "ocene" | "istorija";
+
 interface DashboardShellProps {
-  mode: "podeli" | "zakupi";
+  context: Context;
+  section: Section;
   children: React.ReactNode;
 }
 
-export function DashboardShell({ mode, children }: DashboardShellProps) {
+export function DashboardShell({ context, section, children }: DashboardShellProps) {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  function handleModeChange(nextMode: "podeli" | "zakupi") {
-    if (nextMode === "podeli") {
+  function handleContextChange(nextContext: Context) {
+    if (nextContext === "podeli") {
       router.push("/kontrolna-tabla/predmeti");
-      return;
-    }
-    if (nextMode === "zakupi") {
+    } else {
       router.push("/kontrolna-tabla/zakupi");
-      return;
     }
   }
 
@@ -39,11 +42,8 @@ export function DashboardShell({ mode, children }: DashboardShellProps) {
           accessibleTitle="Navigacija"
         >
           <DashboardSidebar
-            mode={mode}
-            onModeChange={(nextMode) => {
-              handleModeChange(nextMode);
-              setSidebarOpen(false);
-            }}
+            context={context}
+            section={section}
             onResetMode={() => {
               router.push("/kontrolna-tabla");
               setSidebarOpen(false);
@@ -56,8 +56,8 @@ export function DashboardShell({ mode, children }: DashboardShellProps) {
       {/* Desktop static sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-64 lg:flex-col">
         <DashboardSidebar
-          mode={mode}
-          onModeChange={handleModeChange}
+          context={context}
+          section={section}
           onResetMode={() => router.push("/kontrolna-tabla")}
         />
       </div>
@@ -65,8 +65,9 @@ export function DashboardShell({ mode, children }: DashboardShellProps) {
       {/* Main content area */}
       <div className="lg:pl-64">
         <DashboardHeader
-          mode={mode}
-          onModeChange={handleModeChange}
+          context={context}
+          section={section}
+          onContextChange={handleContextChange}
           onMenuClick={() => setSidebarOpen(true)}
         />
         <main className="px-4 py-6 sm:px-6 sm:py-8">{children}</main>

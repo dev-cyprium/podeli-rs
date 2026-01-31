@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useMemo, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { SignedIn, SignedOut } from "@clerk/nextjs";
@@ -19,11 +19,25 @@ function NoviPredmetContent() {
   const [pageError, setPageError] = useState<string | null>(null);
 
   const itemId = useMemo(() => searchParams.get("id"), [searchParams]);
+  const profile = useQuery(api.profiles.getMyProfile);
   const item = useQuery(
     api.items.getById,
     itemId ? { id: itemId as Id<"items"> } : "skip"
   );
   const limits = useQuery(api.profiles.getMyPlanLimits);
+
+  const preferredContactTypes = profile?.preferredContactTypes ?? [];
+
+  // Redirect to predmeti to configure contact prefs if creating new without them
+  useEffect(() => {
+    if (
+      !itemId &&
+      profile !== undefined &&
+      (!preferredContactTypes || preferredContactTypes.length === 0)
+    ) {
+      router.replace("/kontrolna-tabla/predmeti#contact-prefs");
+    }
+  }, [itemId, profile, preferredContactTypes, router]);
 
   const createItem = useMutation(api.items.create);
   const updateItem = useMutation(api.items.update);
@@ -48,7 +62,7 @@ function NoviPredmetContent() {
   }
 
   return (
-    <DashboardShell mode="podeli">
+    <DashboardShell context="podeli" section="main">
       <Card>
         <CardHeader>
           <CardTitle>
@@ -67,7 +81,13 @@ function NoviPredmetContent() {
             </div>
           </SignedOut>
           <SignedIn>
-            {atLimit ? (
+            {!itemId &&
+            profile !== undefined &&
+            preferredContactTypes.length === 0 ? (
+              <div className="py-10 text-center text-sm text-muted-foreground">
+                Preusmeravanje na podešavanje kontakta...
+              </div>
+            ) : atLimit ? (
               <div className="py-10 text-center">
                 <AlertTriangle className="mx-auto h-10 w-10 text-[#f0a202]" />
                 <h3 className="mt-4 text-lg font-semibold text-[#02020a]">
@@ -102,6 +122,7 @@ function NoviPredmetContent() {
                   onSave={handleSave}
                   onCancel={() => router.push("/kontrolna-tabla/predmeti")}
                   planLimits={limits ?? undefined}
+                  preferredContactTypes={preferredContactTypes}
                 />
               </>
             )}
@@ -116,7 +137,7 @@ export default function NoviPredmetPage() {
   return (
     <Suspense
       fallback={
-        <DashboardShell mode="podeli">
+        <DashboardShell context="podeli" section="main">
           <Card>
             <CardContent className="py-10 text-center text-sm text-muted-foreground">
               Učitavanje forme...

@@ -9,16 +9,37 @@ import { api } from "@/convex/_generated/api";
 import { Doc, Id } from "@/convex/_generated/dataModel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { BookingStatusBadge } from "@/components/booking/BookingStatusBadge";
+import { AgreementStatus } from "@/components/booking/AgreementStatus";
 import {
-  BookingStatusBadge,
-  PaymentStatusBadge,
-} from "@/components/booking/BookingStatusBadge";
-import { Calendar, Clock, Inbox, X, Check, CheckCircle } from "lucide-react";
+  Calendar,
+  Clock,
+  Inbox,
+  X,
+  Check,
+  MessageSquare,
+  Package,
+  Truck,
+  RotateCcw,
+  Handshake,
+  Star,
+  User,
+} from "lucide-react";
 import { DateDisplay } from "@/components/ui/date-display";
 import { getItemUrl } from "@/lib/utils";
 
 type BookingWithItem = Doc<"bookings"> & {
   item: Doc<"items"> | null;
+  renter?: {
+    firstName?: string;
+    lastName?: string;
+    imageUrl?: string;
+  } | null;
+  renterRating?: {
+    average: number;
+    count: number;
+  } | null;
+  renterCompletedRentals?: number;
 };
 
 export function IncomingBookings() {
@@ -51,10 +72,14 @@ function IncomingBookingsContent() {
 
   const pendingBookings = bookings.filter((b) => b.status === "pending");
   const activeBookings = bookings.filter(
-    (b) => b.status === "confirmed" || b.status === "active"
+    (b) =>
+      b.status === "confirmed" ||
+      b.status === "agreed" ||
+      b.status === "nije_isporucen" ||
+      b.status === "isporucen"
   );
   const completedBookings = bookings.filter(
-    (b) => b.status === "completed" || b.status === "cancelled"
+    (b) => b.status === "vracen" || b.status === "cancelled"
   );
 
   return (
@@ -109,7 +134,7 @@ function IncomingBookingsContent() {
             {activeBookings.length > 0 && (
               <div>
                 <h3 className="mb-3 text-sm font-medium text-muted-foreground">
-                  Aktivne i potvrđene ({activeBookings.length})
+                  Aktivne ({activeBookings.length})
                 </h3>
                 <div className="space-y-3">
                   <AnimatePresence mode="popLayout">
@@ -155,8 +180,32 @@ function IncomingBookingsContent() {
 
 function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showRatingForm, setShowRatingForm] = useState(false);
+  const [selectedRating, setSelectedRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false);
 
-  const updateStatus = useMutation(api.bookings.updateBookingStatus);
+  const agreeToBooking = useMutation(api.bookings.agreeToBooking);
+  const markAsReady = useMutation(api.bookings.markAsReady);
+  const markAsDelivered = useMutation(api.bookings.markAsDelivered);
+  const markAsReturned = useMutation(api.bookings.markAsReturned);
+  const cancelBooking = useMutation(api.bookings.cancelBooking);
+  const createRenterReview = useMutation(api.reviews.createRenterReview);
+  const resetReminderFlag = useMutation(api.cronHandlers.resetReminderFlag);
+
+  const hasMessages = useQuery(api.messages.hasMessages, {
+    bookingId: booking._id,
+  });
+
+  // For debug: check if super-admin (only in dev)
+  const isSuperAdmin = useQuery(api.profiles.getIsCurrentUserSuperAdmin);
+
+  const existingRenterReview = useQuery(
+    api.reviews.getRenterReviewByBooking,
+    booking.status === "vracen" ? { bookingId: booking._id } : "skip"
+  );
+
   const imageUrl = useQuery(
     api.items.getImageUrl,
     booking.item?.images[0]
@@ -164,32 +213,128 @@ function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
       : "skip"
   );
 
-  const canActivate =
-    booking.status === "confirmed" && booking.paymentStatus === "paid";
-  const canComplete = booking.status === "active";
-  const canCancel =
-    booking.status === "confirmed" || booking.status === "active";
+  // Get time override for debugging (if set by super-admin)
+  const timeOverride = useQuery(api.debug.getTimeOverride);
 
-  const handleStatusChange = async (
-    status: "active" | "completed" | "cancelled"
-  ) => {
-    if (
-      status === "cancelled" &&
-      !confirm("Da li ste sigurni da želite da otkažete ovu rezervaciju?")
-    ) {
-      return;
+  const canChat =
+    booking.status === "confirmed" ||
+    booking.status === "agreed" ||
+    booking.status === "nije_isporucen" ||
+    booking.status === "isporucen";
+
+  const canAgree =
+    booking.status === "confirmed" &&
+    !booking.ownerAgreed &&
+    booking.renterAgreed &&
+    hasMessages;
+
+  const canMarkReady = booking.status === "agreed";
+  const canMarkDelivered = booking.status === "nije_isporucen";
+
+  // Can mark as returned on the last day (end date) or after
+  // Use time override if set (for debugging), otherwise use current time
+  const currentTime = timeOverride?.timestamp ? new Date(timeOverride.timestamp) : new Date();
+  const isReturnDay = new Date(booking.endDate + "T00:00:00") <= currentTime;
+  const canMarkReturned = booking.status === "isporucen" && isReturnDay;
+
+  const canCancel =
+    booking.status === "pending" || booking.status === "confirmed";
+  const canRateRenter =
+    booking.status === "vracen" && existingRenterReview === null;
+
+  const handleSubmitRating = async () => {
+    if (selectedRating === 0) return;
+    setIsSubmittingRating(true);
+    try {
+      await createRenterReview({
+        bookingId: booking._id,
+        rating: selectedRating,
+      });
+      setShowRatingForm(false);
+      setSelectedRating(0);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Greška pri ocenjivanju");
+    } finally {
+      setIsSubmittingRating(false);
     }
+  };
+
+  const handleAgree = async () => {
+    setError(null);
     setIsUpdating(true);
     try {
-      await updateStatus({ id: booking._id, status });
-    } catch (error) {
-      console.error("Failed to update booking status:", error);
+      await agreeToBooking({ id: booking._id });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Greška");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleMarkReady = async () => {
+    setError(null);
+    setIsUpdating(true);
+    try {
+      await markAsReady({ id: booking._id });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Greška");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleMarkDelivered = async () => {
+    setError(null);
+    setIsUpdating(true);
+    try {
+      await markAsDelivered({ id: booking._id });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Greška");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleMarkReturned = async () => {
+    setError(null);
+    setIsUpdating(true);
+    try {
+      await markAsReturned({ id: booking._id });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Greška");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!confirm("Da li ste sigurni da želite da otkažete ovu rezervaciju?")) {
+      return;
+    }
+    setError(null);
+    setIsUpdating(true);
+    try {
+      await cancelBooking({ id: booking._id });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Greška");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleResetReminder = async () => {
+    setIsUpdating(true);
+    try {
+      await resetReminderFlag({ bookingId: booking._id });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Greška");
     } finally {
       setIsUpdating(false);
     }
   };
 
   const itemUrl = booking.item ? getItemUrl(booking.item) : "#";
+  const showDebugReset = isSuperAdmin && process.env.NODE_ENV !== "production" && booking.returnReminderSent;
 
   return (
     <div className="flex gap-3 rounded-lg border border-border bg-card p-3">
@@ -218,10 +363,7 @@ function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
           >
             {booking.item?.title ?? "Predmet nije dostupan"}
           </Link>
-          <div className="flex gap-1.5">
-            <BookingStatusBadge status={booking.status} />
-            <PaymentStatusBadge status={booking.paymentStatus} />
-          </div>
+          <BookingStatusBadge status={booking.status as "pending" | "confirmed" | "agreed" | "nije_isporucen" | "isporucen" | "vracen" | "cancelled"} />
         </div>
 
         <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
@@ -237,44 +379,221 @@ function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
           </span>
         </div>
 
-        {(canActivate || canComplete || canCancel) && (
-          <div className="mt-2 flex gap-2">
-            {canActivate && (
-              <Button
-                size="xs"
-                variant="outline"
-                onClick={() => handleStatusChange("active")}
-                disabled={isUpdating}
-                className="text-podeli-blue hover:bg-podeli-blue/10"
-              >
-                <Check className="mr-1 h-3 w-3" />
-                Aktiviraj
-              </Button>
+        {/* Renter info */}
+        <div className="mt-2 flex items-center gap-2 text-xs">
+          <div className="flex h-5 w-5 items-center justify-center overflow-hidden rounded-full bg-muted">
+            {booking.renter?.imageUrl ? (
+              <img
+                src={booking.renter.imageUrl}
+                alt={booking.renter.firstName ?? "Zakupac"}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <User className="h-2.5 w-2.5 text-muted-foreground" />
             )}
-            {canComplete && (
+          </div>
+          <span className="text-muted-foreground">
+            {booking.renter?.firstName ?? "Korisnik"}
+          </span>
+          {booking.renterRating && (
+            <div className="flex items-center gap-0.5 text-amber-500">
+              <Star className="h-3 w-3 fill-current" />
+              <span className="font-medium">
+                {booking.renterRating.average.toFixed(1)}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Agreement status for confirmed bookings */}
+        {booking.status === "confirmed" && (
+          <AgreementStatus
+            renterAgreed={booking.renterAgreed}
+            ownerAgreed={booking.ownerAgreed}
+            isOwner={true}
+            className="mt-2"
+          />
+        )}
+
+        {error && (
+          <div className="mt-2 rounded bg-podeli-red/10 p-2 text-xs text-podeli-red">
+            {error}
+          </div>
+        )}
+
+        {/* Actions based on status */}
+        <div className="mt-2 flex flex-wrap gap-2">
+          {canChat && (
+            <Button
+              size="xs"
+              variant="outline"
+              asChild
+              className="text-podeli-blue hover:bg-podeli-blue/10"
+            >
+              <Link href={`/kontrolna-tabla/predmeti/poruke/${booking._id}`}>
+                <MessageSquare className="mr-1 h-3 w-3" />
+                Otvori chat
+              </Link>
+            </Button>
+          )}
+
+          {canAgree && (
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={handleAgree}
+              disabled={isUpdating}
+              className="text-green-600 hover:bg-green-50"
+            >
+              <Handshake className="mr-1 h-3 w-3" />
+              Potvrdi dogovor
+            </Button>
+          )}
+
+          {canMarkReady && (
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={handleMarkReady}
+              disabled={isUpdating}
+              className="text-amber-600 hover:bg-amber-50"
+            >
+              <Package className="mr-1 h-3 w-3" />
+              Spreman za preuzimanje
+            </Button>
+          )}
+
+          {canMarkDelivered && (
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={handleMarkDelivered}
+              disabled={isUpdating}
+              className="text-purple-600 hover:bg-purple-50"
+            >
+              <Truck className="mr-1 h-3 w-3" />
+              Potvrdi isporuku
+            </Button>
+          )}
+
+          {canMarkReturned && (
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={handleMarkReturned}
+              disabled={isUpdating}
+              className="text-green-600 hover:bg-green-50"
+            >
+              <RotateCcw className="mr-1 h-3 w-3" />
+              Potvrdi povratak
+            </Button>
+          )}
+
+          {/* Show when return will be available */}
+          {booking.status === "isporucen" && !isReturnDay && (
+            <span className="text-xs text-muted-foreground">
+              Povratak moguć od <DateDisplay value={booking.endDate} format="short" />
+            </span>
+          )}
+
+          {canCancel && (
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={handleCancel}
+              disabled={isUpdating}
+              className="text-podeli-red hover:bg-podeli-red/10"
+            >
+              <X className="mr-1 h-3 w-3" />
+              Otkaži
+            </Button>
+          )}
+
+          {canRateRenter && !showRatingForm && (
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={() => setShowRatingForm(true)}
+              className="text-amber-600 hover:bg-amber-50"
+            >
+              <Star className="mr-1 h-3 w-3" />
+              Oceni zakupca
+            </Button>
+          )}
+
+          {existingRenterReview && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <span>Ocenili ste:</span>
+              <div className="flex items-center gap-0.5 text-amber-500">
+                <Star className="h-3 w-3 fill-current" />
+                <span className="font-medium">{existingRenterReview.rating}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Debug: reset reminder flag */}
+          {showDebugReset && (
+            <Button
+              size="xs"
+              variant="outline"
+              onClick={handleResetReminder}
+              disabled={isUpdating}
+              className="text-purple-600 hover:bg-purple-50"
+            >
+              <RotateCcw className="mr-1 h-3 w-3" />
+              Reset podsetnik
+            </Button>
+          )}
+        </div>
+
+        {/* Rating form */}
+        {showRatingForm && (
+          <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3">
+            <p className="mb-2 text-xs font-medium text-amber-800">
+              Ocenite zakupca {booking.renter?.firstName ?? ""}
+            </p>
+            <div className="mb-3 flex gap-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => setSelectedRating(star)}
+                  onMouseEnter={() => setHoverRating(star)}
+                  onMouseLeave={() => setHoverRating(0)}
+                  className="p-0.5 focus:outline-none"
+                  disabled={isSubmittingRating}
+                >
+                  <Star
+                    className={`h-6 w-6 transition-colors ${
+                      star <= (hoverRating || selectedRating)
+                        ? "fill-amber-400 text-amber-400"
+                        : "text-gray-300"
+                    }`}
+                  />
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2">
               <Button
                 size="xs"
-                variant="outline"
-                onClick={() => handleStatusChange("completed")}
-                disabled={isUpdating}
-                className="text-podeli-blue hover:bg-podeli-blue/10"
+                onClick={handleSubmitRating}
+                disabled={selectedRating === 0 || isSubmittingRating}
+                className="bg-amber-500 text-white hover:bg-amber-600"
               >
-                <CheckCircle className="mr-1 h-3 w-3" />
-                Završi
+                {isSubmittingRating ? "Šaljem..." : "Pošalji ocenu"}
               </Button>
-            )}
-            {canCancel && (
               <Button
                 size="xs"
-                variant="outline"
-                onClick={() => handleStatusChange("cancelled")}
-                disabled={isUpdating}
-                className="text-podeli-red hover:bg-podeli-red/10"
+                variant="ghost"
+                onClick={() => {
+                  setShowRatingForm(false);
+                  setSelectedRating(0);
+                }}
+                disabled={isSubmittingRating}
               >
-                <X className="mr-1 h-3 w-3" />
                 Otkaži
               </Button>
-            )}
+            </div>
           </div>
         )}
       </div>
@@ -355,7 +674,7 @@ function PendingBookingCard({ booking }: { booking: BookingWithItem }) {
           >
             {booking.item?.title ?? "Predmet nije dostupan"}
           </Link>
-          <BookingStatusBadge status={booking.status} />
+          <BookingStatusBadge status={booking.status as "pending" | "confirmed" | "agreed" | "nije_isporucen" | "isporucen" | "vracen" | "cancelled"} />
         </div>
 
         <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
@@ -369,6 +688,44 @@ function PendingBookingCard({ booking }: { booking: BookingWithItem }) {
           <span className="font-medium text-podeli-accent">
             {booking.totalPrice.toFixed(0)} RSD
           </span>
+        </div>
+
+        {/* Renter info */}
+        <div className="mt-2 flex items-center gap-2 rounded-md bg-white/50 px-2 py-1.5">
+          <div className="flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-muted">
+            {booking.renter?.imageUrl ? (
+              <img
+                src={booking.renter.imageUrl}
+                alt={booking.renter.firstName ?? "Zakupac"}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <User className="h-3 w-3 text-muted-foreground" />
+            )}
+          </div>
+          <div className="flex flex-1 items-center gap-2 text-xs">
+            <span className="font-medium text-podeli-dark">
+              {booking.renter?.firstName ?? "Korisnik"}
+            </span>
+            {booking.renterRating ? (
+              <div className="flex items-center gap-0.5 text-amber-500">
+                <Star className="h-3 w-3 fill-current" />
+                <span className="font-semibold">
+                  {booking.renterRating.average.toFixed(1)}
+                </span>
+                <span className="text-muted-foreground">
+                  ({booking.renterRating.count})
+                </span>
+              </div>
+            ) : (
+              <span className="text-muted-foreground">Bez ocena</span>
+            )}
+            {(booking.renterCompletedRentals ?? 0) > 0 && (
+              <span className="text-muted-foreground">
+                • {booking.renterCompletedRentals} završen{booking.renterCompletedRentals === 1 ? "a" : "e"} rezervacij{booking.renterCompletedRentals === 1 ? "a" : "e"}
+              </span>
+            )}
+          </div>
         </div>
 
         {error && (

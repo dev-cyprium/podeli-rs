@@ -394,6 +394,14 @@ export const update = mutation({
   },
 });
 
+// Statuses that prevent item deletion (active bookings)
+const ACTIVE_BOOKING_STATUSES = [
+  "confirmed",
+  "agreed",
+  "nije_isporucen",
+  "isporucen",
+] as const;
+
 export const remove = mutation({
   args: {
     id: v.id("items"),
@@ -407,11 +415,25 @@ export const remove = mutation({
     if (item.ownerId !== identity.subject) {
       throw new Error("Nemate dozvolu da obrišete ovaj predmet.");
     }
-    // Delete associated bookings
+
+    // Get all bookings for this item
     const bookings = await ctx.db
       .query("bookings")
       .withIndex("by_item", (q) => q.eq("itemId", args.id))
       .collect();
+
+    // Check if there are any active bookings that prevent deletion
+    const activeBookings = bookings.filter((b) =>
+      ACTIVE_BOOKING_STATUSES.includes(b.status as typeof ACTIVE_BOOKING_STATUSES[number])
+    );
+
+    if (activeBookings.length > 0) {
+      throw new Error(
+        "Ne možete obrisati predmet dok postoje aktivne rezervacije. Sačekajte da se sve rezervacije završe."
+      );
+    }
+
+    // Delete non-active bookings (pending, cancelled, vracen)
     for (const booking of bookings) {
       await ctx.db.delete(booking._id);
     }
