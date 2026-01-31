@@ -42,7 +42,15 @@ export const listForUser = query({
       .query("notifications")
       .withIndex("by_user", (q) => q.eq("userId", identity.subject))
       .collect();
-    const sorted = notifications.sort((a, b) => b.createdAt - a.createdAt);
+    // Sort unread first, then by createdAt descending
+    const sorted = notifications.sort((a, b) => {
+      const aRead = a.read ? 1 : 0;
+      const bRead = b.read ? 1 : 0;
+      if (aRead !== bRead) {
+        return aRead - bRead;
+      }
+      return b.createdAt - a.createdAt;
+    });
     return sorted.slice(0, 50);
   },
 });

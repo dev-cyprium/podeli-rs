@@ -16,7 +16,7 @@ import {
   AlertTriangle,
   PartyPopper,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { api } from "@/convex/_generated/api";
@@ -110,13 +110,24 @@ export function NotificationBell() {
   const deleteAll = useMutation(api.notifications.deleteAll);
   const [open, setOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const hasMarkedAsRead = useRef(false);
+
+  const unreadCount = notifications?.filter((n) => !n.read).length ?? 0;
+
+  // Mark all as read when the dropdown opens
+  useEffect(() => {
+    if (open && unreadCount > 0 && !hasMarkedAsRead.current) {
+      hasMarkedAsRead.current = true;
+      markAllAsRead({});
+    }
+    if (!open) {
+      hasMarkedAsRead.current = false;
+    }
+  }, [open, unreadCount, markAllAsRead]);
 
   if (!isSignedIn) {
     return null;
   }
-
-  const unreadCount =
-    notifications?.filter((n) => !n.read).length ?? 0;
 
   const handleNotificationClick = (notification: NonNullable<typeof notifications>[number]) => {
     markAsRead({ notificationId: notification._id });
@@ -124,11 +135,6 @@ export function NotificationBell() {
     if (notification.link) {
       router.push(notification.link);
     }
-  };
-
-  const handleMarkAllAsRead = () => {
-    markAllAsRead({});
-    setOpen(false);
   };
 
   const handleDeleteAll = async () => {
@@ -218,25 +224,12 @@ export function NotificationBell() {
           <>
             <div className="border-t border-border" />
             <div className="flex gap-2 p-2">
-              {unreadCount > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="flex-1 justify-center rounded-md bg-transparent text-[#006992] hover:bg-[#006992]/10 hover:text-[#006992] focus-visible:ring-0 focus-visible:ring-offset-0"
-                  onClick={handleMarkAllAsRead}
-                >
-                  Označi sve kao pročitano
-                </Button>
-              )}
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className={cn(
-                      "justify-center rounded-md bg-transparent text-[#dd1c1a] hover:bg-[#dd1c1a]/10 hover:text-[#dd1c1a] focus-visible:ring-0 focus-visible:ring-offset-0",
-                      unreadCount > 0 ? "flex-1" : "w-full"
-                    )}
+                    className="w-full justify-center rounded-md bg-transparent text-[#dd1c1a] hover:bg-[#dd1c1a]/10 hover:text-[#dd1c1a] focus-visible:ring-0 focus-visible:ring-offset-0"
                     disabled={isDeleting}
                   >
                     <Trash2 className="mr-1.5 h-4 w-4" />
