@@ -49,6 +49,13 @@ export function NavLinks({ isSignedIn }: NavLinksProps) {
             >
               Blog
             </Link>
+            <Link
+              href="/cesto-postavljana-pitanja"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="text-sm font-semibold text-muted-foreground hover:text-podeli-accent"
+            >
+              Česta pitanja
+            </Link>
             <PonudaLink
               onClick={() => setIsMobileMenuOpen(false)}
             />

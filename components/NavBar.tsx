@@ -28,6 +28,12 @@ export async function NavBar() {
           >
             Blog
           </Link>
+          <Link
+            href="/cesto-postavljana-pitanja"
+            className="text-sm font-semibold text-muted-foreground hover:text-podeli-accent"
+          >
+            Česta pitanja
+          </Link>
           <PonudaLink />
           {isSignedIn ? (
             <div className="flex items-center gap-2">
