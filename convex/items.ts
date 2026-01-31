@@ -174,6 +174,12 @@ export const create = mutation({
       throw new Error("Plan nije pronađen.");
     }
 
+    // Check preferred contact types
+    const prefs = profile.preferredContactTypes ?? [];
+    if (prefs.length === 0) {
+      throw new Error("Postavite način kontakta pre objavljivanja.");
+    }
+
     // Check single listing expiration
     if (profile.planSlug === "single_listing" && profile.planExpiresAt && profile.planExpiresAt < Date.now()) {
       throw new Error("Vaš pojedinačni oglas je istekao. Nadogradite plan da biste kreirali nove oglase.");
@@ -388,6 +394,14 @@ export const update = mutation({
   },
 });
 
+// Statuses that prevent item deletion (active bookings)
+const ACTIVE_BOOKING_STATUSES = [
+  "confirmed",
+  "agreed",
+  "nije_isporucen",
+  "isporucen",
+] as const;
+
 export const remove = mutation({
   args: {
     id: v.id("items"),
@@ -400,6 +414,65 @@ export const remove = mutation({
     }
     if (item.ownerId !== identity.subject) {
       throw new Error("Nemate dozvolu da obrišete ovaj predmet.");
+    }
+
+    // Get all bookings for this item
+    const bookings = await ctx.db
+      .query("bookings")
+      .withIndex("by_item", (q) => q.eq("itemId", args.id))
+      .collect();
+
+    // Check if there are any active bookings that prevent deletion
+    const activeBookings = bookings.filter((b) =>
+      ACTIVE_BOOKING_STATUSES.includes(b.status as typeof ACTIVE_BOOKING_STATUSES[number])
+    );
+
+    if (activeBookings.length > 0) {
+      throw new Error(
+        "Ne možete obrisati predmet dok postoje aktivne rezervacije. Sačekajte da se sve rezervacije završe."
+      );
+    }
+
+    // Delete non-active bookings (pending, cancelled, vracen)
+    for (const booking of bookings) {
+      // Delete related reviews
+      const reviews = await ctx.db
+        .query("reviews")
+        .withIndex("by_booking", (q) => q.eq("bookingId", booking._id))
+        .collect();
+      for (const review of reviews) {
+        await ctx.db.delete(review._id);
+      }
+
+      // Delete related renter reviews
+      const renterReviews = await ctx.db
+        .query("renterReviews")
+        .withIndex("by_booking", (q) => q.eq("bookingId", booking._id))
+        .collect();
+      for (const renterReview of renterReviews) {
+        await ctx.db.delete(renterReview._id);
+      }
+
+      // Delete related messages
+      const messages = await ctx.db
+        .query("messages")
+        .withIndex("by_booking", (q) => q.eq("bookingId", booking._id))
+        .collect();
+      for (const message of messages) {
+        await ctx.db.delete(message._id);
+      }
+
+      // Delete related chat presence records
+      const chatPresences = await ctx.db
+        .query("chatPresence")
+        .withIndex("by_booking_and_user", (q) => q.eq("bookingId", booking._id))
+        .collect();
+      for (const chatPresence of chatPresences) {
+        await ctx.db.delete(chatPresence._id);
+      }
+
+      // Finally delete the booking itself
+      await ctx.db.delete(booking._id);
     }
     // Delete associated image files
     for (const imageId of item.images) {

@@ -130,6 +130,52 @@ export const getProfilesByUserIds = query({
   },
 });
 
+const VALID_CONTACT_TYPES = ["chat", "email", "phone"] as const;
+
+export const updatePreferredContactTypes = mutation({
+  args: {
+    preferredContactTypes: v.array(
+      v.union(
+        v.literal("chat"),
+        v.literal("email"),
+        v.literal("phone")
+      )
+    ),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await requireIdentity(ctx);
+
+    if (args.preferredContactTypes.length === 0) {
+      throw new Error("Odaberite bar jednu opciju kontakta.");
+    }
+
+    const validTypes = args.preferredContactTypes.filter((t) =>
+      VALID_CONTACT_TYPES.includes(t)
+    );
+    if (validTypes.length !== args.preferredContactTypes.length) {
+      throw new Error("Nepoznata opcija kontakta.");
+    }
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
+      .first();
+
+    if (!profile) {
+      throw new Error("Profil nije pronađen.");
+    }
+
+    const now = Date.now();
+    await ctx.db.patch(profile._id, {
+      preferredContactTypes: validTypes,
+      updatedAt: now,
+    });
+
+    return null;
+  },
+});
+
 export const ensureProfile = mutation({
   args: {},
   returns: v.null(),

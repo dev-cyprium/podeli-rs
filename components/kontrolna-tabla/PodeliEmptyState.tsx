@@ -7,9 +7,11 @@ import { cn } from "@/lib/utils";
 interface PodeliEmptyStateProps {
   onCreate: () => void;
   className?: string;
+  /** When true, the create button is disabled (e.g. contact prefs not set) */
+  createDisabled?: boolean;
 }
 
-export function PodeliEmptyState({ onCreate, className }: PodeliEmptyStateProps) {
+export function PodeliEmptyState({ onCreate, className, createDisabled }: PodeliEmptyStateProps) {
   return (
     <div
       className={cn(
@@ -27,9 +29,16 @@ export function PodeliEmptyState({ onCreate, className }: PodeliEmptyStateProps)
         <p className="mt-4 text-lg text-muted-foreground">
           Podeli stvari koje ne koristiš svaki dan i zaradi.
         </p>
+        {createDisabled && (
+          <p className="mt-2 text-sm text-podeli-blue">
+            Postavite način kontakta u panelu iznad da biste mogli da dodate predmet.
+          </p>
+        )}
         <Button
           onClick={onCreate}
-          className="mt-8 rounded-xl bg-podeli-accent px-8 py-3.5 text-sm font-semibold text-podeli-dark shadow-sm hover:bg-podeli-accent/90"
+          disabled={createDisabled}
+          title={createDisabled ? "Postavite način kontakta gore da biste dodali predmet" : undefined}
+          className="mt-8 rounded-xl bg-podeli-accent px-8 py-3.5 text-sm font-semibold text-podeli-dark shadow-sm hover:bg-podeli-accent/90 disabled:cursor-not-allowed disabled:opacity-60"
         >
           Dodaj prvi predmet
         </Button>

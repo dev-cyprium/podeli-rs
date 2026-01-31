@@ -19,11 +19,14 @@ function NoviPredmetContent() {
   const [pageError, setPageError] = useState<string | null>(null);
 
   const itemId = useMemo(() => searchParams.get("id"), [searchParams]);
+  const profile = useQuery(api.profiles.getMyProfile);
   const item = useQuery(
     api.items.getById,
     itemId ? { id: itemId as Id<"items"> } : "skip"
   );
   const limits = useQuery(api.profiles.getMyPlanLimits);
+
+  const preferredContactTypes = profile?.preferredContactTypes ?? [];
 
   const createItem = useMutation(api.items.create);
   const updateItem = useMutation(api.items.update);
@@ -48,7 +51,7 @@ function NoviPredmetContent() {
   }
 
   return (
-    <DashboardShell mode="podeli">
+    <DashboardShell context="podeli" section="main">
       <Card>
         <CardHeader>
           <CardTitle>
@@ -102,6 +105,7 @@ function NoviPredmetContent() {
                   onSave={handleSave}
                   onCancel={() => router.push("/kontrolna-tabla/predmeti")}
                   planLimits={limits ?? undefined}
+                  preferredContactTypes={preferredContactTypes}
                 />
               </>
             )}
@@ -116,7 +120,7 @@ export default function NoviPredmetPage() {
   return (
     <Suspense
       fallback={
-        <DashboardShell mode="podeli">
+        <DashboardShell context="podeli" section="main">
           <Card>
             <CardContent className="py-10 text-center text-sm text-muted-foreground">
               Učitavanje forme...

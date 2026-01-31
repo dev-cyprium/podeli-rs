@@ -77,6 +77,15 @@ export default defineSchema({
     email: v.optional(v.string()),
     hasBadge: v.boolean(),
     badgeLabel: v.optional(v.string()),
+    preferredContactTypes: v.optional(
+      v.array(
+        v.union(
+          v.literal("chat"),
+          v.literal("email"),
+          v.literal("phone")
+        )
+      )
+    ),
     superAdmin: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -98,22 +107,28 @@ export default defineSchema({
     status: v.union(
       v.literal("pending"),
       v.literal("confirmed"),
-      v.literal("active"),
-      v.literal("completed"),
+      v.literal("agreed"),
+      v.literal("nije_isporucen"),
+      v.literal("isporucen"),
+      v.literal("vracen"),
       v.literal("cancelled"),
     ),
-    paymentMethod: v.union(v.literal("cash"), v.literal("card")),
-    paymentStatus: v.union(
-      v.literal("pending"),
-      v.literal("paid"),
-      v.literal("refunded"),
-    ),
+    // Agreement tracking
+    renterAgreed: v.optional(v.boolean()),
+    ownerAgreed: v.optional(v.boolean()),
+    agreedAt: v.optional(v.number()),
+    // Delivery/return tracking
+    deliveredAt: v.optional(v.number()),
+    returnedAt: v.optional(v.number()),
+    // Return reminder tracking
+    returnReminderSent: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_item", ["itemId"])
     .index("by_renter", ["renterId"])
-    .index("by_owner", ["ownerId"]),
+    .index("by_owner", ["ownerId"])
+    .index("by_status", ["status"]),
 
   reviews: defineTable({
     itemId: v.id("items"),
@@ -126,6 +141,35 @@ export default defineSchema({
     .index("by_item", ["itemId"])
     .index("by_booking", ["bookingId"]),
 
+  // Reviews of renters by owners (after completed rentals)
+  renterReviews: defineTable({
+    bookingId: v.id("bookings"),
+    renterId: v.string(),
+    ownerId: v.string(),
+    rating: v.number(),
+    comment: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_renter", ["renterId"])
+    .index("by_booking", ["bookingId"]),
+
+  messages: defineTable({
+    bookingId: v.id("bookings"),
+    senderId: v.string(),
+    content: v.string(),
+    read: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_booking", ["bookingId"])
+    .index("by_booking_and_created", ["bookingId", "createdAt"]),
+
+  chatPresence: defineTable({
+    bookingId: v.id("bookings"),
+    userId: v.string(),
+    lastSeenAt: v.number(),
+  })
+    .index("by_booking_and_user", ["bookingId", "userId"]),
+
   notifications: defineTable({
     userId: v.string(),
     message: v.string(),
@@ -137,6 +181,14 @@ export default defineSchema({
         v.literal("booking_rejected"),
         v.literal("plan_changed"),
         v.literal("system"),
+        v.literal("message_received"),
+        v.literal("agreement_requested"),
+        v.literal("booking_agreed"),
+        v.literal("item_ready"),
+        v.literal("item_delivered"),
+        v.literal("return_reminder"),
+        v.literal("item_returned"),
+        v.literal("renter_reviewed"),
       ),
     ),
     link: v.optional(v.string()),
@@ -154,4 +206,11 @@ export default defineSchema({
   })
     .index("by_name", ["name"])
     .index("by_order", ["order"]),
+
+  // Debug settings for development (time travel, etc.)
+  debugSettings: defineTable({
+    key: v.string(),
+    value: v.string(),
+    updatedAt: v.number(),
+  }).index("by_key", ["key"]),
 });

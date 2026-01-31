@@ -15,6 +15,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { PreferredContactForm } from "./PreferredContactForm";
 
 type AvailabilitySlot = {
   startDate: string;
@@ -51,11 +58,18 @@ export type ItemFormData = {
   deliveryMethods: DeliveryMethod[];
 };
 
+const CONTACT_LABELS: Record<string, string> = {
+  chat: "Chat",
+  email: "Email",
+  phone: "Telefon",
+};
+
 interface ItemWizardFormProps {
   item: Doc<"items"> | null;
   onSave: (data: ItemFormData) => Promise<void>;
   onCancel?: () => void;
   planLimits?: PlanLimits;
+  preferredContactTypes?: string[];
 }
 
 export function ItemWizardForm({
@@ -63,6 +77,7 @@ export function ItemWizardForm({
   onSave,
   onCancel,
   planLimits: _planLimits,
+  preferredContactTypes = [],
 }: ItemWizardFormProps) {
   const generateUploadUrl = useMutation(api.items.generateUploadUrl);
   const categories = useQuery(api.categories.listNames) ?? [];
@@ -87,6 +102,7 @@ export function ItemWizardForm({
   const [isProcessingImages, setIsProcessingImages] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
+  const [contactModalOpen, setContactModalOpen] = useState(false);
   const [invalidSteps, setInvalidSteps] = useState<Set<number>>(new Set());
   const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set()); // Don't mark any step as visited initially
 
@@ -694,9 +710,31 @@ export function ItemWizardForm({
           ) : null}
 
           {currentStep === 3 ? (
-            <div className="space-y-2">
-              <Label>Način dostave</Label>
-              <div className="grid gap-2">
+            <div className="space-y-4">
+              {preferredContactTypes.length > 0 ? (
+                <div className="rounded-lg border border-podeli-blue/20 bg-podeli-blue/5 px-4 py-3">
+                  <p className="text-sm font-medium text-podeli-dark">
+                    Kako će vas zainteresovani korisnici kontaktirati:
+                  </p>
+                  <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-muted-foreground">
+                    {preferredContactTypes.map((t) => (
+                      <li key={t}>
+                        {CONTACT_LABELS[t] ?? t}
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    type="button"
+                    onClick={() => setContactModalOpen(true)}
+                    className="mt-2 inline-block text-sm font-medium text-podeli-blue hover:text-podeli-blue/90 hover:underline"
+                  >
+                    Izmeni način kontakta
+                  </button>
+                </div>
+              ) : null}
+              <div className="space-y-2">
+                <Label>Način dostave</Label>
+                <div className="grid gap-2">
                 {ALL_DELIVERY_OPTIONS.map((option) => {
                   // "comingSoon" options are always locked regardless of plan
                   const isLocked = option.comingSoon === true;
@@ -728,6 +766,7 @@ export function ItemWizardForm({
                     </label>
                   );
                 })}
+                </div>
               </div>
             </div>
           ) : null}
@@ -775,6 +814,24 @@ export function ItemWizardForm({
           </Button>
         ) : null}
       </div>
+
+      <Dialog open={contactModalOpen} onOpenChange={setContactModalOpen}>
+        <DialogContent
+          accessibleTitle="Izmeni način kontakta"
+          accessibleDescription="Odaberite kako želite da vas zainteresovani korisnici kontaktiraju."
+        >
+          <DialogHeader>
+            <DialogTitle>Izmeni način kontakta</DialogTitle>
+          </DialogHeader>
+          <PreferredContactForm
+            preferredContactTypes={preferredContactTypes}
+            compact
+            embedded
+            initialExpanded
+            onSave={() => setContactModalOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

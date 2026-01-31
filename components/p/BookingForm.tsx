@@ -11,9 +11,13 @@ import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { CalendarDays, Truck, CreditCard } from "lucide-react";
+import { CalendarDays, Truck, Send, Loader2, CheckCircle } from "lucide-react";
 import { DateRange } from "react-day-picker";
-import { PaymentMethodModal } from "@/components/booking/PaymentMethodModal";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
+import { parseDateString, formatDateString } from "@/lib/date-utils";
 
 type DeliveryMethod = "licno" | "glovo" | "wolt" | "cargo";
 
@@ -28,14 +32,6 @@ interface BookingFormProps {
   item: Doc<"items">;
 }
 
-function formatDate(date: Date): string {
-  return date.toISOString().split("T")[0];
-}
-
-function parseDate(dateStr: string): Date {
-  return new Date(dateStr + "T00:00:00");
-}
-
 export function BookingForm({ item }: BookingFormProps) {
   const router = useRouter();
   const { isSignedIn } = useAuth();
@@ -43,7 +39,8 @@ export function BookingForm({ item }: BookingFormProps) {
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>(
     (item.deliveryMethods[0] as DeliveryMethod) ?? "licno"
   );
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isComplete, setIsComplete] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const createBooking = useMutation(api.bookings.createBooking);
@@ -56,8 +53,8 @@ export function BookingForm({ item }: BookingFormProps) {
 
     const dates: Date[] = [];
     for (const booking of bookedDates) {
-      const start = parseDate(booking.startDate);
-      const end = parseDate(booking.endDate);
+      const start = parseDateString(booking.startDate);
+      const end = parseDateString(booking.endDate);
       const current = new Date(start);
 
       while (current <= end) {
@@ -79,38 +76,33 @@ export function BookingForm({ item }: BookingFormProps) {
   const canBook =
     isSignedIn && dateRange?.from && dateRange?.to && totalDays > 0;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!canBook || !dateRange?.from || !dateRange?.to) {
       return;
     }
-    setError(null);
-    setShowPaymentModal(true);
-  };
 
-  const handlePaymentConfirm = async (paymentMethod: "cash" | "card") => {
-    if (!dateRange?.from || !dateRange?.to) {
-      throw new Error("Izaberite datum.");
-    }
+    setError(null);
+    setIsSubmitting(true);
 
     try {
       await createBooking({
         itemId: item._id,
-        startDate: formatDate(dateRange.from),
-        endDate: formatDate(dateRange.to),
+        startDate: formatDateString(dateRange.from),
+        endDate: formatDateString(dateRange.to),
         deliveryMethod,
-        paymentMethod,
       });
+      setIsComplete(true);
       // Wait a bit to show success message, then redirect
       setTimeout(() => {
         router.push("/kontrolna-tabla/zakupi");
       }, 1500);
     } catch (err) {
-      // Handle Convex application errors properly
       const errorMessage =
         err instanceof ConvexError
           ? (err.data as string)
           : "Greška pri rezervaciji. Molimo pokušajte ponovo.";
-      throw new Error(errorMessage);
+      setError(errorMessage);
+      setIsSubmitting(false);
     }
   };
 
@@ -218,24 +210,42 @@ export function BookingForm({ item }: BookingFormProps) {
               <Button
                 className="w-full bg-podeli-accent hover:bg-podeli-accent/90 text-podeli-dark"
                 size="lg"
-                disabled={!canBook}
+                disabled={!canBook || isSubmitting}
                 onClick={handleSubmit}
               >
-                <CreditCard className="mr-2 h-4 w-4" />
-                Rezerviši
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Slanje zahteva...
+                  </>
+                ) : (
+                  <>
+                    <Send className="mr-2 h-4 w-4" />
+                    Pošalji zahtev
+                  </>
+                )}
               </Button>
             </>
           )}
         </CardContent>
       </Card>
 
-      {showPaymentModal && (
-        <PaymentMethodModal
-          totalPrice={totalPrice}
-          onConfirm={handlePaymentConfirm}
-          onCancel={() => setShowPaymentModal(false)}
-        />
-      )}
+      {/* Success Dialog */}
+      <Dialog open={isComplete}>
+        <DialogContent className="sm:max-w-md" showCloseButton={false} accessibleTitle="Zahtev poslat">
+          <div className="py-8 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-podeli-blue/10">
+              <CheckCircle className="h-8 w-8 text-podeli-blue" />
+            </div>
+            <h2 className="text-xl font-bold text-podeli-dark">
+              Zahtev poslat!
+            </h2>
+            <p className="mt-2 text-muted-foreground">
+              Vlasnik će pregledati vaš zahtev i obavestiti vas o odluci.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

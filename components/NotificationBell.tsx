@@ -1,7 +1,21 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { Bell, Trash2, ArrowRight, CheckCircle2, XCircle, Clock, Sparkles } from "lucide-react";
+import {
+  Bell,
+  Trash2,
+  ArrowRight,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  Sparkles,
+  MessageSquare,
+  Handshake,
+  Package,
+  Truck,
+  AlertTriangle,
+  PartyPopper,
+} from "lucide-react";
 import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
@@ -41,7 +55,20 @@ function formatRelativeTime(createdAt: number): string {
   return formatSerbianDate(createdAt, "short");
 }
 
-type NotificationType = "booking_pending" | "booking_approved" | "booking_rejected" | "plan_changed" | "system";
+type NotificationType =
+  | "booking_pending"
+  | "booking_approved"
+  | "booking_rejected"
+  | "plan_changed"
+  | "system"
+  | "message_received"
+  | "agreement_requested"
+  | "booking_agreed"
+  | "item_ready"
+  | "item_delivered"
+  | "return_reminder"
+  | "item_returned"
+  | "renter_reviewed";
 
 function getNotificationIcon(type?: NotificationType) {
   switch (type) {
@@ -53,6 +80,22 @@ function getNotificationIcon(type?: NotificationType) {
       return <Clock className="h-4 w-4 flex-shrink-0 text-amber-500" />;
     case "plan_changed":
       return <Sparkles className="h-4 w-4 flex-shrink-0 text-blue-500" />;
+    case "message_received":
+      return <MessageSquare className="h-4 w-4 flex-shrink-0 text-blue-500" />;
+    case "agreement_requested":
+      return <Handshake className="h-4 w-4 flex-shrink-0 text-amber-500" />;
+    case "booking_agreed":
+      return <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-green-600" />;
+    case "item_ready":
+      return <Package className="h-4 w-4 flex-shrink-0 text-purple-500" />;
+    case "item_delivered":
+      return <Truck className="h-4 w-4 flex-shrink-0 text-green-600" />;
+    case "return_reminder":
+      return <AlertTriangle className="h-4 w-4 flex-shrink-0 text-amber-500" />;
+    case "item_returned":
+      return <PartyPopper className="h-4 w-4 flex-shrink-0 text-green-600" />;
+    case "renter_reviewed":
+      return <Sparkles className="h-4 w-4 flex-shrink-0 text-amber-500" />;
     default:
       return null;
   }
@@ -127,7 +170,7 @@ export function NotificationBell() {
         <div className="border-b border-border px-3 py-2">
           <h3 className="text-sm font-semibold">Obaveštenja</h3>
         </div>
-        <div className="overflow-hidden">
+        <div className="max-h-80 overflow-y-auto">
           {notifications === undefined ? (
             <div className="px-3 py-6 text-center text-sm text-muted-foreground">
               Učitavanje…
