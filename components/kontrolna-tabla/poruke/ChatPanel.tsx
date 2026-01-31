@@ -223,7 +223,7 @@ export function ChatPanel({ bookingId }: ChatPanelProps) {
       ) : (
         <div className="border-t border-border bg-muted/50 p-4 text-center text-sm text-muted-foreground">
           {booking.status === "vracen"
-            ? "Razgovor je završen. Predmet je vraćen."
+            ? "Razgovor je završen. Predmet je vraćen. Poruke će biti obrisane nakon 30 dana."
             : "Poruke nisu dozvoljene za ovu rezervaciju."}
         </div>
       )}
