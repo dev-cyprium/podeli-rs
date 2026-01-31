@@ -5,6 +5,7 @@ import { ArrowLeft, User, Mail, Lock, Link2, Monitor, AlertTriangle } from "luci
 import Link from "next/link";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/Logo";
 import { ProfileSection } from "./ProfileSection";
 import { EmailSection } from "./EmailSection";
 import { PasswordSection } from "./PasswordSection";
@@ -36,6 +37,11 @@ export function AccountSettings() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
+      {/* Logo */}
+      <div className="mb-2">
+        <Logo href="/" height={28} />
+      </div>
+
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
