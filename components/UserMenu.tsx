@@ -1,8 +1,9 @@
 "use client";
 
 import { useUser, useClerk } from "@clerk/nextjs";
-import { LogOut, LayoutDashboard, ShieldCheck } from "lucide-react";
+import { LogOut, LayoutDashboard, ShieldCheck, UserCog } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,12 +55,27 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          className={`flex h-10 w-10 items-center justify-center rounded-full ${colorClass} text-sm font-semibold text-podeli-light transition-transform hover:scale-105 hover:${colorClass} focus:outline-none focus:ring-2 focus:ring-podeli-accent focus:ring-offset-2`}
-        >
-          {initials}
-        </Button>
+        {user.imageUrl ? (
+          <Button
+            variant="ghost"
+            className="h-10 w-10 overflow-hidden rounded-full p-0"
+          >
+            <Image
+              src={user.imageUrl}
+              alt={user.firstName ?? "Korisnik"}
+              width={40}
+              height={40}
+              className="h-full w-full object-cover"
+            />
+          </Button>
+        ) : (
+          <Button
+            variant="ghost"
+            className={`flex h-10 w-10 items-center justify-center rounded-full ${colorClass} text-sm font-semibold text-podeli-light transition-transform hover:scale-105 hover:${colorClass} focus:outline-none focus:ring-2 focus:ring-podeli-accent focus:ring-offset-2`}
+          >
+            {initials}
+          </Button>
+        )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
         <div className="px-2 py-1.5">
@@ -75,6 +91,12 @@ export function UserMenu() {
           <Link href="/kontrolna-tabla" className="flex items-center gap-2 cursor-pointer">
             <LayoutDashboard className="h-4 w-4" />
             <span>Kontrolna tabla</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/kontrolna-tabla/profil" className="flex items-center gap-2 cursor-pointer">
+            <UserCog className="h-4 w-4" />
+            <span>Podešavanja profila</span>
           </Link>
         </DropdownMenuItem>
         {isSuperAdmin === true && (

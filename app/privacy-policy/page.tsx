@@ -279,13 +279,18 @@ export default function PrivacyPolicyPage() {
         </article>
 
         <footer className="mt-16 border-t border-border pt-8">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-sm font-medium text-podeli-accent hover:underline"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Nazad na početnu
-          </Link>
+          <div className="flex flex-col items-center gap-4">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 text-sm font-medium text-podeli-accent hover:underline"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Nazad na početnu
+            </Link>
+            <p className="text-xs text-muted-foreground">
+              © {new Date().getFullYear()} podeli.rs – Sva prava zadržana.
+            </p>
+          </div>
         </footer>
       </main>
     </div>

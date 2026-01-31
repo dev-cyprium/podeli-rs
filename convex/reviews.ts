@@ -306,3 +306,252 @@ export const getMyRenterRating = query({
     };
   },
 });
+
+// ==================== OWNER REVIEWS (for Podeli/Ocene page) ====================
+
+/**
+ * Get all reviews for items owned by the current user (with detailed info)
+ */
+export const getReviewsForMyItems = query({
+  args: {},
+  returns: v.array(
+    v.object({
+      _id: v.id("reviews"),
+      _creationTime: v.number(),
+      itemId: v.id("items"),
+      bookingId: v.id("bookings"),
+      reviewerId: v.string(),
+      rating: v.number(),
+      comment: v.string(),
+      createdAt: v.number(),
+      item: v.union(
+        v.object({
+          _id: v.id("items"),
+          title: v.string(),
+          images: v.array(v.id("_storage")),
+        }),
+        v.null()
+      ),
+      renter: v.union(
+        v.object({
+          firstName: v.optional(v.string()),
+          lastName: v.optional(v.string()),
+          imageUrl: v.optional(v.string()),
+        }),
+        v.null()
+      ),
+      booking: v.union(
+        v.object({
+          startDate: v.string(),
+          endDate: v.string(),
+        }),
+        v.null()
+      ),
+    })
+  ),
+  handler: async (ctx) => {
+    const identity = await requireIdentity(ctx);
+    const userId = identity.subject;
+
+    // Get all items owned by this user
+    const myItems = await ctx.db
+      .query("items")
+      .withIndex("by_owner", (q) => q.eq("ownerId", userId))
+      .collect();
+
+    const myItemIds = myItems.map((item) => item._id);
+
+    // Get all reviews for these items
+    const allReviews = [];
+    for (const itemId of myItemIds) {
+      const reviews = await ctx.db
+        .query("reviews")
+        .withIndex("by_item", (q) => q.eq("itemId", itemId))
+        .collect();
+      allReviews.push(...reviews);
+    }
+
+    // Sort by createdAt descending
+    allReviews.sort((a, b) => b.createdAt - a.createdAt);
+
+    // Enrich with item, renter, and booking details
+    const enrichedReviews = await Promise.all(
+      allReviews.map(async (review) => {
+        const item = await ctx.db.get(review.itemId);
+        const booking = await ctx.db.get(review.bookingId);
+        const renterProfile = await ctx.db
+          .query("profiles")
+          .withIndex("by_userId", (q) => q.eq("userId", review.reviewerId))
+          .first();
+
+        return {
+          ...review,
+          item: item
+            ? {
+                _id: item._id,
+                title: item.title,
+                images: item.images,
+              }
+            : null,
+          renter: renterProfile
+            ? {
+                firstName: renterProfile.firstName,
+                lastName: renterProfile.lastName,
+                imageUrl: renterProfile.imageUrl,
+              }
+            : null,
+          booking: booking
+            ? {
+                startDate: booking.startDate,
+                endDate: booking.endDate,
+              }
+            : null,
+        };
+      })
+    );
+
+    return enrichedReviews;
+  },
+});
+
+/**
+ * Get average rating across all items owned by the current user
+ */
+export const getMyItemsAverageRating = query({
+  args: {},
+  returns: v.union(
+    v.object({
+      average: v.number(),
+      count: v.number(),
+    }),
+    v.null()
+  ),
+  handler: async (ctx) => {
+    const identity = await requireIdentity(ctx);
+    const userId = identity.subject;
+
+    // Get all items owned by this user
+    const myItems = await ctx.db
+      .query("items")
+      .withIndex("by_owner", (q) => q.eq("ownerId", userId))
+      .collect();
+
+    const myItemIds = myItems.map((item) => item._id);
+
+    // Get all reviews for these items
+    const allReviews = [];
+    for (const itemId of myItemIds) {
+      const reviews = await ctx.db
+        .query("reviews")
+        .withIndex("by_item", (q) => q.eq("itemId", itemId))
+        .collect();
+      allReviews.push(...reviews);
+    }
+
+    if (allReviews.length === 0) {
+      return null;
+    }
+
+    const sum = allReviews.reduce((acc, review) => acc + review.rating, 0);
+    return {
+      average: sum / allReviews.length,
+      count: allReviews.length,
+    };
+  },
+});
+
+/**
+ * Get all renter reviews given by the current user (as an owner)
+ */
+export const getRenterReviewsGivenByMe = query({
+  args: {},
+  returns: v.array(
+    v.object({
+      _id: v.id("renterReviews"),
+      _creationTime: v.number(),
+      bookingId: v.id("bookings"),
+      renterId: v.string(),
+      ownerId: v.string(),
+      rating: v.number(),
+      comment: v.optional(v.string()),
+      createdAt: v.number(),
+      item: v.union(
+        v.object({
+          _id: v.id("items"),
+          title: v.string(),
+          images: v.array(v.id("_storage")),
+        }),
+        v.null()
+      ),
+      renter: v.union(
+        v.object({
+          firstName: v.optional(v.string()),
+          lastName: v.optional(v.string()),
+          imageUrl: v.optional(v.string()),
+        }),
+        v.null()
+      ),
+      booking: v.union(
+        v.object({
+          startDate: v.string(),
+          endDate: v.string(),
+        }),
+        v.null()
+      ),
+    })
+  ),
+  handler: async (ctx) => {
+    const identity = await requireIdentity(ctx);
+    const userId = identity.subject;
+
+    // Get all renter reviews where I am the owner
+    const reviews = await ctx.db
+      .query("renterReviews")
+      .order("desc")
+      .collect();
+
+    // Filter to only reviews by this owner (no index by owner, so filter in memory)
+    const myReviews = reviews.filter((r) => r.ownerId === userId);
+
+    // Sort by createdAt descending
+    myReviews.sort((a, b) => b.createdAt - a.createdAt);
+
+    // Enrich with booking, item, and renter details
+    const enrichedReviews = await Promise.all(
+      myReviews.map(async (review) => {
+        const booking = await ctx.db.get(review.bookingId);
+        const item = booking ? await ctx.db.get(booking.itemId) : null;
+        const renterProfile = await ctx.db
+          .query("profiles")
+          .withIndex("by_userId", (q) => q.eq("userId", review.renterId))
+          .first();
+
+        return {
+          ...review,
+          item: item
+            ? {
+                _id: item._id,
+                title: item.title,
+                images: item.images,
+              }
+            : null,
+          renter: renterProfile
+            ? {
+                firstName: renterProfile.firstName,
+                lastName: renterProfile.lastName,
+                imageUrl: renterProfile.imageUrl,
+              }
+            : null,
+          booking: booking
+            ? {
+                startDate: booking.startDate,
+                endDate: booking.endDate,
+              }
+            : null,
+        };
+      })
+    );
+
+    return enrichedReviews;
+  },
+});

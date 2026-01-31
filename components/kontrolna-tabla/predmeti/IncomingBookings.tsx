@@ -658,7 +658,7 @@ function PendingBookingCard({ booking }: { booking: BookingWithItem }) {
     <div className="flex gap-3 rounded-lg border border-podeli-accent/30 bg-podeli-accent/10 p-3">
       <Link
         href={itemUrl}
-        className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-muted"
+        className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted"
       >
         {imageUrl ? (
           <Image

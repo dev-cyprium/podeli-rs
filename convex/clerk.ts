@@ -21,6 +21,7 @@ export const getUsersByIds = action({
       firstName: user.firstName || null,
       lastName: user.lastName || null,
       email: user.emailAddresses[0]?.emailAddress || null,
+      imageUrl: user.imageUrl || null,
     }));
   },
 });

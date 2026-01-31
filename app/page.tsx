@@ -4,6 +4,9 @@ import {
   Leaf,
   PiggyBank,
   Instagram,
+  Handshake,
+  Sparkles,
+  ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
 import { DiscordIcon } from "@/components/icons/Icons";
@@ -222,6 +225,58 @@ async function LatestBlogSection() {
   );
 }
 
+function PartnersSection() {
+  return (
+    <section className="bg-podeli-accent/5 py-16 sm:py-24">
+      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
+          <h2 className="text-2xl font-bold tracking-tight text-podeli-dark sm:text-3xl">
+            Naši partneri
+          </h2>
+        </div>
+
+        <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Partner CTA Card */}
+          <Link
+            href="mailto:kontakt@podeli.rs?subject=Zainteresovan sam za partnerstvo"
+            className="group relative overflow-hidden rounded-2xl border-2 border-dashed border-podeli-accent/40 bg-gradient-to-br from-podeli-accent/10 to-podeli-accent/5 p-8 transition-all hover:border-podeli-accent hover:shadow-lg hover:shadow-podeli-accent/10"
+          >
+            <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-podeli-accent/20 blur-2xl transition-all group-hover:bg-podeli-accent/30" />
+            <div className="absolute -bottom-6 -left-6 h-20 w-20 rounded-full bg-podeli-blue/20 blur-2xl" />
+
+            <div className="relative">
+              <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-podeli-accent/20 text-podeli-accent transition-transform group-hover:scale-110">
+                <Handshake className="h-7 w-7" />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-podeli-accent" />
+                <span className="text-sm font-medium text-podeli-accent">
+                  Otvoreno za prijave
+                </span>
+              </div>
+
+              <h3 className="mt-3 text-xl font-bold text-podeli-dark">
+                Vi - postanite naš partner
+              </h3>
+
+              <p className="mt-3 leading-7 text-muted-foreground">
+                Imate biznis ili ideju koja se uklapa u našu misiju deljenja?
+                Javite nam se i hajde da zajedno gradimo zajednicu.
+              </p>
+
+              <div className="mt-6 flex items-center gap-2 text-sm font-semibold text-podeli-accent transition-all group-hover:gap-3">
+                <span>Kontaktirajte nas</span>
+                <ArrowRight className="h-4 w-4" />
+              </div>
+            </div>
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default async function Home() {
   return (
     <div className="min-h-screen bg-podeli-light font-sans text-podeli-dark selection:bg-podeli-accent/20 selection:text-podeli-dark">
@@ -237,6 +292,9 @@ export default async function Home() {
 
       {/* Latest from blog */}
       <LatestBlogSection />
+
+      {/* Partners Section */}
+      <PartnersSection />
 
       {/* Trust Section */}
       <section className="bg-podeli-dark py-24 text-podeli-light">
@@ -360,7 +418,7 @@ export default async function Home() {
       <footer className="bg-card py-12">
         <div className="mx-auto max-w-7xl px-6 text-center text-sm text-muted-foreground lg:px-8">
           <p>
-            &copy; {new Date().getFullYear()} PODELI.rs - Sva prava zadržana.
+            © {new Date().getFullYear()} podeli.rs – Sva prava zadržana.
           </p>
           <div className="mt-4 flex flex-wrap justify-center gap-6">
             <a href="#" className="hover:text-podeli-dark">

@@ -1,15 +1,47 @@
 "use client";
 
-import { useQuery } from "convex/react";
+import { useQuery, useAction } from "convex/react";
+import { useState, useEffect, useMemo } from "react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Star, User, Calendar } from "lucide-react";
 import { DateDisplay } from "@/components/ui/date-display";
 
+type ClerkUser = {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+  imageUrl: string | null;
+};
+
 export function MyRenterReviews() {
   const reviews = useQuery(api.reviews.getMyRenterReviews);
   const myRating = useQuery(api.reviews.getMyRenterRating);
+  const getUsersByIds = useAction(api.clerk.getUsersByIds);
+
+  const [clerkUsers, setClerkUsers] = useState<ClerkUser[]>([]);
+
+  // Collect all unique owner IDs
+  const ownerIds = useMemo(() => {
+    if (!reviews) return [];
+    return [...new Set(reviews.map((r) => r.ownerId))];
+  }, [reviews]);
+
+  // Fetch user data from Clerk
+  useEffect(() => {
+    if (ownerIds.length > 0) {
+      getUsersByIds({ userIds: ownerIds })
+        .then(setClerkUsers)
+        .catch(console.error);
+    }
+  }, [ownerIds, getUsersByIds]);
+
+  // Create a map for quick lookup
+  const userMap = useMemo(() => {
+    return new Map(clerkUsers.map((u) => [u.id, u]));
+  }, [clerkUsers]);
 
   if (reviews === undefined) {
     return (
@@ -51,7 +83,11 @@ export function MyRenterReviews() {
         ) : (
           <div className="space-y-4">
             {reviews.map((review) => (
-              <ReviewCard key={review._id} review={review} />
+              <ReviewCard
+                key={review._id}
+                review={review}
+                clerkUser={userMap.get(review.ownerId)}
+              />
             ))}
           </div>
         )}
@@ -79,6 +115,7 @@ function EmptyState() {
 
 type ReviewWithDetails = {
   _id: Id<"renterReviews">;
+  ownerId: string;
   rating: number;
   comment?: string;
   createdAt: number;
@@ -87,18 +124,19 @@ type ReviewWithDetails = {
     title: string;
     images: Id<"_storage">[];
   } | null;
-  owner: {
-    firstName?: string;
-    lastName?: string;
-    imageUrl?: string;
-  } | null;
   booking: {
     startDate: string;
     endDate: string;
   } | null;
 };
 
-function ReviewCard({ review }: { review: ReviewWithDetails }) {
+function ReviewCard({
+  review,
+  clerkUser,
+}: {
+  review: ReviewWithDetails;
+  clerkUser?: ClerkUser;
+}) {
   const imageUrl = useQuery(
     api.items.getImageUrl,
     review.item?.images[0]
@@ -159,13 +197,13 @@ function ReviewCard({ review }: { review: ReviewWithDetails }) {
           <p className="mt-2 text-sm text-muted-foreground">{review.comment}</p>
         )}
 
-        {/* Owner info */}
+        {/* Owner info from Clerk */}
         <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
           <div className="flex h-5 w-5 items-center justify-center overflow-hidden rounded-full bg-muted">
-            {review.owner?.imageUrl ? (
+            {clerkUser?.imageUrl ? (
               <img
-                src={review.owner.imageUrl}
-                alt={review.owner.firstName ?? "Vlasnik"}
+                src={clerkUser.imageUrl}
+                alt={clerkUser.firstName ?? "Vlasnik"}
                 className="h-full w-full object-cover"
               />
             ) : (
@@ -173,7 +211,7 @@ function ReviewCard({ review }: { review: ReviewWithDetails }) {
             )}
           </div>
           <span>
-            Ocenio/la: {review.owner?.firstName ?? "Korisnik"}
+            Ocenio/la: {clerkUser?.firstName ?? "Korisnik"}
           </span>
           <span className="text-muted-foreground/60">•</span>
           <span>

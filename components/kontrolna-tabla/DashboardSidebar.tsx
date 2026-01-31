@@ -91,7 +91,7 @@ export function DashboardSidebar({
   const podeliItems: NavItem[] = [
     { id: "main", label: "Predmeti", icon: Package, href: "/kontrolna-tabla/predmeti" },
     { id: "poruke", label: "Poruke", icon: MessageSquare, href: "/kontrolna-tabla/predmeti/poruke", showBadge: true },
-    { id: "ocene", label: "Ocene", icon: Star, href: "/kontrolna-tabla/predmeti/ocene", disabled: true },
+    { id: "ocene", label: "Ocene", icon: Star, href: "/kontrolna-tabla/predmeti/ocene" },
     { id: "istorija", label: "Istorija", icon: History, href: "/kontrolna-tabla/predmeti/istorija", disabled: true },
   ];
 

@@ -102,7 +102,7 @@ export function RenterBookingCard({ booking }: RenterBookingCardProps) {
       <div className="flex gap-4 rounded-xl border border-border bg-card p-4">
         <Link
           href={itemUrl}
-          className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-muted"
+          className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-muted"
         >
           {imageUrl ? (
             <Image
