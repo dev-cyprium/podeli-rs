@@ -435,6 +435,43 @@ export const remove = mutation({
 
     // Delete non-active bookings (pending, cancelled, vracen)
     for (const booking of bookings) {
+      // Delete related reviews
+      const reviews = await ctx.db
+        .query("reviews")
+        .withIndex("by_booking", (q) => q.eq("bookingId", booking._id))
+        .collect();
+      for (const review of reviews) {
+        await ctx.db.delete(review._id);
+      }
+
+      // Delete related renter reviews
+      const renterReviews = await ctx.db
+        .query("renterReviews")
+        .withIndex("by_booking", (q) => q.eq("bookingId", booking._id))
+        .collect();
+      for (const renterReview of renterReviews) {
+        await ctx.db.delete(renterReview._id);
+      }
+
+      // Delete related messages
+      const messages = await ctx.db
+        .query("messages")
+        .withIndex("by_booking", (q) => q.eq("bookingId", booking._id))
+        .collect();
+      for (const message of messages) {
+        await ctx.db.delete(message._id);
+      }
+
+      // Delete related chat presence records
+      const chatPresences = await ctx.db
+        .query("chatPresence")
+        .withIndex("by_booking_and_user", (q) => q.eq("bookingId", booking._id))
+        .collect();
+      for (const chatPresence of chatPresences) {
+        await ctx.db.delete(chatPresence._id);
+      }
+
+      // Finally delete the booking itself
       await ctx.db.delete(booking._id);
     }
     // Delete associated image files
