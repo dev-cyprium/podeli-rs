@@ -362,6 +362,14 @@ export const sendBookingRequestEmail = internalAction({
   },
   returns: v.boolean(),
   handler: async (ctx, args) => {
+    if (process.env.DISABLE_EMAILS === "true") {
+      console.log("[EMAIL DISABLED] Would send booking request email:", {
+        to: args.to,
+        subject: `Nova rezervacija za "${args.itemTitle}"`,
+      });
+      return true;
+    }
+
     const resend = new Resend(process.env.RESEND_API_KEY);
     try {
       const { error } = await resend.emails.send({
@@ -406,6 +414,14 @@ export const sendNewMessageEmail = internalAction({
   },
   returns: v.boolean(),
   handler: async (ctx, args) => {
+    if (process.env.DISABLE_EMAILS === "true") {
+      console.log("[EMAIL DISABLED] Would send new message email:", {
+        to: args.to,
+        subject: `Nova poruka od ${args.senderName}`,
+      });
+      return true;
+    }
+
     const resend = new Resend(process.env.RESEND_API_KEY);
     try {
       const { error } = await resend.emails.send({
