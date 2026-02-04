@@ -4,6 +4,7 @@ import {
   Leaf,
   PiggyBank,
   Instagram,
+  Facebook,
   Handshake,
   Sparkles,
   ArrowRight,
@@ -104,6 +105,16 @@ function HeroSection() {
               >
                 <DiscordIcon className="h-5 w-5" />
                 Discord
+              </a>
+              <a
+                href="https://www.facebook.com/profile.php?id=61587392755718"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm font-medium text-podeli-dark hover:text-podeli-accent transition-colors"
+                aria-label="Facebook"
+              >
+                <Facebook className="h-5 w-5" />
+                Facebook
               </a>
             </div>
           </div>
@@ -421,9 +432,9 @@ export default async function Home() {
             © {new Date().getFullYear()} podeli.rs – Sva prava zadržana.
           </p>
           <div className="mt-4 flex flex-wrap justify-center gap-6">
-            <a href="#" className="hover:text-podeli-dark">
+            <Link href="/o-nama" className="hover:text-podeli-dark">
               O nama
-            </a>
+            </Link>
             <Link href="/terms-of-service" className="hover:text-podeli-dark">
               Uslovi korišćenja
             </Link>
@@ -449,6 +460,16 @@ export default async function Home() {
             >
               <DiscordIcon className="h-4 w-4" />
               Discord
+            </a>
+            <a
+              href="https://www.facebook.com/profile.php?id=61587392755718"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 hover:text-podeli-dark"
+              aria-label="Facebook"
+            >
+              <Facebook className="h-4 w-4" />
+              Facebook
             </a>
           </div>
         </div>
