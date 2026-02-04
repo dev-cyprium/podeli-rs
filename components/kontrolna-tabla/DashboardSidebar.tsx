@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { TimeTravelWidget } from "@/components/debug/TimeTravelWidget";
 
 // Context: podeli (owner/sharing) or zakupi (renter)
 type Context = "podeli" | "zakupi";
@@ -174,7 +175,16 @@ export function DashboardSidebar({
 
       {context === "podeli" && <PlanIndicator />}
 
-      <div className="mt-auto px-2 pt-6">
+      <div className="mt-auto space-y-4 px-2 pt-6">
+        {/* Dev-only time travel widget */}
+        {process.env.NODE_ENV !== "production" && (
+          <div className="rounded-lg border border-dashed border-amber-300 bg-amber-50 p-2">
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-amber-600">
+              Dev Only
+            </p>
+            <TimeTravelWidget />
+          </div>
+        )}
         <Button
           variant="outline"
           size="sm"

@@ -16,7 +16,7 @@ function Card({ className, ...props }: React.ComponentProps<"div">) {
 function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
-      className={cn("border-b border-slate-100 px-6 py-4", className)}
+      className={cn("border-b border-slate-100 px-4 py-4 sm:px-6", className)}
       {...props}
     />
   );
@@ -32,7 +32,7 @@ function CardTitle({ className, ...props }: React.ComponentProps<"h3">) {
 }
 
 function CardContent({ className, ...props }: React.ComponentProps<"div">) {
-  return <div className={cn("px-6 py-4", className)} {...props} />;
+  return <div className={cn("px-4 py-4 sm:px-6", className)} {...props} />;
 }
 
 export { Card, CardHeader, CardTitle, CardContent };

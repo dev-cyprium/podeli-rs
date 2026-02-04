@@ -3,7 +3,6 @@
 import { Menu } from "lucide-react";
 import { NotificationBell } from "@/components/NotificationBell";
 import { UserMenu } from "@/components/UserMenu";
-import { TimeTravelWidget } from "@/components/debug/TimeTravelWidget";
 import { cn } from "@/lib/utils";
 import { DashboardBreadcrumbs } from "./DashboardBreadcrumbs";
 import { Button } from "@/components/ui/button";
@@ -40,64 +39,60 @@ export function DashboardHeader({
   ];
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-border bg-podeli-light/80 px-4 shadow-sm backdrop-blur-md sm:gap-x-6 sm:px-6 lg:px-8">
-      {/* Mobile menu button */}
-      {onMenuClick && (
-        <>
+    <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center border-b border-border bg-podeli-light/80 px-4 shadow-sm backdrop-blur-md sm:px-6 lg:px-8">
+      {/* Left section: menu button + breadcrumbs */}
+      <div className="flex items-center gap-3">
+        {onMenuClick && (
           <Button
             type="button"
             variant="ghost"
             size="icon"
             onClick={onMenuClick}
-            className="-m-2.5 p-2.5 text-muted-foreground hover:text-podeli-dark lg:hidden"
+            className="-ml-2 text-muted-foreground hover:text-podeli-dark lg:hidden"
           >
             <span className="sr-only">Open sidebar</span>
             <Menu className="h-6 w-6" aria-hidden="true" />
           </Button>
-          {/* Separator */}
-          <div
-            aria-hidden="true"
-            className="h-6 w-px bg-border lg:hidden"
-          />
-        </>
-      )}
-
-      <div className="flex flex-1 items-center justify-between gap-x-4 self-stretch lg:gap-x-6">
+        )}
         <DashboardBreadcrumbs items={breadcrumbs} />
+      </div>
 
-        <div className="flex items-center gap-2 sm:gap-4">
-          <TimeTravelWidget />
-          <div className="rounded-full bg-muted p-1">
-            <div className="flex">
-              <Button
-                variant="ghost"
-                onClick={() => onContextChange("podeli")}
-                className={cn(
-                  "rounded-full px-3 py-1.5 text-xs font-medium transition-all sm:px-4 sm:py-2 sm:text-sm",
-                  context === "podeli"
-                    ? "bg-podeli-accent text-podeli-dark shadow-sm hover:bg-podeli-accent"
-                    : "text-muted-foreground hover:text-podeli-dark"
-                )}
-              >
-                Podeli
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => onContextChange("zakupi")}
-                className={cn(
-                  "rounded-full px-3 py-1.5 text-xs font-medium transition-all sm:px-4 sm:py-2 sm:text-sm",
-                  context === "zakupi"
-                    ? "bg-podeli-accent text-podeli-dark shadow-sm hover:bg-podeli-accent"
-                    : "text-muted-foreground hover:text-podeli-dark"
-                )}
-              >
-                Zakupi
-              </Button>
-            </div>
+      {/* Center section: context toggle */}
+      <div className="absolute left-1/2 -translate-x-1/2">
+        <div className="rounded-full bg-muted p-1">
+          <div className="flex">
+            <Button
+              variant="ghost"
+              onClick={() => onContextChange("podeli")}
+              className={cn(
+                "rounded-full px-3 py-1.5 text-xs font-medium transition-all sm:px-4 sm:py-2 sm:text-sm",
+                context === "podeli"
+                  ? "bg-podeli-accent text-podeli-dark shadow-sm hover:bg-podeli-accent"
+                  : "text-muted-foreground hover:text-podeli-dark"
+              )}
+            >
+              Podeli
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => onContextChange("zakupi")}
+              className={cn(
+                "rounded-full px-3 py-1.5 text-xs font-medium transition-all sm:px-4 sm:py-2 sm:text-sm",
+                context === "zakupi"
+                  ? "bg-podeli-accent text-podeli-dark shadow-sm hover:bg-podeli-accent"
+                  : "text-muted-foreground hover:text-podeli-dark"
+              )}
+            >
+              Zakupi
+            </Button>
           </div>
-          <NotificationBell />
-          <UserMenu />
         </div>
+      </div>
+
+      {/* Right section: notifications + user menu */}
+      <div className="ml-auto flex items-center gap-2 sm:gap-3">
+        <NotificationBell />
+        <UserMenu />
       </div>
     </header>
   );

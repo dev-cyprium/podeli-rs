@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { DashboardHeader } from "./DashboardHeader";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { BackgroundPattern } from "./BackgroundPattern";
@@ -34,12 +34,13 @@ export function DashboardShell({ context, section, children }: DashboardShellPro
   return (
     <div className="min-h-screen">
       <BackgroundPattern />
-      {/* Mobile sidebar dialog */}
-      <Dialog open={sidebarOpen} onOpenChange={setSidebarOpen}>
-        <DialogContent
-          className="fixed inset-y-0 left-0 top-0 z-50 h-full w-full max-w-xs translate-x-0 translate-y-0 rounded-none border-0 p-0 shadow-lg data-[state=closed]:-translate-x-full data-[state=open]:translate-x-0 sm:max-w-xs"
+      {/* Mobile sidebar - slides in from left */}
+      <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+        <SheetContent
+          side="left"
           showCloseButton={false}
           accessibleTitle="Navigacija"
+          className="w-64 border-r p-0"
         >
           <DashboardSidebar
             context={context}
@@ -50,8 +51,8 @@ export function DashboardShell({ context, section, children }: DashboardShellPro
             }}
             onClose={() => setSidebarOpen(false)}
           />
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
 
       {/* Desktop static sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-64 lg:flex-col">

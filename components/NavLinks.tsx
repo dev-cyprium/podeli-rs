@@ -3,17 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
-import { NotificationBell } from "./NotificationBell";
 import { PonudaLink } from "./PonudaLink";
-import { SignInButton } from "./SignInButton";
-import { UserMenu } from "./UserMenu";
 import { Button } from "@/components/ui/button";
 
-interface NavLinksProps {
-  isSignedIn: boolean;
-}
-
-export function NavLinks({ isSignedIn }: NavLinksProps) {
+export function NavLinks() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
@@ -66,14 +59,6 @@ export function NavLinks({ isSignedIn }: NavLinksProps) {
             >
               Planovi
             </Link>
-            <div className="flex flex-col gap-2 pt-2">
-              {isSignedIn && (
-                <div className="flex items-center gap-2">
-                  <NotificationBell />
-                </div>
-              )}
-              {isSignedIn ? <UserMenu /> : <SignInButton />}
-            </div>
           </div>
         </div>
       )}

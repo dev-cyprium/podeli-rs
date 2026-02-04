@@ -339,96 +339,120 @@ function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
   const showDebugReset = isSuperAdmin && process.env.NODE_ENV !== "production" && booking.returnReminderSent;
 
   return (
-    <div className="flex gap-3 rounded-lg border border-border bg-card p-3">
-      <Link
-        href={itemUrl}
-        className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted"
-      >
-        {imageUrl ? (
-          <Image
-            src={imageUrl}
-            alt={booking.item?.title ?? "Predmet"}
-            fill
-            sizes="64px"
-            className="object-cover"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
-            Nema
-          </div>
-        )}
-      </Link>
-
-      <div className="flex flex-1 flex-col">
-        <div className="flex items-start justify-between">
-          <Link
-            href={itemUrl}
-            className="text-sm font-semibold text-podeli-dark hover:text-podeli-accent"
-          >
-            {booking.item?.title ?? "Predmet nije dostupan"}
-          </Link>
-          <BookingStatusBadge status={booking.status as "pending" | "confirmed" | "agreed" | "nije_isporucen" | "isporucen" | "vracen" | "cancelled"} />
-        </div>
-
-        <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <Calendar className="h-3 w-3" />
-            <span>
-              <DateDisplay value={booking.startDate} format="short" /> –{" "}
-              <DateDisplay value={booking.endDate} format="short" />
-            </span>
-          </div>
-          <span className="font-medium text-podeli-accent">
-            {booking.totalPrice.toFixed(0)} RSD
-          </span>
-        </div>
-
-        {/* Renter info */}
-        <div className="mt-2 flex items-center gap-2 text-xs">
-          <div className="relative flex h-5 w-5 items-center justify-center overflow-hidden rounded-full bg-muted">
-            {booking.renter?.imageUrl ? (
-              <Image
-                src={booking.renter.imageUrl}
-                alt={booking.renter.firstName ?? "Zakupac"}
-                fill
-                sizes="20px"
-                className="object-cover"
-              />
-            ) : (
-              <User className="h-2.5 w-2.5 text-muted-foreground" />
-            )}
-          </div>
-          <span className="text-muted-foreground">
-            {booking.renter?.firstName ?? "Korisnik"}
-          </span>
-          {booking.renterRating && (
-            <div className="flex items-center gap-0.5 text-amber-500">
-              <Star className="h-3 w-3 fill-current" />
-              <span className="font-medium">
-                {booking.renterRating.average.toFixed(1)}
-              </span>
+    <div className="rounded-lg border border-border bg-card p-3">
+      {/* Top row: image + title + badge */}
+      <div className="flex gap-3">
+        <Link
+          href={itemUrl}
+          className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted"
+        >
+          {imageUrl ? (
+            <Image
+              src={imageUrl}
+              alt={booking.item?.title ?? "Predmet"}
+              fill
+              sizes="64px"
+              className="object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
+              Nema
             </div>
           )}
-        </div>
+        </Link>
 
-        {/* Agreement status for confirmed bookings */}
-        {booking.status === "confirmed" && (
-          <AgreementStatus
-            renterAgreed={booking.renterAgreed}
-            ownerAgreed={booking.ownerAgreed}
-            isOwner={true}
-            className="mt-2"
-          />
-        )}
-
-        {error && (
-          <div className="mt-2 rounded bg-podeli-red/10 p-2 text-xs text-podeli-red">
-            {error}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <Link
+              href={itemUrl}
+              className="truncate text-sm font-semibold text-podeli-dark hover:text-podeli-accent"
+            >
+              {booking.item?.title ?? "Predmet nije dostupan"}
+            </Link>
+            <BookingStatusBadge status={booking.status as "pending" | "confirmed" | "agreed" | "nije_isporucen" | "isporucen" | "vracen" | "cancelled"} />
           </div>
-        )}
 
-        {/* Actions based on status */}
-        <div className="mt-2 flex flex-wrap gap-2">
+          {/* Price */}
+          <div className="mt-1 text-sm font-semibold text-podeli-accent">
+            {booking.totalPrice.toFixed(0)} RSD
+          </div>
+        </div>
+      </div>
+
+      {/* Dates - stacked */}
+      <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <Calendar className="h-3.5 w-3.5 shrink-0" />
+          <span>Početak:</span>
+          <span className="font-medium text-podeli-dark">
+            <DateDisplay value={booking.startDate} format="short" />
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <RotateCcw className="h-3.5 w-3.5 shrink-0" />
+          <span>Povratak:</span>
+          <span className="font-medium text-podeli-dark">
+            <DateDisplay value={booking.endDate} format="short" />
+          </span>
+        </div>
+      </div>
+
+      {/* Renter info */}
+      <div className="mt-3 flex items-center gap-2 rounded-md bg-muted/50 px-2 py-2 text-xs">
+        <div className="relative flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-muted">
+          {booking.renter?.imageUrl ? (
+            <Image
+              src={booking.renter.imageUrl}
+              alt={booking.renter.firstName ?? "Zakupac"}
+              fill
+              sizes="24px"
+              className="object-cover"
+            />
+          ) : (
+            <User className="h-3 w-3 text-muted-foreground" />
+          )}
+        </div>
+        <span className="font-medium text-podeli-dark">
+          {booking.renter?.firstName ?? "Korisnik"}
+        </span>
+        {booking.renterRating ? (
+          <div className="flex items-center gap-0.5 text-amber-500">
+            <Star className="h-3 w-3 fill-current" />
+            <span className="font-medium">
+              {booking.renterRating.average.toFixed(1)}
+            </span>
+            <span className="text-muted-foreground">
+              ({booking.renterRating.count})
+            </span>
+          </div>
+        ) : (
+          <span className="text-muted-foreground">Bez ocena</span>
+        )}
+        {(booking.renterCompletedRentals ?? 0) > 0 && (
+          <span className="hidden text-muted-foreground sm:inline">
+            • {booking.renterCompletedRentals} završen{booking.renterCompletedRentals === 1 ? "a" : "e"} rezervacij{booking.renterCompletedRentals === 1 ? "a" : "e"}
+          </span>
+        )}
+      </div>
+
+      {/* Agreement status for confirmed bookings */}
+      {booking.status === "confirmed" && (
+        <AgreementStatus
+          renterAgreed={booking.renterAgreed}
+          ownerAgreed={booking.ownerAgreed}
+          isOwner={true}
+          className="mt-3"
+        />
+      )}
+
+      {error && (
+        <div className="mt-3 rounded bg-podeli-red/10 p-2 text-xs text-podeli-red">
+          {error}
+        </div>
+      )}
+
+      {/* Actions based on status */}
+      <div className="mt-3 flex flex-wrap gap-2">
           {canChat && (
             <Button
               size="xs"
@@ -603,7 +627,6 @@ function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
             </div>
           </div>
         )}
-      </div>
     </div>
   );
 }
@@ -655,69 +678,84 @@ function PendingBookingCard({ booking }: { booking: BookingWithItem }) {
   const itemUrl = booking.item ? getItemUrl(booking.item) : "#";
 
   return (
-    <div className="flex gap-3 rounded-lg border border-podeli-accent/30 bg-podeli-accent/10 p-3">
-      <Link
-        href={itemUrl}
-        className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted"
-      >
-        {imageUrl ? (
-          <Image
-            src={imageUrl}
-            alt={booking.item?.title ?? "Predmet"}
-            fill
-            sizes="64px"
-            className="object-cover"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
-            Nema
-          </div>
-        )}
-      </Link>
+    <div className="rounded-lg border border-podeli-accent/30 bg-podeli-accent/10 p-3">
+      {/* Top row: image + title + badge */}
+      <div className="flex gap-3">
+        <Link
+          href={itemUrl}
+          className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted"
+        >
+          {imageUrl ? (
+            <Image
+              src={imageUrl}
+              alt={booking.item?.title ?? "Predmet"}
+              fill
+              sizes="64px"
+              className="object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
+              Nema
+            </div>
+          )}
+        </Link>
 
-      <div className="flex flex-1 flex-col">
-        <div className="flex items-start justify-between">
-          <Link
-            href={itemUrl}
-            className="text-sm font-semibold text-podeli-dark hover:text-podeli-accent"
-          >
-            {booking.item?.title ?? "Predmet nije dostupan"}
-          </Link>
-          <BookingStatusBadge status={booking.status as "pending" | "confirmed" | "agreed" | "nije_isporucen" | "isporucen" | "vracen" | "cancelled"} />
-        </div>
-
-        <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <Calendar className="h-3 w-3" />
-            <span>
-              <DateDisplay value={booking.startDate} format="short" /> –{" "}
-              <DateDisplay value={booking.endDate} format="short" />
-            </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <Link
+              href={itemUrl}
+              className="truncate text-sm font-semibold text-podeli-dark hover:text-podeli-accent"
+            >
+              {booking.item?.title ?? "Predmet nije dostupan"}
+            </Link>
+            <BookingStatusBadge status={booking.status as "pending" | "confirmed" | "agreed" | "nije_isporucen" | "isporucen" | "vracen" | "cancelled"} />
           </div>
-          <span className="font-medium text-podeli-accent">
+
+          {/* Price */}
+          <div className="mt-1 text-sm font-semibold text-podeli-accent">
             {booking.totalPrice.toFixed(0)} RSD
+          </div>
+        </div>
+      </div>
+
+      {/* Dates - stacked */}
+      <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <Calendar className="h-3.5 w-3.5 shrink-0" />
+          <span>Početak:</span>
+          <span className="font-medium text-podeli-dark">
+            <DateDisplay value={booking.startDate} format="short" />
           </span>
         </div>
+        <div className="flex items-center gap-2">
+          <RotateCcw className="h-3.5 w-3.5 shrink-0" />
+          <span>Povratak:</span>
+          <span className="font-medium text-podeli-dark">
+            <DateDisplay value={booking.endDate} format="short" />
+          </span>
+        </div>
+      </div>
 
-        {/* Renter info */}
-        <div className="mt-2 flex items-center gap-2 rounded-md bg-white/50 px-2 py-1.5">
-          <div className="relative flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-muted">
-            {booking.renter?.imageUrl ? (
-              <Image
-                src={booking.renter.imageUrl}
-                alt={booking.renter.firstName ?? "Zakupac"}
-                fill
-                sizes="24px"
-                className="object-cover"
-              />
-            ) : (
-              <User className="h-3 w-3 text-muted-foreground" />
-            )}
-          </div>
-          <div className="flex flex-1 items-center gap-2 text-xs">
-            <span className="font-medium text-podeli-dark">
-              {booking.renter?.firstName ?? "Korisnik"}
-            </span>
+      {/* Renter info */}
+      <div className="mt-3 flex items-center gap-2 rounded-md bg-white/50 px-2 py-2">
+        <div className="relative flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-muted">
+          {booking.renter?.imageUrl ? (
+            <Image
+              src={booking.renter.imageUrl}
+              alt={booking.renter.firstName ?? "Zakupac"}
+              fill
+              sizes="28px"
+              className="object-cover"
+            />
+          ) : (
+            <User className="h-4 w-4 text-muted-foreground" />
+          )}
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col text-xs sm:flex-row sm:items-center sm:gap-2">
+          <span className="font-medium text-podeli-dark">
+            {booking.renter?.firstName ?? "Korisnik"}
+          </span>
+          <div className="flex items-center gap-2">
             {booking.renterRating ? (
               <div className="flex items-center gap-0.5 text-amber-500">
                 <Star className="h-3 w-3 fill-current" />
@@ -732,41 +770,42 @@ function PendingBookingCard({ booking }: { booking: BookingWithItem }) {
               <span className="text-muted-foreground">Bez ocena</span>
             )}
             {(booking.renterCompletedRentals ?? 0) > 0 && (
-              <span className="text-muted-foreground">
+              <span className="hidden text-muted-foreground sm:inline">
                 • {booking.renterCompletedRentals} završen{booking.renterCompletedRentals === 1 ? "a" : "e"} rezervacij{booking.renterCompletedRentals === 1 ? "a" : "e"}
               </span>
             )}
           </div>
         </div>
+      </div>
 
-        {error && (
-          <div className="mt-2 rounded bg-podeli-red/10 p-2 text-xs text-podeli-red">
-            {error}
-          </div>
-        )}
-
-        <div className="mt-2 flex gap-2">
-          <Button
-            size="xs"
-            variant="outline"
-            onClick={handleApprove}
-            disabled={isUpdating}
-            className="text-podeli-blue hover:bg-podeli-blue/10"
-          >
-            <Check className="mr-1 h-3 w-3" />
-            Odobri
-          </Button>
-          <Button
-            size="xs"
-            variant="outline"
-            onClick={handleReject}
-            disabled={isUpdating}
-            className="text-podeli-red hover:bg-podeli-red/10"
-          >
-            <X className="mr-1 h-3 w-3" />
-            Odbij
-          </Button>
+      {error && (
+        <div className="mt-3 rounded bg-podeli-red/10 p-2 text-xs text-podeli-red">
+          {error}
         </div>
+      )}
+
+      {/* Action buttons */}
+      <div className="mt-3 flex gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleApprove}
+          disabled={isUpdating}
+          className="flex-1 text-podeli-blue hover:bg-podeli-blue/10"
+        >
+          <Check className="mr-1.5 h-4 w-4" />
+          Odobri
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleReject}
+          disabled={isUpdating}
+          className="flex-1 text-podeli-red hover:bg-podeli-red/10"
+        >
+          <X className="mr-1.5 h-4 w-4" />
+          Odbij
+        </Button>
       </div>
     </div>
   );

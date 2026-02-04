@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PodeliEmptyState } from "@/components/kontrolna-tabla/PodeliEmptyState";
 import { formatSerbianDate } from "@/lib/serbian-date";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Calendar, Truck, Coins } from "lucide-react";
 
 type DeliveryMethod = "licno" | "glovo" | "wolt" | "cargo";
 
@@ -86,38 +86,40 @@ function ItemsListContent() {
 
   return (
     <Card>
-      <CardHeader className="flex items-center justify-between">
-        <div>
+      <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0 flex-1">
           <CardTitle>Moji predmeti ({listingCountLabel})</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">
             Upravljajte ponudom i dostupnošću.
           </p>
         </div>
-        {atLimit ? (
-          <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1 text-xs text-[#f0a202]">
-              <AlertTriangle className="h-3 w-3" />
-              Limit dostignut
-            </span>
-            <Button asChild size="sm" className="bg-[#f0a202] text-white hover:bg-[#f0a202]/90">
-              <Link href="/planovi">Nadogradite</Link>
+        <div className="shrink-0">
+          {atLimit ? (
+            <div className="flex items-center gap-2">
+              <span className="flex items-center gap-1 text-xs text-[#f0a202]">
+                <AlertTriangle className="h-3 w-3" />
+                Limit dostignut
+              </span>
+              <Button asChild size="sm" className="bg-[#f0a202] text-white hover:bg-[#f0a202]/90">
+                <Link href="/planovi">Nadogradite</Link>
+              </Button>
+            </div>
+          ) : !hasContactPrefs ? (
+            <Button
+              disabled
+              size="sm"
+              variant="outline"
+              className="w-full cursor-not-allowed opacity-60 sm:w-auto"
+              title="Postavite način kontakta gore da biste dodali predmet"
+            >
+              Novi predmet
             </Button>
-          </div>
-        ) : !hasContactPrefs ? (
-          <Button
-            disabled
-            size="sm"
-            variant="outline"
-            className="cursor-not-allowed opacity-60"
-            title="Postavite način kontakta gore da biste dodali predmet"
-          >
-            Novi predmet
-          </Button>
-        ) : (
-          <Button asChild className="bg-podeli-accent text-podeli-dark hover:bg-podeli-accent/90">
-            <Link href="/kontrolna-tabla/predmeti/novi">Novi predmet</Link>
-          </Button>
-        )}
+          ) : (
+            <Button asChild size="sm" className="w-full bg-podeli-accent text-podeli-dark hover:bg-podeli-accent/90 sm:w-auto">
+              <Link href="/kontrolna-tabla/predmeti/novi">Novi predmet</Link>
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         {items.length === 0 ? (
@@ -173,60 +175,77 @@ function ItemCard({
   const availabilitySummary =
     item.availabilitySlots.length > 0
       ? item.availabilitySlots.slice(0, 2).map(formatSlot).join(", ")
-      : "Nema unetih termina";
+      : "Nema termina";
+
+  const deliverySummary = item.deliveryMethods.length
+    ? item.deliveryMethods.map(formatDelivery).join(", ")
+    : "Nije navedeno";
 
   return (
-    <div className="flex gap-4 rounded-xl border border-border bg-card px-4 py-4">
-      <div className="h-20 w-20 overflow-hidden rounded-lg bg-muted">
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={item.title}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
-            Nema slike
+    <div className="rounded-xl border border-border bg-card p-4">
+      {/* Mobile: stacked, Desktop: horizontal */}
+      <div className="flex flex-col gap-4 sm:flex-row">
+        {/* Image */}
+        <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-muted">
+          {imageUrl ? (
+            <img
+              src={imageUrl}
+              alt={item.title}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
+              Nema slike
+            </div>
+          )}
+        </div>
+
+        {/* Content */}
+        <div className="min-w-0 flex-1">
+          {/* Title + Badge */}
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="truncate text-base font-semibold text-podeli-dark">
+              {item.title}
+            </h3>
+            <Badge className="shrink-0">{item.category}</Badge>
           </div>
-        )}
-      </div>
 
-      <div className="flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="text-base font-semibold text-podeli-dark">
-            {item.title}
-          </h3>
-          <Badge>{item.category}</Badge>
-        </div>
-        <p className="mt-1 text-sm text-muted-foreground">{item.description}</p>
-        <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
-          <span className="rounded-full bg-muted px-2 py-1">
-            {item.pricePerDay.toFixed(0)} RSD / dan
-          </span>
-          <span className="rounded-full bg-muted px-2 py-1">
-            Dostupnost: {availabilitySummary}
-          </span>
-          <span className="rounded-full bg-muted px-2 py-1">
-            Dostava:{" "}
-            {item.deliveryMethods.length
-              ? item.deliveryMethods.map(formatDelivery).join(", ")
-              : "Nije navedeno"}
-          </span>
-        </div>
-      </div>
+          {/* Description - hidden on mobile to save space */}
+          <p className="mt-1 hidden text-sm text-muted-foreground sm:line-clamp-2">
+            {item.description}
+          </p>
 
-      <div className="flex flex-col gap-2">
-        <Button variant="outline" size="sm" onClick={onEdit}>
-          Izmeni
-        </Button>
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={onDelete}
-          className="border border-podeli-red/30"
-        >
-          Obriši
-        </Button>
+          {/* Info pills with icons */}
+          <div className="mt-3 flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:flex-wrap sm:gap-3">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1">
+              <Coins className="h-3 w-3 shrink-0" />
+              <span>{item.pricePerDay.toFixed(0)} RSD / dan</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1">
+              <Calendar className="h-3 w-3 shrink-0" />
+              <span className="truncate">{availabilitySummary}</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1">
+              <Truck className="h-3 w-3 shrink-0" />
+              <span className="truncate">{deliverySummary}</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Action buttons - row on mobile, column on desktop */}
+        <div className="flex shrink-0 gap-2 sm:flex-col">
+          <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={onEdit}>
+            Izmeni
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            className="flex-1 border border-podeli-red/30 sm:flex-none"
+            onClick={onDelete}
+          >
+            Obriši
+          </Button>
+        </div>
       </div>
     </div>
   );

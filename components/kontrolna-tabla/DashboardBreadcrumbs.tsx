@@ -8,7 +8,7 @@ interface DashboardBreadcrumbsProps {
 
 export function DashboardBreadcrumbs({ items }: DashboardBreadcrumbsProps) {
   return (
-    <nav className="flex items-center gap-2 text-sm text-muted-foreground">
+    <nav className="hidden items-center gap-2 text-sm text-muted-foreground md:flex">
       {items.map((item, index) => (
         <span key={`${item}-${index}`} className="flex items-center gap-2">
           <span className={index === items.length - 1 ? "text-podeli-dark font-medium" : ""}>

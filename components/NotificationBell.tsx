@@ -171,7 +171,7 @@ export function NotificationBell() {
         align="end"
         side="bottom"
         sideOffset={8}
-        className="max-w-[min(90vw,22rem)] w-[min(90vw,22rem)] overflow-hidden rounded-md border border-border bg-[#f8f7ff] p-0 text-[#02020a] shadow-md"
+        className="w-[100vw] max-w-[100vw] overflow-hidden rounded-none border-x-0 border-border bg-[#f8f7ff] p-0 text-[#02020a] shadow-md sm:w-[22rem] sm:max-w-[22rem] sm:rounded-md sm:border-x"
       >
         <div className="border-b border-border px-3 py-2">
           <h3 className="text-sm font-semibold">Obaveštenja</h3>
