@@ -33,17 +33,18 @@ export function FunctionsPanel() {
     setLoading(key);
     try {
       const result = await fn();
+      const r = result as Record<string, unknown>;
       const detail =
         typeof result === "object" && result !== null && "created" in result
-          ? `Kreirano: ${(result as { created: number }).created}, postojalo: ${(result as { existing: number }).existing}`
+          ? `Kreirano: ${r.created}, postojalo: ${r.existing}`
           : typeof result === "object" &&
               result !== null &&
               "updated" in result
-            ? `Ažurirano: ${(result as { updated: number }).updated} / ${(result as { total: number }).total}`
+            ? `Ažurirano: ${r.updated} / ${r.total}`
             : typeof result === "object" &&
                 result !== null &&
                 "deleted" in result
-              ? `Obrisano: ${(result as { deleted: number }).deleted} / ${(result as { total: number }).total}`
+              ? `Obrisano: ${r.deleted} / ${r.total}`
               : null;
       toast.success(successMsg, { description: detail ?? undefined });
     } catch (err) {
