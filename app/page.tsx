@@ -27,14 +27,6 @@ function HeroSection() {
     <section className="relative overflow-hidden pt-16 pb-24 lg:pt-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="flex flex-col items-center text-center">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-podeli-accent/30 bg-podeli-accent/10 px-4 py-1.5 text-sm font-medium text-podeli-dark">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-podeli-accent opacity-75"></span>
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-podeli-accent"></span>
-            </span>
-            Lansiramo uskoro u Beogradu
-          </div>
-
           <h1 className="max-w-4xl text-5xl font-extrabold tracking-tight text-podeli-dark sm:text-6xl lg:text-7xl">
             Tvoj komšiluk je pun <br className="hidden sm:block" />
             <span className="relative whitespace-nowrap text-podeli-accent">
@@ -428,9 +420,7 @@ export default async function Home() {
       {/* Simple Footer */}
       <footer className="bg-card py-12">
         <div className="mx-auto max-w-7xl px-6 text-center text-sm text-muted-foreground lg:px-8">
-          <p>
-            © {new Date().getFullYear()} podeli.rs – Sva prava zadržana.
-          </p>
+          <p>© {new Date().getFullYear()} podeli.rs – Sva prava zadržana.</p>
           <div className="mt-4 flex flex-wrap justify-center gap-6">
             <Link href="/o-nama" className="hover:text-podeli-dark">
               O nama
@@ -438,7 +428,10 @@ export default async function Home() {
             <Link href="/terms-of-service" className="hover:text-podeli-dark">
               Uslovi korišćenja
             </Link>
-            <a href="mailto:kontakt@podeli.rs" className="hover:text-podeli-dark">
+            <a
+              href="mailto:kontakt@podeli.rs"
+              className="hover:text-podeli-dark"
+            >
               Kontakt
             </a>
             <a

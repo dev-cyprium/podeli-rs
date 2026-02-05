@@ -38,6 +38,7 @@ export default defineSchema({
     maxListings: v.number(),
     maxActiveRentals: v.number(),
     allowedDeliveryMethods: v.array(v.string()),
+    instagramStoryBoosts: v.optional(v.number()),
     hasBadge: v.boolean(),
     badgeLabel: v.optional(v.string()),
     priceAmount: v.number(),

@@ -1,0 +1,248 @@
+"use client";
+
+import { useState } from "react";
+import { useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import {
+  Zap,
+  Layers,
+  Hash,
+  Search,
+  Trash2,
+  Loader2,
+} from "lucide-react";
+
+export function FunctionsPanel() {
+  const [loading, setLoading] = useState<string | null>(null);
+
+  const initPlans = useMutation(api.plans.initializeDefaults);
+  const backfillPlans = useMutation(api.plans.backfill);
+  const initCategories = useMutation(api.categories.initializeDefaults);
+  const backfillShortIdSlug = useMutation(api.items.backfillShortIdAndSlug);
+  const backfillSearchText = useMutation(api.items.backfillSearchText);
+  const clearOrphanedBookings = useMutation(api.bookings.clearOrphanedBookings);
+
+  async function run(
+    key: string,
+    fn: () => Promise<unknown>,
+    successMsg: string
+  ) {
+    setLoading(key);
+    try {
+      const result = await fn();
+      const detail =
+        typeof result === "object" && result !== null && "created" in result
+          ? `Kreirano: ${(result as { created: number }).created}, postojalo: ${(result as { existing: number }).existing}`
+          : typeof result === "object" &&
+              result !== null &&
+              "updated" in result
+            ? `Ažurirano: ${(result as { updated: number }).updated} / ${(result as { total: number }).total}`
+            : typeof result === "object" &&
+                result !== null &&
+                "deleted" in result
+              ? `Obrisano: ${(result as { deleted: number }).deleted} / ${(result as { total: number }).total}`
+              : null;
+      toast.success(successMsg, { description: detail ?? undefined });
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Greška pri izvršavanju funkcije."
+      );
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-bold text-[#02020a]">Admin funkcije</h1>
+        <p className="mt-1 text-muted-foreground">
+          Pokreni uobičajene admin funkcije: inicijalizacija, backfill, čišćenje.
+        </p>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Zap className="h-4 w-4 text-podeli-accent" />
+              Inicijalizuj planove
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Kreira podrazumevane planove ako ne postoji nijedan (free, starter,
+              ultimate, lifetime, single_listing).
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  run(
+                    "plans",
+                    () => initPlans(),
+                    "Planovi su inicijalizovani."
+                  )
+                }
+                disabled={loading !== null}
+              >
+                {loading === "plans" && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                Inicijalizuj
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  run(
+                    "backfillPlans",
+                    () => backfillPlans(),
+                    "Planovi su ažurirani (backfill)."
+                  )
+                }
+                disabled={loading !== null}
+              >
+                {loading === "backfillPlans" && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                Backfill
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Layers className="h-4 w-4 text-podeli-accent" />
+              Inicijalizuj kategorije
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Kreira podrazumevane kategorije ako ne postoje (Alati, Kampovanje,
+              Elektronika, itd.).
+            </p>
+          </CardHeader>
+          <CardContent>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                run(
+                  "categories",
+                  () => initCategories(),
+                  "Kategorije su inicijalizovane."
+                )
+              }
+              disabled={loading !== null}
+            >
+              {loading === "categories" && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Pokreni
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Hash className="h-4 w-4 text-podeli-accent" />
+              Backfill shortId / slug
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Popuni shortId i slug za oglase koji ih nemaju (potrebno za URL
+              /p/[shortId]/[slug]).
+            </p>
+          </CardHeader>
+          <CardContent>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                run(
+                  "backfillShortId",
+                  () => backfillShortIdSlug(),
+                  "Backfill shortId/slug je završen."
+                )
+              }
+              disabled={loading !== null}
+            >
+              {loading === "backfillShortId" && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Pokreni
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Search className="h-4 w-4 text-podeli-accent" />
+              Backfill searchText
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Popuni searchText za oglase koji ga nemaju (potrebno za pretragu).
+            </p>
+          </CardHeader>
+          <CardContent>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                run(
+                  "backfillSearch",
+                  () => backfillSearchText(),
+                  "Backfill searchText je završen."
+                )
+              }
+              disabled={loading !== null}
+            >
+              {loading === "backfillSearch" && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Pokreni
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Trash2 className="h-4 w-4 text-podeli-accent" />
+              Očisti siročiće zakupa
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Briše zakupe čiji predmet više ne postoji u bazi.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+              onClick={() =>
+                run(
+                  "clearOrphaned",
+                  () => clearOrphanedBookings(),
+                  "Siročići zakupa su očišćeni."
+                )
+              }
+              disabled={loading !== null}
+            >
+              {loading === "clearOrphaned" && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Pokreni
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

@@ -1,6 +1,7 @@
 import { NavBar } from "@/components/NavBar";
 import { PricingCards } from "@/components/planovi/PricingCards";
 import { BackButton } from "@/components/ui/back-button";
+import { DiscordIcon } from "@/components/icons/Icons";
 
 export const metadata = {
   title: "Planovi | PODELI.rs",
@@ -25,15 +26,26 @@ export default function PlanoviPage() {
 
         <PricingCards />
 
-        <div className="mt-12 text-center">
-          <p className="text-sm text-muted-foreground">
-            Imate pitanja? Kontaktirajte nas na{" "}
-            <a
-              href="mailto:kontakt@podeli.rs"
-              className="font-medium text-accent hover:underline"
-            >
-              kontakt@podeli.rs
-            </a>
+        <div className="mt-12 w-full text-center">
+          <p className="inline-block text-sm text-muted-foreground">
+          Imate pitanja? Kontaktirajte nas na{" "}
+          <a
+            href="mailto:kontakt@podeli.rs"
+            className="font-medium text-accent hover:underline"
+          >
+            kontakt@podeli.rs
+          </a>{" "}
+          ili na{" "}
+          <a
+            href="https://discord.gg/69MBaCTEnz"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 align-middle font-medium text-[#5865F2] hover:underline"
+          >
+            <DiscordIcon className="h-4 w-4 shrink-0" />
+            Discord-u
+          </a>
+          .
           </p>
         </div>
       </div>

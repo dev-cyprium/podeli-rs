@@ -49,10 +49,11 @@ export const initializeDefaults = mutation({
       {
         slug: "starter",
         name: "Starter",
-        description: "Za aktivne korisnike koji žele više oglasa i kurirsku dostavu.",
+        description: "Za aktivne korisnike koji žele više oglasa.",
         maxListings: 5,
         maxActiveRentals: -1,
-        allowedDeliveryMethods: ["licno", "glovo", "wolt", "cargo"],
+        allowedDeliveryMethods: ["licno"],
+        instagramStoryBoosts: 1,
         hasBadge: false,
         priceAmount: 250,
         priceCurrency: "RSD",
@@ -66,7 +67,8 @@ export const initializeDefaults = mutation({
         description: "Bez ograničenja. Neograničen broj oglasa i zakupa.",
         maxListings: -1,
         maxActiveRentals: -1,
-        allowedDeliveryMethods: ["licno", "glovo", "wolt", "cargo"],
+        allowedDeliveryMethods: ["licno"],
+        instagramStoryBoosts: 10,
         hasBadge: false,
         priceAmount: 500,
         priceCurrency: "RSD",
@@ -80,7 +82,8 @@ export const initializeDefaults = mutation({
         description: "Jednokratno plaćanje za doživotni pristup svim funkcijama. DOMACIN bedž uključen.",
         maxListings: -1,
         maxActiveRentals: -1,
-        allowedDeliveryMethods: ["licno", "glovo", "wolt", "cargo"],
+        allowedDeliveryMethods: ["licno"],
+        instagramStoryBoosts: 20,
         hasBadge: true,
         badgeLabel: "DOMACIN",
         priceAmount: 300,
@@ -130,5 +133,46 @@ export const initializeDefaults = mutation({
     }
 
     return { created, existing };
+  },
+});
+
+/**
+ * Backfill existing plans with latest data (e.g. instagramStoryBoosts).
+ * Safe to run repeatedly.
+ */
+export const backfill = mutation({
+  args: {},
+  returns: v.object({
+    updated: v.number(),
+    total: v.number(),
+  }),
+  handler: async (ctx) => {
+    const slugToBoosts: Record<string, number> = {
+      free: 0,
+      starter: 1,
+      ultimate: 10,
+      lifetime: 20,
+      single_listing: 0,
+    };
+
+    const plans = await ctx.db.query("plans").collect();
+    let updated = 0;
+    const now = Date.now();
+
+    for (const plan of plans) {
+      const targetBoosts = slugToBoosts[plan.slug];
+      if (targetBoosts === undefined) continue;
+
+      const currentBoosts = plan.instagramStoryBoosts ?? 0;
+      if (currentBoosts !== targetBoosts) {
+        await ctx.db.patch(plan._id, {
+          instagramStoryBoosts: targetBoosts,
+          updatedAt: now,
+        });
+        updated++;
+      }
+    }
+
+    return { updated, total: plans.length };
   },
 });
