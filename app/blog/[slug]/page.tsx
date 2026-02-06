@@ -28,7 +28,7 @@ export async function generateMetadata({
 
   if (!post) {
     return {
-      title: "Članak nije pronađen | PODELI.rs",
+      title: "Članak nije pronađen | podeli.rs",
     };
   }
 
@@ -37,7 +37,7 @@ export async function generateMetadata({
     : `${SITE_URL}/og-image.png`;
 
   return {
-    title: `${post.title} | PODELI.rs`,
+    title: `${post.title} | podeli.rs`,
     description: post.description,
     authors: [{ name: post.author }],
     alternates: {
@@ -47,7 +47,7 @@ export async function generateMetadata({
       title: post.title,
       description: post.description,
       url: `${SITE_URL}/blog/${slug}`,
-      siteName: "PODELI.rs",
+      siteName: "podeli.rs",
       locale: "sr_RS",
       type: "article",
       publishedTime: post.date,
@@ -93,7 +93,7 @@ export default async function BlogPostPage({ params }: PageProps) {
     },
     publisher: {
       "@type": "Organization",
-      name: "PODELI.rs",
+      name: "podeli.rs",
       logo: {
         "@type": "ImageObject",
         url: `${SITE_URL}/logo.png`,

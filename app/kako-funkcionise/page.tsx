@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { NavBar } from "@/components/NavBar";
+import { BrandName } from "@/components/BrandName";
 
 export default function KakoFunkcionisePage() {
   return (
@@ -9,14 +10,14 @@ export default function KakoFunkcionisePage() {
       <main className="mx-auto max-w-4xl px-6 py-16 sm:py-20">
         <section className="text-center">
           <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-podeli-accent/30 bg-podeli-accent/10 px-4 py-1.5 text-sm font-medium text-podeli-dark">
-            Kako funkcioniše PODELI
+            Kako funkcioniše <BrandName />
           </div>
           <h1 className="mt-6 text-4xl font-bold tracking-tight text-podeli-dark sm:text-5xl">
             Jednostavno deljenje, jasna pravila
           </h1>
           <p className="mt-4 text-lg text-muted-foreground">
-            PODELI povezuje komšije koji žele da iznajme ili podele stvari na
-            fer, siguran i jednostavan način. Ovo su osnovna pravila i tok
+            <BrandName /> povezuje komšije koji žele da iznajme ili podele stvari
+            na fer, siguran i jednostavan način. Ovo su osnovna pravila i tok
             korišćenja platforme.
           </p>
         </section>
@@ -55,7 +56,8 @@ export default function KakoFunkcionisePage() {
             <h2 className="text-lg font-semibold text-podeli-dark">3. Dogovor i plaćanje</h2>
             <p className="mt-2 text-muted-foreground">
               Plaćanje se obavlja direktno između korisnika (vlasnik &lt;&gt;
-              korisnik). PODELI ne uzima uplatu za samu razmenu stvari, već
+              korisnik). <BrandName /> ne uzima uplatu za samu razmenu stvari,
+              već
               pretplata omogućava pristup platformi.
             </p>
             <p className="mt-3 text-sm text-muted-foreground">

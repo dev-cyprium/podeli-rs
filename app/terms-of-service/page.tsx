@@ -7,18 +7,18 @@ import { formatSerbianDate } from "@/lib/serbian-date";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://podeli.rs";
 
 export const metadata: Metadata = {
-  title: "Uslovi korišćenja | PODELI.rs",
+  title: "Uslovi korišćenja | podeli.rs",
   description:
-    "Uslovi korišćenja platforme PODELI.rs: odricanje odgovornosti, dostupnost usluge, kolačići i praćenje, recenzije i rana faza bez osiguranja.",
+    "Uslovi korišćenja platforme podeli.rs: odricanje odgovornosti, dostupnost usluge, kolačići i praćenje, recenzije i rana faza bez osiguranja.",
   alternates: {
     canonical: `${SITE_URL}/terms-of-service`,
   },
   openGraph: {
-    title: "Uslovi korišćenja | PODELI.rs",
+    title: "Uslovi korišćenja | podeli.rs",
     description:
-      "Uslovi korišćenja platforme PODELI.rs: odricanje odgovornosti, dostupnost, kolačići, recenzije.",
+      "Uslovi korišćenja platforme podeli.rs: odricanje odgovornosti, dostupnost, kolačići, recenzije.",
     url: `${SITE_URL}/terms-of-service`,
-    siteName: "PODELI.rs",
+    siteName: "podeli.rs",
     locale: "sr_RS",
     type: "website",
   },

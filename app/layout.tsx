@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PODELI - Podeli sa komšijama. Živi pametnije.",
+  title: "podeli - Podeli sa komšijama. Živi pametnije.",
   description:
     "Lokalna platforma za deljenje i iznajmljivanje stvari u Beogradu. Ne kupuj ono što ćeš koristiti jednom. Podeli sa nekim ko već ima. Samo u Beogradu.",
 };

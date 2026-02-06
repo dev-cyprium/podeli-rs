@@ -4,7 +4,7 @@ import { SearchPageContent } from "@/components/search/SearchPageContent";
 import { SearchResultsSkeleton } from "@/components/search/SearchResultsSkeleton";
 
 export const metadata = {
-  title: "Pretraga | PODELI.rs",
+  title: "Pretraga | podeli.rs",
   description: "Pretraži i iznajmi stvari od komšija u Beogradu",
 };
 

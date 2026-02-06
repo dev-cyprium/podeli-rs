@@ -4,7 +4,7 @@ import { BackButton } from "@/components/ui/back-button";
 import { DiscordIcon } from "@/components/icons/Icons";
 
 export const metadata = {
-  title: "Planovi | PODELI.rs",
+  title: "Planovi | podeli.rs",
   description: "Izaberite plan koji najbolje odgovara vašim potrebama. Od besplatnog do doživotnog pristupa.",
 };
 

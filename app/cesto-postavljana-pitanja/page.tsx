@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { NavBar } from "@/components/NavBar";
+import { BrandName } from "@/components/BrandName";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Često postavljana pitanja | PODELI",
+  title: "Često postavljana pitanja | podeli.rs",
   description:
-    "Pronađite odgovore na najčešća pitanja o korišćenju PODELI platforme za iznajmljivanje i deljenje stvari.",
+    "Pronađite odgovore na najčešća pitanja o korišćenju podeli platforme za iznajmljivanje i deljenje stvari.",
 };
 
 const faqs = [
@@ -22,25 +23,37 @@ Napomena: Svaki kupon može da se iskoristi samo jednom i vezan je za vaš nalog
   },
   {
     question: "Kako funkcioniše plaćanje za iznajmljivanje?",
-    answer: `Plaćanje se obavlja direktno između vlasnika i korisnika koji iznajmljuje stvar. PODELI platforma ne posreduje u samoj transakciji — mi samo povezujemo korisnike.
-
-Preporučeni koraci:
-• Dogovorite cenu unapred preko chat-a
-• Dogovorite način plaćanja (gotovina, prenos, itd.)
-• Sačuvajte dokaz o plaćanju za svaki slučaj
-
-Pretplata na PODELI služi za objavljivanje stvari, a ne za samo iznajmljivanje.`,
+    answer: (
+      <>
+        Plaćanje se obavlja direktno između vlasnika i korisnika koji iznajmljuje
+        stvar. <BrandName /> platforma ne posreduje u samoj transakciji — mi
+        samo povezujemo korisnike.
+        {"\n\n"}
+        Preporučeni koraci:
+        {"\n"}• Dogovorite cenu unapred preko chat-a
+        {"\n"}• Dogovorite način plaćanja (gotovina, prenos, itd.)
+        {"\n"}• Sačuvajte dokaz o plaćanju za svaki slučaj
+        {"\n\n"}
+        Pretplata na <BrandName /> služi za objavljivanje stvari, a ne za samo
+        iznajmljivanje.
+      </>
+    ),
   },
   {
     question: "Šta ako se stvar ošteti tokom iznajmljivanja?",
-    answer: `Trenutno, PODELI ne nudi osiguranje za štetu. Preporučujemo sledeće mere predostrožnosti:
-
-• Pre predaje, fotografišite stvar sa svih strana
-• Dogovorite se o depozitu za vrednije stvari
-• Jasno definišite uslove korišćenja u opisu predmeta
-• Komunicirajte otvoreno o eventualnim oštećenjima
-
-Nakon razmene, ostavite iskren utisak kroz sistem ocena kako biste pomogli zajednici da prepozna pouzdane korisnike.`,
+    answer: (
+      <>
+        Trenutno, <BrandName /> ne nudi osiguranje za štetu. Preporučujemo
+        sledeće mere predostrožnosti:
+        {"\n"}• Pre predaje, fotografišite stvar sa svih strana
+        {"\n"}• Dogovorite se o depozitu za vrednije stvari
+        {"\n"}• Jasno definišite uslove korišćenja u opisu predmeta
+        {"\n"}• Komunicirajte otvoreno o eventualnim oštećenjima
+        {"\n\n"}
+        Nakon razmene, ostavite iskren utisak kroz sistem ocena kako biste
+        pomogli zajednici da prepozna pouzdane korisnike.
+      </>
+    ),
   },
   {
     question: "Kako da ostavim recenziju?",
@@ -69,7 +82,7 @@ export default function CestoPostavljanaPitanjaPage() {
             Često postavljana pitanja
           </h1>
           <p className="mt-4 text-lg text-muted-foreground">
-            Pronađite odgovore na najčešća pitanja o korišćenju PODELI
+            Pronađite odgovore na najčešća pitanja o korišćenju <BrandName />{" "}
             platforme. Ako ne pronađete odgovor, slobodno nas kontaktirajte.
           </p>
         </section>

@@ -36,16 +36,16 @@ export async function generateMetadata({
 
   if (!product) {
     return {
-      title: "Predmet nije pronađen | PODELI.rs",
+      title: "Predmet nije pronađen | podeli.rs",
       description:
-        "Ovaj predmet ne postoji ili je uklonjen. Pogledaj druge ponude na PODELI.rs.",
+        "Ovaj predmet ne postoji ili je uklonjen. Pogledaj druge ponude na podeli.rs.",
     };
   }
 
   return {
-    title: `${product.title} | PODELI.rs`,
+    title: `${product.title} | podeli.rs`,
     description:
-      product.description.slice(0, 155) + " | opis klijenta na PODELI.rs",
+      product.description.slice(0, 155) + " | opis klijenta na podeli.rs",
     openGraph: {
       title: product.title,
       description: product.description,
