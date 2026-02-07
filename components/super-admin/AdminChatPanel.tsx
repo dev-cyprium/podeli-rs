@@ -8,8 +8,7 @@ import { Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { BookingStatusBadge } from "@/components/booking/BookingStatusBadge";
-import { MessageBubble } from "@/components/kontrolna-tabla/poruke/MessageBubble";
-import { formatSerbianDate } from "@/lib/serbian-date";
+import { ChatMessageList } from "@/components/kontrolna-tabla/poruke/ChatMessageList";
 import {
   ArrowLeft,
   MessageSquare,
@@ -24,39 +23,6 @@ interface AdminChatPanelProps {
   bookingId: Id<"bookings">;
 }
 
-function isSameDay(ts1: number, ts2: number): boolean {
-  const d1 = new Date(ts1);
-  const d2 = new Date(ts2);
-  return (
-    d1.getFullYear() === d2.getFullYear() &&
-    d1.getMonth() === d2.getMonth() &&
-    d1.getDate() === d2.getDate()
-  );
-}
-
-function getDateSeparatorLabel(timestamp: number): string {
-  const msgDate = new Date(timestamp);
-  const today = new Date();
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-
-  if (
-    msgDate.getFullYear() === today.getFullYear() &&
-    msgDate.getMonth() === today.getMonth() &&
-    msgDate.getDate() === today.getDate()
-  ) {
-    return "Danas";
-  }
-  if (
-    msgDate.getFullYear() === yesterday.getFullYear() &&
-    msgDate.getMonth() === yesterday.getMonth() &&
-    msgDate.getDate() === yesterday.getDate()
-  ) {
-    return "Juče";
-  }
-  return formatSerbianDate(timestamp, "short");
-}
-
 export function AdminChatPanel({ bookingId }: AdminChatPanelProps) {
   const [systemContent, setSystemContent] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -67,9 +33,13 @@ export function AdminChatPanel({ bookingId }: AdminChatPanelProps) {
   const sendSystemMessage = useMutation(api.messages.sendSystemMessage);
   const unblockUser = useMutation(api.chatBlocks.unblockUser);
 
+  // Viewport height minus SuperAdmin header (4rem) and main padding (1.5rem top + 1.5rem bottom = 3rem, sm: 2rem + 2rem = 4rem)
+  // Use negative margins to break out of the shell padding
+  const chatHeight = "h-[calc(100dvh-4rem)]";
+
   if (chatData === undefined || messages === undefined) {
     return (
-      <div className="flex h-full min-h-[400px] items-center justify-center rounded-xl bg-[#f0f0f0]">
+      <div className={`-mx-4 -my-6 sm:-mx-6 sm:-my-8 flex ${chatHeight} items-center justify-center bg-[#f0f0f0]`}>
         <p className="text-sm text-muted-foreground">Učitavanje...</p>
       </div>
     );
@@ -77,7 +47,7 @@ export function AdminChatPanel({ bookingId }: AdminChatPanelProps) {
 
   if (chatData === null) {
     return (
-      <div className="flex h-full min-h-[400px] flex-col items-center justify-center gap-4 rounded-xl bg-[#f0f0f0]">
+      <div className={`-mx-4 -my-6 sm:-mx-6 sm:-my-8 flex ${chatHeight} flex-col items-center justify-center gap-4 bg-[#f0f0f0]`}>
         <MessageSquare className="h-12 w-12 text-muted-foreground/50" />
         <p className="text-sm text-muted-foreground">
           Razgovor nije pronađen.
@@ -113,80 +83,8 @@ export function AdminChatPanel({ bookingId }: AdminChatPanelProps) {
     await unblockUser({ bookingId });
   };
 
-  // Build grouped messages with date separators
-  const renderMessages = () => {
-    if (messages.length === 0) {
-      return (
-        <div className="flex h-full flex-col items-center justify-center text-center">
-          <MessageSquare className="h-12 w-12 text-muted-foreground/50" />
-          <p className="mt-4 text-sm text-muted-foreground">
-            Nema poruka u ovom razgovoru.
-          </p>
-        </div>
-      );
-    }
-
-    const elements: React.ReactNode[] = [];
-
-    for (let i = 0; i < messages.length; i++) {
-      const msg = messages[i];
-      const prevMsg = i > 0 ? messages[i - 1] : null;
-      const nextMsg = i < messages.length - 1 ? messages[i + 1] : null;
-
-      // Date separator
-      if (!prevMsg || !isSameDay(prevMsg.createdAt, msg.createdAt)) {
-        elements.push(
-          <div key={`date-${msg.createdAt}`} className="flex justify-center py-2">
-            <span className="rounded-full bg-white/80 px-3 py-1 text-xs text-muted-foreground shadow-sm">
-              {getDateSeparatorLabel(msg.createdAt)}
-            </span>
-          </div>
-        );
-      }
-
-      const isSystem = msg.type === "system" || msg.senderId === "SYSTEM";
-      // In admin view, show owner messages on left and renter messages on right
-      const isOwnerMessage = msg.senderId === owner?.userId;
-
-      const sameSenderAsPrev =
-        prevMsg &&
-        prevMsg.senderId === msg.senderId &&
-        !isSystem &&
-        prevMsg.type !== "system" &&
-        prevMsg.senderId !== "SYSTEM" &&
-        isSameDay(prevMsg.createdAt, msg.createdAt);
-      const sameSenderAsNext =
-        nextMsg &&
-        nextMsg.senderId === msg.senderId &&
-        !isSystem &&
-        nextMsg.type !== "system" &&
-        nextMsg.senderId !== "SYSTEM" &&
-        isSameDay(nextMsg.createdAt, msg.createdAt);
-
-      const isFirstInGroup = !sameSenderAsPrev;
-      const isLastInGroup = !sameSenderAsNext;
-
-      elements.push(
-        <div key={msg._id} className={isFirstInGroup ? "mt-3" : "mt-0.5"}>
-          <MessageBubble
-            content={msg.content}
-            senderName={msg.senderProfile?.firstName}
-            senderImage={msg.senderProfile?.imageUrl}
-            createdAt={msg.createdAt}
-            isOwnMessage={!isOwnerMessage && !isSystem}
-            isFirstInGroup={isFirstInGroup}
-            isLastInGroup={isLastInGroup}
-            isSystemMessage={isSystem}
-          />
-        </div>
-      );
-    }
-
-    return <>{elements}</>;
-  };
-
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-[#f0f0f0]">
+    <div className={`-mx-4 -my-6 sm:-mx-6 sm:-my-8 flex ${chatHeight} flex-col overflow-hidden border-x border-border bg-[#f0f0f0]`}>
       {/* Header */}
       <div className="border-b border-border bg-card p-3">
         <div className="flex items-center gap-3">
@@ -237,7 +135,13 @@ export function AdminChatPanel({ bookingId }: AdminChatPanelProps) {
 
       {/* Messages - read only */}
       <div className="flex-1 overflow-y-auto px-3 py-2">
-        {renderMessages()}
+        <ChatMessageList
+          messages={messages}
+          isOwnMessage={(msg) => {
+            // In admin view, show renter messages on right, owner on left
+            return msg.senderId !== owner?.userId && msg.senderId !== "SYSTEM";
+          }}
+        />
       </div>
 
       {/* System message input */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
@@ -10,7 +10,7 @@ import { Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { BookingStatusBadge } from "@/components/booking/BookingStatusBadge";
 import { AgreementStatus } from "@/components/booking/AgreementStatus";
-import { MessageBubble } from "./MessageBubble";
+import { ChatMessageList } from "./ChatMessageList";
 import { ChatInput } from "./ChatInput";
 import {
   AlertDialog,
@@ -51,39 +51,6 @@ interface ChatPanelProps {
   context: "podeli" | "zakupi";
 }
 
-function getDateSeparatorLabel(timestamp: number): string {
-  const msgDate = new Date(timestamp);
-  const today = new Date();
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-
-  if (
-    msgDate.getFullYear() === today.getFullYear() &&
-    msgDate.getMonth() === today.getMonth() &&
-    msgDate.getDate() === today.getDate()
-  ) {
-    return "Danas";
-  }
-  if (
-    msgDate.getFullYear() === yesterday.getFullYear() &&
-    msgDate.getMonth() === yesterday.getMonth() &&
-    msgDate.getDate() === yesterday.getDate()
-  ) {
-    return "Juče";
-  }
-  return formatSerbianDate(timestamp, "short");
-}
-
-function isSameDay(ts1: number, ts2: number): boolean {
-  const d1 = new Date(ts1);
-  const d2 = new Date(ts2);
-  return (
-    d1.getFullYear() === d2.getFullYear() &&
-    d1.getMonth() === d2.getMonth() &&
-    d1.getDate() === d2.getDate()
-  );
-}
-
 function formatLastSeen(timestamp: number): string {
   const now = Date.now();
   const diffMs = now - timestamp;
@@ -98,7 +65,6 @@ function formatLastSeen(timestamp: number): string {
 
 export function ChatPanel({ bookingId, context }: ChatPanelProps) {
   const { user } = useUser();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
   const [blockReason, setBlockReason] = useState("");
   const [declineDialogOpen, setDeclineDialogOpen] = useState(false);
@@ -138,11 +104,6 @@ export function ChatPanel({ bookingId, context }: ChatPanelProps) {
 
     return () => clearInterval(interval);
   }, [bookingId, chatData, markAsRead]);
-
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
 
   // Chat uses viewport height minus the dashboard header (4rem)
   const chatHeight = "h-[calc(100dvh-4rem)]";
@@ -232,86 +193,6 @@ export function ChatPanel({ bookingId, context }: ChatPanelProps) {
     presence &&
     !presence.isOnline &&
     Date.now() - presence.lastSeenAt >= ONE_HOUR;
-
-  // Build grouped messages with date separators
-  const renderMessages = () => {
-    if (messages.length === 0) {
-      return (
-        <div className="flex h-full flex-col items-center justify-center text-center">
-          <MessageSquare className="h-12 w-12 text-muted-foreground/50" />
-          <p className="mt-4 text-sm text-muted-foreground">
-            Nema poruka u ovom razgovoru.
-          </p>
-          {canChat && !isBlocked && (
-            <p className="mt-1 text-xs text-muted-foreground">
-              Pošaljite prvu poruku da započnete razgovor.
-            </p>
-          )}
-        </div>
-      );
-    }
-
-    const elements: React.ReactNode[] = [];
-
-    for (let i = 0; i < messages.length; i++) {
-      const msg = messages[i];
-      const prevMsg = i > 0 ? messages[i - 1] : null;
-      const nextMsg = i < messages.length - 1 ? messages[i + 1] : null;
-
-      // Date separator
-      if (!prevMsg || !isSameDay(prevMsg.createdAt, msg.createdAt)) {
-        elements.push(
-          <div key={`date-${msg.createdAt}`} className="flex justify-center py-2">
-            <span className="rounded-full bg-white/80 px-3 py-1 text-xs text-muted-foreground shadow-sm">
-              {getDateSeparatorLabel(msg.createdAt)}
-            </span>
-          </div>
-        );
-      }
-
-      const isSystem = msg.type === "system" || msg.senderId === "SYSTEM";
-      const isOwnMessage = msg.senderId === user?.id;
-
-      // Grouping: same sender, same day, not system
-      const sameSenderAsPrev =
-        prevMsg &&
-        prevMsg.senderId === msg.senderId &&
-        !isSystem &&
-        prevMsg.type !== "system" &&
-        prevMsg.senderId !== "SYSTEM" &&
-        isSameDay(prevMsg.createdAt, msg.createdAt);
-      const sameSenderAsNext =
-        nextMsg &&
-        nextMsg.senderId === msg.senderId &&
-        !isSystem &&
-        nextMsg.type !== "system" &&
-        nextMsg.senderId !== "SYSTEM" &&
-        isSameDay(nextMsg.createdAt, msg.createdAt);
-
-      const isFirstInGroup = !sameSenderAsPrev;
-      const isLastInGroup = !sameSenderAsNext;
-
-      elements.push(
-        <div
-          key={msg._id}
-          className={isFirstInGroup ? "mt-3" : "mt-0.5"}
-        >
-          <MessageBubble
-            content={msg.content}
-            senderName={msg.senderProfile?.firstName}
-            senderImage={msg.senderProfile?.imageUrl}
-            createdAt={msg.createdAt}
-            isOwnMessage={isOwnMessage}
-            isFirstInGroup={isFirstInGroup}
-            isLastInGroup={isLastInGroup}
-            isSystemMessage={isSystem}
-          />
-        </div>
-      );
-    }
-
-    return <>{elements}</>;
-  };
 
   const inputDisabled = isBlocked || !canChat;
 
@@ -475,8 +356,23 @@ export function ChatPanel({ bookingId, context }: ChatPanelProps) {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-3 py-2">
-        {renderMessages()}
-        <div ref={messagesEndRef} />
+        <ChatMessageList
+          messages={messages}
+          isOwnMessage={(msg) => msg.senderId === user?.id}
+          emptyContent={
+            <>
+              <MessageSquare className="h-12 w-12 text-muted-foreground/50" />
+              <p className="mt-4 text-sm text-muted-foreground">
+                Nema poruka u ovom razgovoru.
+              </p>
+              {canChat && !isBlocked && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Pošaljite prvu poruku da započnete razgovor.
+                </p>
+              )}
+            </>
+          }
+        />
       </div>
 
       {/* Email nudge banner */}
