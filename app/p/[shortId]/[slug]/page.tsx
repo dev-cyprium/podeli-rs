@@ -8,6 +8,7 @@ import { DomacinBadge } from "@/components/DomacinBadge";
 import { ItemImageGallery } from "@/components/p/ItemImageGallery";
 import { BookingForm } from "@/components/p/BookingForm";
 import { ReviewsList } from "@/components/p/ReviewsList";
+import { FavoriteButton } from "@/components/p/FavoriteButton";
 import { NavBar } from "@/components/NavBar";
 import { Badge } from "@/components/ui/badge";
 import { DateDisplay } from "@/components/ui/date-display";
@@ -140,6 +141,7 @@ export default async function ItemDetailPage({ params }: PageProps) {
                       {item.title}
                     </h1>
                     <Badge>{item.category}</Badge>
+                    <FavoriteButton itemId={item._id} />
                   </div>
                   <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
                     <MapPin className="h-4 w-4" />

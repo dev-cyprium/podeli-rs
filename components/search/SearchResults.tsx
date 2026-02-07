@@ -3,13 +3,13 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useQuery, useAction } from "convex/react";
+import { useQuery, useAction, useMutation, useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id, Doc } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { DomacinBadge } from "@/components/DomacinBadge";
 import { getItemUrl } from "@/lib/utils";
-import { Drill, Tent, Gamepad2, Bike, MapPin, Loader2 } from "lucide-react";
+import { Drill, Tent, Gamepad2, Bike, MapPin, Loader2, Heart } from "lucide-react";
 import { AntIcon } from "@/components/icons/Icons";
 import { SearchResultsSkeleton } from "./SearchResultsSkeleton";
 
@@ -54,16 +54,21 @@ type OwnerProfile = {
 
 function ItemCard({
   item,
+  isFavorited,
+  isAuthenticated,
 }: {
   item: Doc<"items"> & {
     owner: UserSnapshot | undefined;
     ownerProfile?: OwnerProfile;
   };
+  isFavorited: boolean;
+  isAuthenticated: boolean;
 }) {
   const imageUrl = useQuery(
     api.items.getImageUrl,
     item.images[0] ? { storageId: item.images[0] as Id<"_storage"> } : "skip",
   );
+  const toggleFavorite = useMutation(api.favorites.toggle);
   const owner = item.owner;
   const ownerProfile = item.ownerProfile;
   const hasBadge = ownerProfile?.hasBadge ?? false;
@@ -89,6 +94,23 @@ function ItemCard({
               className="h-20 w-20 text-muted group-hover:text-podeli-accent"
               strokeWidth={1.5}
             />
+          )}
+          {isAuthenticated && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleFavorite({ itemId: item._id });
+              }}
+              className="absolute left-2 top-2 z-10 h-8 w-8 rounded-full bg-black/30 backdrop-blur-sm transition-colors hover:bg-black/50"
+            >
+              <Heart
+                className={`h-4 w-4 ${isFavorited ? "fill-[#dd1c1a] text-[#dd1c1a]" : "text-white"}`}
+              />
+            </Button>
           )}
           {item.deposit != null && item.deposit > 0 && (
             <span className="absolute right-2 top-2 rounded-full bg-podeli-accent px-2.5 py-0.5 text-xs font-semibold text-white shadow-sm">
@@ -155,8 +177,17 @@ function SearchResultsInner({ query, category }: SearchResultsInnerProps) {
   const [users, setUsers] = useState<UserSnapshot[]>([]);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const lastProcessedCursor = useRef<string | null>(null);
+  const { isAuthenticated } = useConvexAuth();
 
   const getUsersByIds = useAction(api.clerk.getUsersByIds);
+  const favoriteItemIds = useQuery(
+    api.favorites.getFavoriteItemIds,
+    isAuthenticated ? {} : "skip",
+  );
+  const favoriteSet = useMemo(
+    () => new Set(favoriteItemIds ?? []),
+    [favoriteItemIds],
+  );
 
   const searchResult = useQuery(api.items.searchItems, {
     query: query || undefined,
@@ -270,7 +301,12 @@ function SearchResultsInner({ query, category }: SearchResultsInnerProps) {
     <>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {itemsWithUsers.map((item) => (
-          <ItemCard key={item._id} item={item} />
+          <ItemCard
+            key={item._id}
+            item={item}
+            isFavorited={favoriteSet.has(item._id)}
+            isAuthenticated={isAuthenticated}
+          />
         ))}
       </div>
 

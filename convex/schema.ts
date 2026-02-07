@@ -88,6 +88,7 @@ export default defineSchema({
         )
       )
     ),
+    defaultDashboardMode: v.optional(v.union(v.literal("podeli"), v.literal("zakupi"))),
     superAdmin: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -216,6 +217,14 @@ export default defineSchema({
   })
     .index("by_name", ["name"])
     .index("by_order", ["order"]),
+
+  favorites: defineTable({
+    userId: v.string(),
+    itemId: v.id("items"),
+    createdAt: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_userId_and_itemId", ["userId", "itemId"]),
 
   // Debug settings for development (time travel, etc.)
   debugSettings: defineTable({

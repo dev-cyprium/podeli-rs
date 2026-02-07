@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import { ModeSelector } from "@/components/kontrolna-tabla/ModeSelector";
 import { BackgroundPattern } from "@/components/kontrolna-tabla/BackgroundPattern";
+import { KontrolnaTablaContent } from "@/components/kontrolna-tabla/KontrolnaTablaContent";
 
 export default function KontrolnaTablaPage() {
   return (
@@ -14,7 +14,7 @@ export default function KontrolnaTablaPage() {
     >
       <div className="min-h-screen">
         <BackgroundPattern />
-        <ModeSelector />
+        <KontrolnaTablaContent />
       </div>
     </Suspense>
   );

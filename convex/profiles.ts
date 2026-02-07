@@ -1,6 +1,61 @@
 import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
 import { requireIdentity } from "@/lib/convex-auth";
+
+const clerkUserValidator = v.object({
+  userId: v.string(),
+  firstName: v.optional(v.union(v.string(), v.null())),
+  lastName: v.optional(v.union(v.string(), v.null())),
+  email: v.optional(v.union(v.string(), v.null())),
+  imageUrl: v.optional(v.union(v.string(), v.null())),
+});
+
+/** Internal: create profiles for users that don't have one. Used by sync action. */
+export const createProfilesForUsers = internalMutation({
+  args: {
+    users: v.array(clerkUserValidator),
+  },
+  returns: v.object({ created: v.number() }),
+  handler: async (ctx, args) => {
+    const freePlan = await ctx.db
+      .query("plans")
+      .withIndex("by_slug", (q) => q.eq("slug", "free"))
+      .first();
+
+    if (!freePlan) {
+      throw new Error("Besplatan plan nije pronađen. Pokrenite inicijalizaciju planova.");
+    }
+
+    let created = 0;
+    const now = Date.now();
+
+    for (const u of args.users) {
+      const existing = await ctx.db
+        .query("profiles")
+        .withIndex("by_userId", (q) => q.eq("userId", u.userId))
+        .first();
+
+      if (existing) continue;
+
+      await ctx.db.insert("profiles", {
+        userId: u.userId,
+        planId: freePlan._id,
+        planSlug: "free",
+        planActivatedAt: now,
+        firstName: u.firstName ?? undefined,
+        lastName: u.lastName ?? undefined,
+        email: u.email ?? undefined,
+        imageUrl: u.imageUrl ?? undefined,
+        hasBadge: false,
+        createdAt: now,
+        updatedAt: now,
+      });
+      created++;
+    }
+
+    return { created };
+  },
+});
 
 export const getMyProfile = query({
   args: {},
@@ -170,6 +225,36 @@ export const updatePreferredContactTypes = mutation({
     await ctx.db.patch(profile._id, {
       preferredContactTypes: validTypes,
       updatedAt: now,
+    });
+
+    return null;
+  },
+});
+
+export const updateDefaultDashboardMode = mutation({
+  args: {
+    defaultDashboardMode: v.union(
+      v.literal("podeli"),
+      v.literal("zakupi"),
+      v.null()
+    ),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await requireIdentity(ctx);
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
+      .first();
+
+    if (!profile) {
+      throw new Error("Profil nije pronađen.");
+    }
+
+    await ctx.db.patch(profile._id, {
+      defaultDashboardMode: args.defaultDashboardMode ?? undefined,
+      updatedAt: Date.now(),
     });
 
     return null;

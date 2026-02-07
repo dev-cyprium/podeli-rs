@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 type Context = "podeli" | "zakupi";
 
 // Section within each context
-type Section = "main" | "poruke" | "ocene" | "istorija";
+type Section = "main" | "poruke" | "ocene" | "omiljeno";
 
 interface DashboardHeaderProps {
   context: Context;
@@ -24,7 +24,7 @@ const sectionLabels: Record<Section, Record<Context, string>> = {
   main: { podeli: "Predmeti", zakupi: "Zakupi" },
   poruke: { podeli: "Poruke", zakupi: "Poruke" },
   ocene: { podeli: "Ocene predmeta", zakupi: "Moje ocene" },
-  istorija: { podeli: "Istorija", zakupi: "Istorija" },
+  omiljeno: { podeli: "Omiljeno", zakupi: "Omiljeno" },
 };
 
 export function DashboardHeader({

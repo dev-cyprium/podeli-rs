@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation } from "convex/react";
+import { useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import {
   Search,
   Trash2,
   Loader2,
+  Users,
 } from "lucide-react";
 
 export function FunctionsPanel() {
@@ -24,6 +25,7 @@ export function FunctionsPanel() {
   const backfillShortIdSlug = useMutation(api.items.backfillShortIdAndSlug);
   const backfillSearchText = useMutation(api.items.backfillSearchText);
   const clearOrphanedBookings = useMutation(api.bookings.clearOrphanedBookings);
+  const syncMissingProfiles = useAction(api.clerk.syncMissingProfilesFromClerk);
 
   async function run(
     key: string,
@@ -36,7 +38,11 @@ export function FunctionsPanel() {
       const r = result as Record<string, unknown>;
       const detail =
         typeof result === "object" && result !== null && "created" in result
-          ? `Kreirano: ${r.created}, postojalo: ${r.existing}`
+          ? "existing" in r
+            ? `Kreirano: ${r.created}, postojalo: ${r.existing}`
+            : "total" in r
+              ? `Kreirano profila: ${r.created} / ${r.total} korisnika pregledano`
+              : `Kreirano: ${r.created}`
           : typeof result === "object" &&
               result !== null &&
               "updated" in result
@@ -240,6 +246,38 @@ export function FunctionsPanel() {
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
               Pokreni
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Users className="h-4 w-4 text-podeli-accent" />
+              Sinhronizuj profile iz Clerk-a
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Kreira profile za sve Clerk korisnike koji još nemaju profil u
+              bazi.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                run(
+                  "syncProfiles",
+                  () => syncMissingProfiles(),
+                  "Sinhronizacija profila je završena."
+                )
+              }
+              disabled={loading !== null}
+            >
+              {loading === "syncProfiles" && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Sinhronizuj
             </Button>
           </CardContent>
         </Card>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { ArrowLeft, User, Mail, Lock, Link2, Monitor, AlertTriangle } from "lucide-react";
+import { ArrowLeft, User, Mail, Lock, Link2, Monitor, AlertTriangle, Settings } from "lucide-react";
 import Link from "next/link";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { PasswordSection } from "./PasswordSection";
 import { ConnectedAccountsSection } from "./ConnectedAccountsSection";
 import { SessionsSection } from "./SessionsSection";
 import { DeleteAccountSection } from "./DeleteAccountSection";
+import { DashboardPreferencesSection } from "./DashboardPreferencesSection";
 
 export function AccountSettings() {
   const { user, isLoaded } = useUser();
@@ -65,6 +66,10 @@ export function AccountSettings() {
               <User className="h-4 w-4" />
               Profil
             </TabsTrigger>
+            <TabsTrigger value="preferences" className="w-full justify-start gap-2">
+              <Settings className="h-4 w-4" />
+              Podešavanja
+            </TabsTrigger>
             <TabsTrigger value="email" className="w-full justify-start gap-2">
               <Mail className="h-4 w-4" />
               Email adrese
@@ -91,6 +96,9 @@ export function AccountSettings() {
             <TabsContent value="profile">
               <ProfileSection />
             </TabsContent>
+            <TabsContent value="preferences">
+              <DashboardPreferencesSection />
+            </TabsContent>
             <TabsContent value="email">
               <EmailSection />
             </TabsContent>
@@ -113,6 +121,7 @@ export function AccountSettings() {
       {/* Mobile: Stacked sections */}
       <div className="space-y-6 md:hidden">
         <ProfileSection />
+        <DashboardPreferencesSection />
         <EmailSection />
         <PasswordSection />
         <ConnectedAccountsSection />

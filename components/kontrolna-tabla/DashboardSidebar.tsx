@@ -4,7 +4,7 @@ import {
   Package,
   MessageSquare,
   Star,
-  History,
+  Heart,
   ChevronLeft,
   X,
   Crown,
@@ -23,7 +23,7 @@ import { TimeTravelWidget } from "@/components/debug/TimeTravelWidget";
 type Context = "podeli" | "zakupi";
 
 // Section within each context
-type Section = "main" | "poruke" | "ocene" | "istorija";
+type Section = "main" | "poruke" | "ocene" | "omiljeno";
 
 interface DashboardSidebarProps {
   context: Context;
@@ -93,14 +93,13 @@ export function DashboardSidebar({
     { id: "main", label: "Predmeti", icon: Package, href: "/kontrolna-tabla/predmeti" },
     { id: "poruke", label: "Poruke", icon: MessageSquare, href: "/kontrolna-tabla/predmeti/poruke", showBadge: true },
     { id: "ocene", label: "Ocene", icon: Star, href: "/kontrolna-tabla/predmeti/ocene" },
-    { id: "istorija", label: "Istorija", icon: History, href: "/kontrolna-tabla/predmeti/istorija", disabled: true },
   ];
 
   const zakupiItems: NavItem[] = [
     { id: "main", label: "Zakupi", icon: ShoppingBag, href: "/kontrolna-tabla/zakupi" },
     { id: "poruke", label: "Poruke", icon: MessageSquare, href: "/kontrolna-tabla/zakupi/poruke", showBadge: true },
     { id: "ocene", label: "Ocene", icon: Star, href: "/kontrolna-tabla/zakupi/ocene" },
-    { id: "istorija", label: "Istorija", icon: History, href: "/kontrolna-tabla/zakupi/istorija", disabled: true },
+    { id: "omiljeno", label: "Omiljeno", icon: Heart, href: "/kontrolna-tabla/zakupi/omiljeno" },
   ];
 
   const navItems = context === "podeli" ? podeliItems : zakupiItems;
