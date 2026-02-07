@@ -149,6 +149,7 @@ export const create = mutation({
     pricePerDay: v.number(),
     deposit: v.optional(v.number()),
     images: v.array(v.id("_storage")),
+    imageFocalPoint: v.optional(v.object({ x: v.number(), y: v.number() })),
     availabilitySlots: v.array(
       v.object({
         startDate: v.string(),
@@ -288,6 +289,7 @@ export const update = mutation({
     pricePerDay: v.number(),
     deposit: v.optional(v.number()),
     images: v.array(v.id("_storage")),
+    imageFocalPoint: v.optional(v.object({ x: v.number(), y: v.number() })),
     availabilitySlots: v.array(
       v.object({
         startDate: v.string(),

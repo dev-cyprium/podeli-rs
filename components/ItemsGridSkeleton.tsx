@@ -14,7 +14,7 @@ export function ItemsGridSkeleton() {
               className="group relative flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-md"
             >
               {/* Image skeleton */}
-              <div className="relative flex h-48 w-full items-center justify-center bg-slate-100">
+              <div className="relative flex aspect-[4/5] w-full items-center justify-center bg-slate-100">
                 <div className="h-20 w-20 animate-pulse rounded-full bg-slate-200"></div>
               </div>
 

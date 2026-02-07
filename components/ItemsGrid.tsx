@@ -71,7 +71,7 @@ function ItemCard({
       className={`group relative flex h-full flex-col overflow-hidden rounded-2xl bg-card shadow-md transition-all hover:-translate-y-1 hover:shadow-xl ${hasBadge ? "ring-2 ring-[#f0a202]/50 shadow-[0_4px_24px_0_rgba(240,162,2,0.10)]" : ""}`}
     >
       <Link href={itemUrl}>
-        <div className="relative flex h-48 w-full items-center justify-center bg-muted transition-colors group-hover:bg-podeli-accent/10">
+        <div className="relative flex aspect-[4/5] w-full items-center justify-center bg-muted transition-colors group-hover:bg-podeli-accent/10">
           {imageUrl ? (
             <Image
               src={imageUrl}
@@ -79,6 +79,7 @@ function ItemCard({
               fill
               sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 100vw"
               className="object-cover"
+              style={item.imageFocalPoint ? { objectPosition: `${item.imageFocalPoint.x}% ${item.imageFocalPoint.y}%` } : undefined}
             />
           ) : (
             <CategoryIcon
@@ -212,7 +213,7 @@ export function ItemsGrid({
             key={i}
             className="group relative overflow-hidden rounded-2xl bg-card shadow-md"
           >
-            <div className="flex h-48 w-full items-center justify-center bg-muted">
+            <div className="flex aspect-[4/5] w-full items-center justify-center bg-muted">
               <div className="h-20 w-20 animate-pulse rounded-full bg-muted"></div>
             </div>
             <div className="p-5">

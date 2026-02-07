@@ -56,6 +56,7 @@ export type ItemFormData = {
   pricePerDay: number;
   deposit?: number;
   images: Id<"_storage">[];
+  imageFocalPoint?: { x: number; y: number };
   availabilitySlots: AvailabilitySlot[];
   deliveryMethods: DeliveryMethod[];
 };
@@ -96,6 +97,9 @@ export function ItemWizardForm({
   );
   const [images, setImages] = useState<Id<"_storage">[]>(
     item?.images && item.images.length > 0 ? [item.images[0]] : [],
+  );
+  const [imageFocalPoint, setImageFocalPoint] = useState<{ x: number; y: number }>(
+    item?.imageFocalPoint ?? { x: 50, y: 50 },
   );
   const [availabilitySlots, setAvailabilitySlots] = useState<
     AvailabilitySlot[]
@@ -149,6 +153,7 @@ export function ItemWizardForm({
 
   function removeImage() {
     setImages([]);
+    setImageFocalPoint({ x: 50, y: 50 });
   }
 
   function addSlot() {
@@ -225,6 +230,7 @@ export function ItemWizardForm({
       const { storageId } = await result.json();
       // Replace the image instead of appending
       setImages([storageId as Id<"_storage">]);
+      setImageFocalPoint({ x: 50, y: 50 });
     } catch (error) {
       setFormError("Greška pri učitavanju slike. Pokušajte ponovo.");
     } finally {
@@ -414,6 +420,7 @@ export function ItemWizardForm({
         pricePerDay: numericPrice,
         deposit: numericDeposit !== undefined && numericDeposit >= 0 ? numericDeposit : undefined,
         images,
+        imageFocalPoint,
         availabilitySlots: cleanedSlots,
         deliveryMethods,
       });
@@ -471,6 +478,7 @@ export function ItemWizardForm({
         pricePerDay: numericPrice,
         deposit: numericDeposit !== undefined && numericDeposit >= 0 ? numericDeposit : undefined,
         images,
+        imageFocalPoint,
         availabilitySlots: cleanedSlots,
         deliveryMethods,
       });
@@ -651,19 +659,42 @@ export function ItemWizardForm({
               ) : null}
               {!isProcessingImages && images.length > 0 ? (
                 <div className="relative group">
-                  <div className="relative overflow-hidden rounded-lg border-2 border-border bg-muted">
+                  <div
+                    className="relative cursor-crosshair overflow-hidden rounded-lg border-2 border-border bg-muted"
+                    onClick={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      const x = Math.round(((e.clientX - rect.left) / rect.width) * 100);
+                      const y = Math.round(((e.clientY - rect.top) / rect.height) * 100);
+                      setImageFocalPoint({ x, y });
+                    }}
+                  >
                     {imageUrlsMap?.[images[0]] ? (
-                      <img
-                        src={imageUrlsMap[images[0]] ?? undefined}
-                        alt="Fotografija predmeta"
-                        className="h-[400px] w-full object-contain"
-                      />
+                      <>
+                        <img
+                          src={imageUrlsMap[images[0]] ?? undefined}
+                          alt="Fotografija predmeta"
+                          className="h-[400px] w-full object-contain"
+                          draggable={false}
+                        />
+                        {/* Focal point marker */}
+                        <div
+                          className="pointer-events-none absolute h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.3)]"
+                          style={{
+                            left: `${imageFocalPoint.x}%`,
+                            top: `${imageFocalPoint.y}%`,
+                            background: "radial-gradient(circle, rgba(240,162,2,0.8) 30%, transparent 70%)",
+                          }}
+                        />
+                      </>
                     ) : (
                       <div className="flex h-[400px] w-full items-center justify-center bg-muted text-sm text-muted-foreground">
                         Učitavanje...
                       </div>
                     )}
                   </div>
+                  <p className="mt-2 text-center text-xs text-muted-foreground">
+                    Kliknite na najvažniji deo slike za pozicioniranje
+                  </p>
                   <div className="mt-3 flex items-center justify-center gap-3">
                     <label className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold text-podeli-dark hover:bg-muted transition-colors cursor-pointer">
                       <input

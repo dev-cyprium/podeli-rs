@@ -131,7 +131,7 @@ export default async function ItemDetailPage({ params }: PageProps) {
 
         <div className="grid gap-8 lg:grid-cols-3">
           <div className="space-y-8 lg:col-span-2">
-            <ItemImageGallery images={item.images} title={item.title} />
+            <ItemImageGallery images={item.images} title={item.title} imageFocalPoint={item.imageFocalPoint} />
 
             <div className="rounded-xl bg-card p-6 shadow-sm">
               <div className="flex flex-wrap items-start justify-between gap-4">

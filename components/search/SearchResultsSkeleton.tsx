@@ -6,7 +6,7 @@ export function SearchResultsSkeleton({ count = 8 }: { count?: number }) {
           key={i}
           className="group relative overflow-hidden rounded-2xl bg-card shadow-md"
         >
-          <div className="flex h-48 w-full items-center justify-center bg-muted">
+          <div className="flex aspect-[4/5] w-full items-center justify-center bg-muted">
             <div className="h-20 w-20 animate-pulse rounded-full bg-muted"></div>
           </div>
           <div className="p-5">

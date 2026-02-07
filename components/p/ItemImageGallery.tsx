@@ -2,19 +2,22 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Expand } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
+import { ImageLightbox } from "./ImageLightbox";
 
 interface ItemImageGalleryProps {
   images: Id<"_storage">[];
   title: string;
+  imageFocalPoint?: { x: number; y: number };
 }
 
-export function ItemImageGallery({ images, title }: ItemImageGalleryProps) {
+export function ItemImageGallery({ images, title, imageFocalPoint }: ItemImageGalleryProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const imageUrls = useQuery(
     api.items.getImageUrls,
@@ -31,24 +34,31 @@ export function ItemImageGallery({ images, title }: ItemImageGalleryProps) {
 
   if (images.length === 0) {
     return (
-      <div className="flex h-64 items-center justify-center rounded-xl bg-muted sm:h-80 md:h-96">
+      <div className="flex aspect-[4/5] items-center justify-center rounded-xl bg-muted md:aspect-[3/2]">
         <span className="text-muted-foreground">Nema slika</span>
       </div>
     );
   }
 
   const currentImageUrl = imageUrls?.[images[currentIndex]];
+  const focalStyle = imageFocalPoint
+    ? { objectPosition: `${imageFocalPoint.x}% ${imageFocalPoint.y}%` }
+    : undefined;
 
   return (
     <div className="space-y-4">
-      <div className="relative overflow-hidden rounded-xl bg-muted">
-        <div className="relative h-64 w-full sm:h-80 md:h-96">
+      <div
+        className="group/gallery relative cursor-pointer overflow-hidden rounded-xl bg-muted"
+        onClick={() => currentImageUrl && setLightboxOpen(true)}
+      >
+        <div className="relative aspect-[4/5] w-full md:aspect-[3/2]">
           {currentImageUrl ? (
             <Image
               src={currentImageUrl}
               alt={`${title} - slika ${currentIndex + 1}`}
               fill
-              className="object-cover"
+              className="object-cover md:object-contain"
+              style={focalStyle}
               priority
             />
           ) : (
@@ -58,13 +68,23 @@ export function ItemImageGallery({ images, title }: ItemImageGalleryProps) {
           )}
         </div>
 
+        {/* Expand icon */}
+        {currentImageUrl && (
+          <div className="absolute bottom-3 right-3 rounded-full bg-black/40 p-2 text-white opacity-0 backdrop-blur-sm transition-opacity group-hover/gallery:opacity-100">
+            <Expand className="h-4 w-4" />
+          </div>
+        )}
+
         {images.length > 1 && (
           <>
             <Button
               variant="ghost"
               size="icon"
               className="absolute left-2 top-1/2 -translate-y-1/2 bg-podeli-light/80 hover:bg-podeli-light"
-              onClick={handlePrevious}
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePrevious();
+              }}
             >
               <ChevronLeft className="h-5 w-5" />
             </Button>
@@ -72,7 +92,10 @@ export function ItemImageGallery({ images, title }: ItemImageGalleryProps) {
               variant="ghost"
               size="icon"
               className="absolute right-2 top-1/2 -translate-y-1/2 bg-podeli-light/80 hover:bg-podeli-light"
-              onClick={handleNext}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleNext();
+              }}
             >
               <ChevronRight className="h-5 w-5" />
             </Button>
@@ -109,6 +132,16 @@ export function ItemImageGallery({ images, title }: ItemImageGalleryProps) {
             );
           })}
         </div>
+      )}
+
+      {/* Lightbox */}
+      {currentImageUrl && (
+        <ImageLightbox
+          open={lightboxOpen}
+          onOpenChange={setLightboxOpen}
+          src={currentImageUrl}
+          alt={`${title} - slika ${currentIndex + 1}`}
+        />
       )}
     </div>
   );
