@@ -63,6 +63,7 @@ export function ConversationList() {
               unreadCount={conversation.unreadCount}
               bookingStatus={conversation.booking.status}
               isOwner={conversation.isOwner}
+              isBlocked={conversation.isBlocked}
             />
           ))}
         </div>

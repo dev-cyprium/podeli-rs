@@ -41,6 +41,15 @@ export const sendMessage = mutation({
       throw new ConvexError("Poruke nisu dozvoljene za ovu rezervaciju.");
     }
 
+    // Check if conversation is blocked
+    const block = await ctx.db
+      .query("chatBlocks")
+      .withIndex("by_bookingId", (q) => q.eq("bookingId", args.bookingId))
+      .first();
+    if (block) {
+      throw new ConvexError("Razgovor je blokiran.");
+    }
+
     const content = args.content.trim();
     if (!content) {
       throw new ConvexError("Poruka ne može biti prazna.");
@@ -58,6 +67,7 @@ export const sendMessage = mutation({
       senderId: userId,
       content,
       read: false,
+      type: "user",
       createdAt: now,
     });
 
@@ -130,6 +140,74 @@ export const sendMessage = mutation({
 });
 
 /**
+ * Send a system message (super-admin only)
+ */
+export const sendSystemMessage = mutation({
+  args: {
+    bookingId: v.id("bookings"),
+    content: v.string(),
+  },
+  returns: v.id("messages"),
+  handler: async (ctx, args) => {
+    const identity = await requireIdentity(ctx);
+    const userId = identity.subject;
+
+    // Super-admin check
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .first();
+    if (!profile?.superAdmin) {
+      throw new ConvexError("Samo super-admin može slati sistemske poruke.");
+    }
+
+    const booking = await ctx.db.get(args.bookingId);
+    if (!booking) {
+      throw new ConvexError("Rezervacija nije pronađena.");
+    }
+
+    const content = args.content.trim();
+    if (!content) {
+      throw new ConvexError("Poruka ne može biti prazna.");
+    }
+
+    const now = Date.now();
+
+    // System messages bypass block checks
+    const messageId = await ctx.db.insert("messages", {
+      bookingId: args.bookingId,
+      senderId: "SYSTEM",
+      content,
+      read: false,
+      type: "system",
+      createdAt: now,
+    });
+
+    // Notify both parties
+    const item = await ctx.db.get(booking.itemId);
+    const itemTitle = item?.title ?? "predmet";
+
+    for (const recipientId of [booking.ownerId, booking.renterId]) {
+      const isOwner = recipientId === booking.ownerId;
+      const chatLink = isOwner
+        ? `/kontrolna-tabla/predmeti/poruke/${args.bookingId}`
+        : `/kontrolna-tabla/zakupi/poruke/${args.bookingId}`;
+
+      await ctx.db.insert("notifications", {
+        userId: recipientId,
+        message: `Sistemska poruka od PODELI.RS za "${itemTitle}".`,
+        type: "system",
+        link: chatLink,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+
+    return messageId;
+  },
+});
+
+/**
  * Get messages for a booking conversation
  */
 export const getMessagesForBooking = query({
@@ -144,6 +222,7 @@ export const getMessagesForBooking = query({
       senderId: v.string(),
       content: v.string(),
       read: v.boolean(),
+      type: v.optional(v.union(v.literal("user"), v.literal("system"))),
       createdAt: v.number(),
       senderProfile: v.union(
         v.object({
@@ -177,6 +256,18 @@ export const getMessagesForBooking = query({
     // Fetch sender profiles
     const messagesWithProfiles = await Promise.all(
       messages.map(async (message) => {
+        // System messages get a special profile
+        if (message.senderId === "SYSTEM" || message.type === "system") {
+          return {
+            ...message,
+            senderProfile: {
+              firstName: "PODELI.RS" as string | undefined,
+              lastName: undefined,
+              imageUrl: undefined,
+            },
+          };
+        }
+
         const profile = await ctx.db
           .query("profiles")
           .withIndex("by_userId", (q) => q.eq("userId", message.senderId))
@@ -295,11 +386,13 @@ export const getConversations = query({
           content: v.string(),
           createdAt: v.number(),
           senderId: v.string(),
+          isSystem: v.boolean(),
         }),
         v.null()
       ),
       unreadCount: v.number(),
       isOwner: v.boolean(),
+      isBlocked: v.boolean(),
     })
   ),
   handler: async (ctx) => {
@@ -346,6 +439,12 @@ export const getConversations = query({
             (m) => m.senderId === otherPartyId && !m.read
           ).length;
 
+          // Check block status
+          const block = await ctx.db
+            .query("chatBlocks")
+            .withIndex("by_bookingId", (q) => q.eq("bookingId", booking._id))
+            .first();
+
           // Get item
           const item = await ctx.db.get(booking.itemId);
 
@@ -383,10 +482,12 @@ export const getConversations = query({
                   content: lastMessage.content,
                   createdAt: lastMessage.createdAt,
                   senderId: lastMessage.senderId,
+                  isSystem: lastMessage.type === "system" || lastMessage.senderId === "SYSTEM",
                 }
               : null,
             unreadCount,
             isOwner,
+            isBlocked: block !== null,
           };
         })
     );
@@ -592,6 +693,53 @@ export const getBookingForChat = query({
         : null,
       isOwner,
       canChat,
+    };
+  },
+});
+
+/**
+ * Get other party's online presence for a booking chat
+ */
+export const getOtherPartyPresence = query({
+  args: {
+    bookingId: v.id("bookings"),
+  },
+  returns: v.union(
+    v.object({
+      isOnline: v.boolean(),
+      lastSeenAt: v.number(),
+    }),
+    v.null()
+  ),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+    const userId = identity.subject;
+
+    const booking = await ctx.db.get(args.bookingId);
+    if (!booking) return null;
+
+    const isOwner = booking.ownerId === userId;
+    const isRenter = booking.renterId === userId;
+    if (!isOwner && !isRenter) return null;
+
+    const otherPartyId = isOwner ? booking.renterId : booking.ownerId;
+
+    const presence = await ctx.db
+      .query("chatPresence")
+      .withIndex("by_booking_and_user", (q) =>
+        q.eq("bookingId", args.bookingId).eq("userId", otherPartyId)
+      )
+      .first();
+
+    if (!presence) return null;
+
+    const now = Date.now();
+    const ONLINE_THRESHOLD = 60_000; // 60 seconds
+
+    return {
+      isOnline: now - presence.lastSeenAt < ONLINE_THRESHOLD,
+      lastSeenAt: presence.lastSeenAt,
     };
   },
 });

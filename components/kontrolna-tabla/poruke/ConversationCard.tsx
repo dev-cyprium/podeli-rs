@@ -6,6 +6,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { BookingStatusBadge } from "@/components/booking/BookingStatusBadge";
 import { formatSerbianDate } from "@/lib/serbian-date";
+import { ShieldAlert, ShieldBan } from "lucide-react";
 
 interface ConversationCardProps {
   bookingId: Id<"bookings">;
@@ -23,10 +24,12 @@ interface ConversationCardProps {
     content: string;
     createdAt: number;
     senderId: string;
+    isSystem: boolean;
   } | null;
   unreadCount: number;
   bookingStatus: string;
   isOwner: boolean;
+  isBlocked: boolean;
 }
 
 export function ConversationCard({
@@ -37,6 +40,7 @@ export function ConversationCard({
   unreadCount,
   bookingStatus,
   isOwner,
+  isBlocked,
 }: ConversationCardProps) {
   const imageUrl = useQuery(
     api.items.getImageUrl,
@@ -75,9 +79,14 @@ export function ConversationCard({
       <div className="flex flex-1 flex-col overflow-hidden">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <h3 className="truncate text-sm font-semibold text-podeli-dark">
-              {item?.title ?? "Predmet"}
-            </h3>
+            <div className="flex items-center gap-1.5">
+              <h3 className="truncate text-sm font-semibold text-podeli-dark">
+                {item?.title ?? "Predmet"}
+              </h3>
+              {isBlocked && (
+                <ShieldBan className="h-3.5 w-3.5 shrink-0 text-red-500" />
+              )}
+            </div>
             <p className="text-xs text-muted-foreground">
               {roleLabel}: {otherName}
             </p>
@@ -97,7 +106,15 @@ export function ConversationCard({
         {lastMessage && (
           <div className="mt-1 flex items-center gap-2">
             <p className="flex-1 truncate text-xs text-muted-foreground">
-              {lastMessage.content}
+              {lastMessage.isSystem ? (
+                <span className="inline-flex items-center gap-1">
+                  <ShieldAlert className="inline h-3 w-3 text-amber-600" />
+                  <span className="font-medium text-amber-700">PODELI.RS:</span>{" "}
+                  {lastMessage.content}
+                </span>
+              ) : (
+                lastMessage.content
+              )}
             </p>
             {unreadCount > 0 && (
               <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-podeli-accent px-1.5 text-[10px] font-medium text-podeli-dark">

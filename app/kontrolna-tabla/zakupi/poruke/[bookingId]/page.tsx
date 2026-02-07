@@ -13,7 +13,7 @@ export default async function ZakupiChatPage({ params }: ChatPageProps) {
 
   return (
     <DashboardShell context="zakupi" section="poruke">
-      <ChatPanel bookingId={bookingId as Id<"bookings">} />
+      <ChatPanel bookingId={bookingId as Id<"bookings">} context="zakupi" />
     </DashboardShell>
   );
 }

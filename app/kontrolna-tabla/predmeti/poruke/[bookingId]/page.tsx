@@ -13,7 +13,7 @@ export default async function PodeliChatPage({ params }: ChatPageProps) {
 
   return (
     <DashboardShell context="podeli" section="poruke">
-      <ChatPanel bookingId={bookingId as Id<"bookings">} />
+      <ChatPanel bookingId={bookingId as Id<"bookings">} context="podeli" />
     </DashboardShell>
   );
 }

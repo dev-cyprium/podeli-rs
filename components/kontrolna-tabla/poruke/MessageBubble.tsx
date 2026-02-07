@@ -2,6 +2,64 @@
 
 import { cn } from "@/lib/utils";
 import { formatSerbianDate } from "@/lib/serbian-date";
+import { ShieldAlert } from "lucide-react";
+import { Fragment } from "react";
+
+// Emoticon replacements
+const EMOTICON_MAP: Array<[string, string]> = [
+  [":D", "\u{1F604}"],
+  [":)", "\u{1F60A}"],
+  [":(", "\u{1F61E}"],
+  [";)", "\u{1F609}"],
+  [":P", "\u{1F61B}"],
+  ["<3", "\u{2764}\u{FE0F}"],
+  [":O", "\u{1F62E}"],
+  [":/", "\u{1F615}"],
+];
+
+function replaceEmoticons(text: string): string {
+  let result = text;
+  for (const [emoticon, emoji] of EMOTICON_MAP) {
+    result = result.split(emoticon).join(emoji);
+  }
+  return result;
+}
+
+// URL detection regex
+const URL_REGEX = /(https?:\/\/[^\s]+)/g;
+
+function renderContentWithLinks(content: string) {
+  const processed = replaceEmoticons(content);
+  const parts = processed.split(URL_REGEX);
+
+  if (parts.length === 1) {
+    return <p className="whitespace-pre-wrap break-words">{processed}</p>;
+  }
+
+  return (
+    <p className="whitespace-pre-wrap break-words">
+      {parts.map((part, i) => {
+        if (URL_REGEX.test(part)) {
+          // Reset lastIndex since we're using the regex multiple times
+          URL_REGEX.lastIndex = 0;
+          const displayUrl = part.length > 50 ? part.slice(0, 47) + "..." : part;
+          return (
+            <a
+              key={i}
+              href={part}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-podeli-blue underline break-all"
+            >
+              {displayUrl}
+            </a>
+          );
+        }
+        return <Fragment key={i}>{part}</Fragment>;
+      })}
+    </p>
+  );
+}
 
 interface MessageBubbleProps {
   content: string;
@@ -9,6 +67,9 @@ interface MessageBubbleProps {
   senderImage?: string;
   createdAt: number;
   isOwnMessage: boolean;
+  isFirstInGroup?: boolean;
+  isLastInGroup?: boolean;
+  isSystemMessage?: boolean;
 }
 
 export function MessageBubble({
@@ -17,55 +78,90 @@ export function MessageBubble({
   senderImage,
   createdAt,
   isOwnMessage,
+  isFirstInGroup = true,
+  isLastInGroup = true,
+  isSystemMessage = false,
 }: MessageBubbleProps) {
+  // System message: centered banner
+  if (isSystemMessage) {
+    return (
+      <div className="mx-auto max-w-[90%]">
+        <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3">
+          <div className="mb-1 flex items-center gap-2">
+            <ShieldAlert className="h-4 w-4 text-amber-600" />
+            <span className="text-xs font-semibold text-amber-800">PODELI.RS</span>
+          </div>
+          <p className="text-sm text-amber-900 whitespace-pre-wrap break-words">{replaceEmoticons(content)}</p>
+          <span className="mt-1 block text-[10px] text-amber-600">
+            {formatRelativeTime(createdAt)}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(
-        "flex gap-2 max-w-[85%]",
-        isOwnMessage ? "ml-auto flex-row-reverse" : "mr-auto"
+        "flex max-w-[80%]",
+        isOwnMessage ? "ml-auto justify-end" : "mr-auto justify-start"
       )}
     >
-      {/* Avatar */}
-      <div className="flex-shrink-0">
-        {senderImage ? (
-          <img
-            src={senderImage}
-            alt={senderName ?? "Korisnik"}
-            className="h-8 w-8 rounded-full object-cover"
-          />
-        ) : (
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
-            {senderName?.charAt(0)?.toUpperCase() ?? "?"}
-          </div>
-        )}
-      </div>
+      {/* Avatar - only on first in group for other party */}
+      {!isOwnMessage && (
+        <div className="mr-1.5 w-7 flex-shrink-0">
+          {isFirstInGroup ? (
+            senderImage ? (
+              <img
+                src={senderImage}
+                alt={senderName ?? "Korisnik"}
+                className="h-7 w-7 rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-muted-foreground">
+                {senderName?.charAt(0)?.toUpperCase() ?? "?"}
+              </div>
+            )
+          ) : null}
+        </div>
+      )}
 
-      {/* Message content */}
       <div
         className={cn(
-          "flex flex-col gap-1",
+          "flex flex-col",
           isOwnMessage ? "items-end" : "items-start"
         )}
       >
-        {/* Sender name */}
-        <span className="text-xs text-muted-foreground">{senderName ?? "Korisnik"}</span>
+        {/* Sender name - only on first in group */}
+        {isFirstInGroup && !isOwnMessage && (
+          <span className="mb-0.5 ml-1 text-[11px] font-medium text-muted-foreground">
+            {senderName ?? "Korisnik"}
+          </span>
+        )}
 
         {/* Bubble */}
         <div
           className={cn(
-            "rounded-2xl px-4 py-2 text-sm",
+            "rounded-2xl px-3 py-1.5 text-sm shadow-sm",
             isOwnMessage
-              ? "rounded-br-sm bg-podeli-accent text-podeli-dark"
-              : "rounded-bl-sm bg-muted text-podeli-dark"
+              ? cn(
+                  "bg-[#dcf8c6] text-podeli-dark",
+                  isLastInGroup ? "rounded-br-none" : ""
+                )
+              : cn(
+                  "bg-white text-podeli-dark",
+                  isLastInGroup ? "rounded-bl-none" : ""
+                )
           )}
         >
-          <p className="whitespace-pre-wrap break-words">{content}</p>
+          {renderContentWithLinks(content)}
+          {/* Inline timestamp on last in group */}
+          {isLastInGroup && (
+            <span className="ml-2 inline-block align-bottom text-[10px] leading-none text-muted-foreground">
+              {formatRelativeTime(createdAt)}
+            </span>
+          )}
         </div>
-
-        {/* Timestamp */}
-        <span className="text-[10px] text-muted-foreground">
-          {formatRelativeTime(createdAt)}
-        </span>
       </div>
     </div>
   );

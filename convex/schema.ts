@@ -161,6 +161,7 @@ export default defineSchema({
     senderId: v.string(),
     content: v.string(),
     read: v.boolean(),
+    type: v.optional(v.union(v.literal("user"), v.literal("system"))),
     createdAt: v.number(),
   })
     .index("by_booking", ["bookingId"])
@@ -225,6 +226,17 @@ export default defineSchema({
   })
     .index("by_userId", ["userId"])
     .index("by_userId_and_itemId", ["userId", "itemId"]),
+
+  chatBlocks: defineTable({
+    bookingId: v.id("bookings"),
+    blockedBy: v.string(),
+    blockedUser: v.string(),
+    reason: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_bookingId", ["bookingId"])
+    .index("by_blockedBy", ["blockedBy"])
+    .index("by_blockedUser", ["blockedUser"]),
 
   // Debug settings for development (time travel, etc.)
   debugSettings: defineTable({

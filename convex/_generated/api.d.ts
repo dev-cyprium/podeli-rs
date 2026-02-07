@@ -9,8 +9,10 @@
  */
 
 import type * as admin from "../admin.js";
+import type * as adminChat from "../adminChat.js";
 import type * as bookings from "../bookings.js";
 import type * as categories from "../categories.js";
+import type * as chatBlocks from "../chatBlocks.js";
 import type * as clerk from "../clerk.js";
 import type * as cronHandlers from "../cronHandlers.js";
 import type * as crons from "../crons.js";
@@ -34,8 +36,10 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   admin: typeof admin;
+  adminChat: typeof adminChat;
   bookings: typeof bookings;
   categories: typeof categories;
+  chatBlocks: typeof chatBlocks;
   clerk: typeof clerk;
   cronHandlers: typeof cronHandlers;
   crons: typeof crons;
