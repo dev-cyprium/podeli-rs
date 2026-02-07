@@ -1,3 +1,5 @@
+import { fetchQuery } from "convex/nextjs";
+import { api } from "@/convex/_generated/api";
 import { NavBar } from "@/components/NavBar";
 import { PricingCards } from "@/components/planovi/PricingCards";
 import { BackButton } from "@/components/ui/back-button";
@@ -8,7 +10,8 @@ export const metadata = {
   description: "Izaberite plan koji najbolje odgovara vašim potrebama. Od besplatnog do doživotnog pristupa.",
 };
 
-export default function PlanoviPage() {
+export default async function PlanoviPage() {
+  const plans = await fetchQuery(api.plans.list);
   return (
     <div className="min-h-screen bg-background">
       <NavBar />
@@ -24,7 +27,7 @@ export default function PlanoviPage() {
           </p>
         </div>
 
-        <PricingCards />
+        <PricingCards plans={plans} />
 
         <div className="mt-12 w-full text-center">
           <p className="inline-block text-sm text-muted-foreground">
