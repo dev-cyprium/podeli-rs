@@ -40,7 +40,7 @@ export default function BlogPage() {
       <main className="mx-auto max-w-4xl px-6 py-16 sm:py-20">
         <section className="text-center">
           <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-podeli-accent/30 bg-podeli-accent/10 px-4 py-1.5 text-sm font-medium text-podeli-dark">
-            <BrandName /> Blog
+            Blog
           </div>
           <h1 className="mt-6 text-4xl font-bold tracking-tight text-podeli-dark sm:text-5xl">
             Saveti i vodiči
