@@ -10,6 +10,9 @@ import {
   Crown,
   ShoppingBag,
   Tag,
+  Circle,
+  Diamond,
+  Gem,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
@@ -42,30 +45,54 @@ type NavItem = {
   showBadge?: boolean;
 };
 
+const planIconMap: Record<string, LucideIcon> = {
+  free: Circle,
+  starter: Diamond,
+  ultimate: Gem,
+  lifetime: Crown,
+  single_listing: Circle,
+};
+
 function PlanIndicator() {
   const limits = useQuery(api.profiles.getMyPlanLimits);
 
   if (!limits) return null;
 
-  const isLifetime = limits.planSlug === "lifetime";
+  const Icon = planIconMap[limits.planSlug] ?? Circle;
+  const isTopTier = limits.planSlug === "lifetime" || limits.planSlug === "ultimate";
 
   return (
     <div className="mt-6 px-2">
       <Link
         href="/planovi"
-        className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm transition-colors hover:bg-muted"
-      >
-        {isLifetime ? (
-          <Crown className="h-4 w-4 text-[#f0a202]" />
-        ) : (
-          <div className="h-4 w-4 rounded-full bg-muted" />
+        className={cn(
+          "group relative flex items-center gap-3 overflow-hidden rounded-xl border px-3 py-3 transition-all hover:shadow-md",
+          isTopTier
+            ? "border-[#f0a202]/30 bg-gradient-to-r from-[#f0a202]/5 to-[#f0a202]/10 hover:border-[#f0a202]/50"
+            : "border-border hover:bg-muted"
         )}
-        <div className="flex-1">
-          <p className="text-xs font-semibold text-[#02020a]">{limits.planName}</p>
-          {limits.hasBadge && limits.badgeLabel && (
-            <p className="text-[10px] font-bold text-[#f0a202]">{limits.badgeLabel}</p>
+      >
+        <div
+          className={cn(
+            "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
+            isTopTier
+              ? "bg-[#f0a202]/15"
+              : "bg-[#f0a202]/10"
           )}
+        >
+          <Icon className="h-4 w-4 text-[#f0a202]" />
         </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-medium text-muted-foreground">Tvoj plan</p>
+          <p className="truncate text-sm font-bold text-[#02020a]">
+            {limits.planName}
+          </p>
+        </div>
+        {limits.hasBadge && limits.badgeLabel && (
+          <span className="shrink-0 rounded-full bg-[#f0a202] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
+            {limits.badgeLabel}
+          </span>
+        )}
       </Link>
     </div>
   );
