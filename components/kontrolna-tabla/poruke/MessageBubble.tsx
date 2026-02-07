@@ -29,18 +29,16 @@ function replaceEmoticons(text: string): string {
 const URL_REGEX = /(https?:\/\/[^\s]+)/g;
 
 function renderContentWithLinks(content: string) {
-  const processed = replaceEmoticons(content);
-  const parts = processed.split(URL_REGEX);
+  const parts = content.split(URL_REGEX);
 
   if (parts.length === 1) {
-    return <p className="whitespace-pre-wrap break-words">{processed}</p>;
+    return <p className="whitespace-pre-wrap break-words">{replaceEmoticons(content)}</p>;
   }
 
   return (
     <p className="whitespace-pre-wrap break-words">
       {parts.map((part, i) => {
         if (URL_REGEX.test(part)) {
-          // Reset lastIndex since we're using the regex multiple times
           URL_REGEX.lastIndex = 0;
           const displayUrl = part.length > 50 ? part.slice(0, 47) + "..." : part;
           return (
@@ -55,7 +53,8 @@ function renderContentWithLinks(content: string) {
             </a>
           );
         }
-        return <Fragment key={i}>{part}</Fragment>;
+        // Only apply emoticon replacement to non-URL text
+        return <Fragment key={i}>{replaceEmoticons(part)}</Fragment>;
       })}
     </p>
   );
