@@ -25,6 +25,7 @@ import {
   Handshake,
   Star,
   User,
+  ShieldBan,
 } from "lucide-react";
 import { DateDisplay } from "@/components/ui/date-display";
 import { getItemUrl } from "@/lib/utils";
@@ -214,6 +215,11 @@ function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
       ? { storageId: booking.item.images[0] as Id<"_storage"> }
       : "skip"
   );
+  const blockStatus = useQuery(api.chatBlocks.getBlockStatus, {
+    bookingId: booking._id,
+  });
+
+  const isBlocked = blockStatus?.isBlocked ?? false;
 
   // Get time override for debugging (if set by super-admin)
   const timeOverride = useQuery(api.debug.getTimeOverride);
@@ -228,7 +234,8 @@ function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
     booking.status === "confirmed" &&
     !booking.ownerAgreed &&
     booking.renterAgreed &&
-    hasMessages;
+    hasMessages &&
+    !isBlocked;
 
   const canMarkReady = booking.status === "agreed";
   const canMarkDelivered = booking.status === "nije_isporucen";
@@ -436,13 +443,30 @@ function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
       </div>
 
       {/* Agreement status for confirmed bookings */}
-      {booking.status === "confirmed" && (
+      {booking.status === "confirmed" && !isBlocked && (
         <AgreementStatus
           renterAgreed={booking.renterAgreed}
           ownerAgreed={booking.ownerAgreed}
           isOwner={true}
           className="mt-3"
         />
+      )}
+
+      {/* Block status banner */}
+      {isBlocked && (
+        <div className="mt-3 flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2">
+          <ShieldBan className="h-4 w-4 shrink-0 text-red-500" />
+          <div className="text-xs text-red-700">
+            <span className="font-medium">
+              {blockStatus?.blockedByMe
+                ? "Blokirali ste ovog korisnika."
+                : "Zakupac vas je blokirao."}
+            </span>
+            {blockStatus?.blockedByOther && blockStatus?.reason && (
+              <span className="text-red-500"> — {blockStatus.reason}</span>
+            )}
+          </div>
+        </div>
       )}
 
       {error && (

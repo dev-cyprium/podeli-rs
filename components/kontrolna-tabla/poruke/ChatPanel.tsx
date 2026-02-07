@@ -320,8 +320,8 @@ export function ChatPanel({ bookingId, context }: ChatPanelProps) {
         </div>
       )}
 
-      {/* Agreement banner for confirmed bookings */}
-      {booking.status === "confirmed" && (
+      {/* Agreement banner for confirmed bookings (hidden when blocked) */}
+      {booking.status === "confirmed" && !isBlocked && (
         <div className="border-b border-border bg-amber-50 px-4 py-3">
           <div className="flex items-center justify-between gap-3">
             <div>

@@ -16,6 +16,7 @@ import {
   X,
   MessageSquare,
   Handshake,
+  ShieldBan,
 } from "lucide-react";
 import { ReviewModal } from "./ReviewModal";
 import { DateDisplay } from "@/components/ui/date-display";
@@ -50,6 +51,11 @@ export function RenterBookingCard({ booking }: RenterBookingCardProps) {
       ? { storageId: booking.item.images[0] as Id<"_storage"> }
       : "skip"
   );
+  const blockStatus = useQuery(api.chatBlocks.getBlockStatus, {
+    bookingId: booking._id,
+  });
+
+  const isBlocked = blockStatus?.isBlocked ?? false;
 
   const canChat =
     booking.status === "confirmed" ||
@@ -63,7 +69,8 @@ export function RenterBookingCard({ booking }: RenterBookingCardProps) {
   const canAgree =
     booking.status === "confirmed" &&
     !booking.renterAgreed &&
-    hasMessages;
+    hasMessages &&
+    !isBlocked;
 
   const canReview =
     booking.status === "vracen" && existingReview === null;
@@ -150,13 +157,30 @@ export function RenterBookingCard({ booking }: RenterBookingCardProps) {
           </div>
 
           {/* Agreement status for confirmed bookings */}
-          {booking.status === "confirmed" && (
+          {booking.status === "confirmed" && !isBlocked && (
             <AgreementStatus
               renterAgreed={booking.renterAgreed}
               ownerAgreed={booking.ownerAgreed}
               isOwner={false}
               className="mt-2"
             />
+          )}
+
+          {/* Block status banner */}
+          {isBlocked && (
+            <div className="mt-2 flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2">
+              <ShieldBan className="h-4 w-4 shrink-0 text-red-500" />
+              <div className="text-xs text-red-700">
+                <span className="font-medium">
+                  {blockStatus?.blockedByMe
+                    ? "Blokirali ste ovog korisnika."
+                    : "Vlasnik vas je blokirao."}
+                </span>
+                {blockStatus?.blockedByOther && blockStatus?.reason && (
+                  <span className="text-red-500"> — {blockStatus.reason}</span>
+                )}
+              </div>
+            </div>
           )}
 
           {error && (

@@ -96,6 +96,7 @@ export const getBlockStatus = query({
       isBlocked: v.boolean(),
       blockedByMe: v.boolean(),
       blockedByOther: v.boolean(),
+      reason: v.optional(v.string()),
     }),
     v.null()
   ),
@@ -117,6 +118,7 @@ export const getBlockStatus = query({
       isBlocked: true,
       blockedByMe: block.blockedBy === userId,
       blockedByOther: block.blockedBy !== userId,
+      reason: block.reason,
     };
   },
 });
