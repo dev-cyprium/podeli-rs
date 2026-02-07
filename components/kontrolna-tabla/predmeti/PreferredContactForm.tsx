@@ -165,7 +165,7 @@ export function PreferredContactForm({
       <div className="flex gap-3">
         <Button
           type="button"
-          className="bg-podeli-accent text-podeli-dark hover:bg-podeli-accent/90"
+          className="bg-podeli-accent text-white hover:bg-podeli-accent/90"
           onClick={handleSave}
           disabled={isSubmitting || selected.length === 0}
         >

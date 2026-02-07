@@ -38,7 +38,7 @@ export function PodeliEmptyState({ onCreate, className, createDisabled }: Podeli
           onClick={onCreate}
           disabled={createDisabled}
           title={createDisabled ? "Postavite način kontakta gore da biste dodali predmet" : undefined}
-          className="mt-8 rounded-xl bg-podeli-accent px-8 py-3.5 text-sm font-semibold text-podeli-dark shadow-sm hover:bg-podeli-accent/90 disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-8 rounded-xl bg-podeli-accent px-8 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-podeli-accent/90 disabled:cursor-not-allowed disabled:opacity-60"
         >
           Dodaj prvi predmet
         </Button>

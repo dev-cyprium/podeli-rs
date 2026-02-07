@@ -404,7 +404,7 @@ export default async function Home() {
                 />
                 <Button
                   type="submit"
-                  className="flex-none bg-podeli-accent px-8 py-3.5 text-sm font-semibold text-podeli-dark shadow-sm hover:bg-podeli-accent/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-podeli-accent"
+                  className="flex-none bg-podeli-accent px-8 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-podeli-accent/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-podeli-accent"
                 >
                   Prijavi se
                 </Button>

@@ -198,7 +198,7 @@ export function SearchBar({
           {showButton && (
             <Button
               onClick={handleSearch}
-              className="h-12 bg-podeli-accent px-6 text-base font-bold text-podeli-dark hover:bg-podeli-accent/90 active:bg-podeli-accent/80 sm:ml-2 sm:h-10 sm:px-8"
+              className="h-12 bg-podeli-accent px-6 text-base font-bold text-white hover:bg-podeli-accent/90 active:bg-podeli-accent/80 sm:ml-2 sm:h-10 sm:px-8"
             >
               Pronađi
             </Button>

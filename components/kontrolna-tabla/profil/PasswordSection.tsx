@@ -198,7 +198,7 @@ export function PasswordSection() {
         <Button
           onClick={handleUpdatePassword}
           disabled={isUpdating || !newPassword || !confirmPassword}
-          className="bg-podeli-accent text-podeli-dark hover:bg-podeli-accent/90"
+          className="bg-podeli-accent text-white hover:bg-podeli-accent/90"
         >
           {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {hasPassword ? "Promeni lozinku" : "Postavi lozinku"}

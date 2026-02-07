@@ -8,6 +8,7 @@ export default defineSchema({
     description: v.string(),
     category: v.string(),
     pricePerDay: v.number(),
+    deposit: v.optional(v.number()),
     images: v.array(v.id("_storage")),
     availabilitySlots: v.array(
       v.object({

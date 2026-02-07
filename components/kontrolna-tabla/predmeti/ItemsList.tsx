@@ -100,7 +100,7 @@ function ItemsListContent() {
                 <AlertTriangle className="h-3 w-3" />
                 Limit dostignut
               </span>
-              <Button asChild size="sm" className="bg-[#f0a202] text-white hover:bg-[#f0a202]/90">
+              <Button asChild size="sm" className="bg-podeli-accent text-white hover:bg-podeli-accent/90">
                 <Link href="/planovi">Nadogradite</Link>
               </Button>
             </div>
@@ -115,7 +115,7 @@ function ItemsListContent() {
               Novi predmet
             </Button>
           ) : (
-            <Button asChild size="sm" className="w-full bg-podeli-accent text-podeli-dark hover:bg-podeli-accent/90 sm:w-auto">
+            <Button asChild size="sm" className="w-full bg-podeli-accent text-white hover:bg-podeli-accent/90 sm:w-auto">
               <Link href="/kontrolna-tabla/predmeti/novi">Novi predmet</Link>
             </Button>
           )}

@@ -90,6 +90,11 @@ function ItemCard({
               strokeWidth={1.5}
             />
           )}
+          {item.deposit != null && item.deposit > 0 && (
+            <span className="absolute right-2 top-2 rounded-full bg-podeli-accent px-2.5 py-0.5 text-xs font-semibold text-white shadow-sm">
+              Depozit {item.deposit.toFixed(0)} RSD
+            </span>
+          )}
         </div>
       </Link>
       <div className="flex h-full flex-col p-5">
@@ -128,7 +133,7 @@ function ItemCard({
         <div className="mt-auto pt-4">
           <Button
             asChild
-            className="w-full bg-podeli-accent text-podeli-dark hover:bg-podeli-accent/90"
+            className="w-full bg-podeli-accent text-white hover:bg-podeli-accent/90"
             size="sm"
           >
             <Link href={itemUrl}>Iznajmi</Link>

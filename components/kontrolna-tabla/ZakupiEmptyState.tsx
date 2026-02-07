@@ -18,7 +18,7 @@ export function ZakupiEmptyState() {
         </p>
         <Button
           disabled
-          className="mt-8 bg-podeli-accent px-8 py-3.5 text-sm font-semibold text-podeli-dark shadow-sm hover:bg-podeli-accent/90"
+          className="mt-8 bg-podeli-accent px-8 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-podeli-accent/90"
         >
           Pretraži ponudu
         </Button>

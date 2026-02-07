@@ -92,7 +92,7 @@ export default function KakoFunkcionisePage() {
           <div className="mt-6">
             <Link
               href="/"
-              className="inline-flex items-center rounded-xl bg-podeli-accent px-6 py-2.5 text-sm font-semibold text-podeli-dark hover:bg-podeli-accent/90"
+              className="inline-flex items-center rounded-xl bg-podeli-accent px-6 py-2.5 text-sm font-semibold text-white hover:bg-podeli-accent/90"
             >
               Nazad na početnu
             </Link>

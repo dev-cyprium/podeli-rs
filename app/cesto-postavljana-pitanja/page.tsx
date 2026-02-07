@@ -109,7 +109,7 @@ export default function CestoPostavljanaPitanjaPage() {
           <div className="mt-6 flex flex-wrap gap-4">
             <a
               href="mailto:kontakt@podeli.rs"
-              className="inline-flex items-center rounded-xl bg-podeli-accent px-6 py-2.5 text-sm font-semibold text-podeli-dark hover:bg-podeli-accent/90"
+              className="inline-flex items-center rounded-xl bg-podeli-accent px-6 py-2.5 text-sm font-semibold text-white hover:bg-podeli-accent/90"
             >
               Kontaktirajte nas
             </a>

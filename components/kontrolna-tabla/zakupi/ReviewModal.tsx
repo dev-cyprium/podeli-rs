@@ -132,7 +132,7 @@ export function ReviewModal({
             Otkaži
           </Button>
           <Button
-            className="flex-1 bg-podeli-accent hover:bg-podeli-accent/90 text-podeli-dark"
+            className="flex-1 bg-podeli-accent hover:bg-podeli-accent/90 text-white"
             onClick={handleSubmit}
             disabled={isSubmitting || rating === 0}
           >

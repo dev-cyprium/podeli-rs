@@ -212,7 +212,7 @@ export function ProfileSection() {
         <Button
           onClick={handleUpdateName}
           disabled={!hasChanges || isUpdatingName}
-          className="bg-podeli-accent text-podeli-dark hover:bg-podeli-accent/90"
+          className="bg-podeli-accent text-white hover:bg-podeli-accent/90"
         >
           {isUpdatingName && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Sačuvaj izmene

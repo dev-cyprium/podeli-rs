@@ -98,7 +98,7 @@ export function PlanUsageWidget() {
             <Button
               asChild
               size="sm"
-              className="bg-[#f0a202] text-white hover:bg-[#f0a202]/90"
+              className="bg-podeli-accent text-white hover:bg-podeli-accent/90"
             >
               <Link href="/planovi">Nadogradite</Link>
             </Button>

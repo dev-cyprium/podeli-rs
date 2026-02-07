@@ -151,6 +151,11 @@ export default async function ItemDetailPage({ params }: PageProps) {
                     {item.pricePerDay.toFixed(0)} RSD
                   </p>
                   <p className="text-sm text-muted-foreground">po danu</p>
+                  {item.deposit != null && item.deposit > 0 && (
+                    <span className="mt-2 inline-block rounded-full bg-podeli-accent px-3 py-0.5 text-sm font-semibold text-white">
+                      Depozit: {item.deposit.toFixed(0)} RSD
+                    </span>
+                  )}
                 </div>
               </div>
 

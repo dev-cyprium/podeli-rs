@@ -91,7 +91,7 @@ function EmptyState() {
       </p>
       <Button
         asChild
-        className="mt-6 bg-podeli-accent hover:bg-podeli-accent/90 text-podeli-dark"
+        className="mt-6 bg-podeli-accent hover:bg-podeli-accent/90 text-white"
       >
         <Link href="/#ponuda">Pretraži ponudu</Link>
       </Button>

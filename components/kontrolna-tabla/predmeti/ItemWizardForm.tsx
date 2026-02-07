@@ -53,6 +53,7 @@ export type ItemFormData = {
   description: string;
   category: string;
   pricePerDay: number;
+  deposit?: number;
   images: Id<"_storage">[];
   availabilitySlots: AvailabilitySlot[];
   deliveryMethods: DeliveryMethod[];
@@ -88,6 +89,9 @@ export function ItemWizardForm({
   );
   const [pricePerDay, setPricePerDay] = useState(
     item?.pricePerDay?.toString() ?? "",
+  );
+  const [deposit, setDeposit] = useState(
+    item?.deposit?.toString() ?? "",
   );
   const [images, setImages] = useState<Id<"_storage">[]>(
     item?.images && item.images.length > 0 ? [item.images[0]] : [],
@@ -395,6 +399,7 @@ export function ItemWizardForm({
 
     setFormError(null);
     const numericPrice = Number(pricePerDay);
+    const numericDeposit = deposit.trim() ? Number(deposit) : undefined;
     const cleanedSlots = availabilitySlots.filter(
       (slot) => slot.startDate && slot.endDate,
     );
@@ -406,12 +411,70 @@ export function ItemWizardForm({
         description: description.trim(),
         category,
         pricePerDay: numericPrice,
+        deposit: numericDeposit !== undefined && numericDeposit >= 0 ? numericDeposit : undefined,
         images,
         availabilitySlots: cleanedSlots,
         deliveryMethods,
       });
       setFormError(null);
     } catch (submitError) {
+      setFormError("Sačuvavanje nije uspelo. Pokušajte ponovo.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function handleSaveFromAnyStep() {
+    // Mark all steps as visited
+    const allVisited = new Set<number>();
+    for (let i = 0; i < steps.length; i++) {
+      allVisited.add(i);
+    }
+    setVisitedSteps(allVisited);
+
+    // Validate all steps
+    const newInvalidSteps = new Set<number>();
+    for (let i = 0; i < steps.length; i++) {
+      const error = validateStep(i);
+      if (error) {
+        newInvalidSteps.add(i);
+      }
+    }
+    setInvalidSteps(newInvalidSteps);
+
+    if (newInvalidSteps.size > 0) {
+      // Navigate to first invalid step
+      for (let i = 0; i < steps.length; i++) {
+        if (newInvalidSteps.has(i)) {
+          setCurrentStep(i);
+          setFormError(validateStep(i));
+          break;
+        }
+      }
+      return;
+    }
+
+    setFormError(null);
+    const numericPrice = Number(pricePerDay);
+    const numericDeposit = deposit.trim() ? Number(deposit) : undefined;
+    const cleanedSlots = availabilitySlots.filter(
+      (slot) => slot.startDate && slot.endDate,
+    );
+
+    setIsSubmitting(true);
+    try {
+      await onSave({
+        title: title.trim(),
+        description: description.trim(),
+        category,
+        pricePerDay: numericPrice,
+        deposit: numericDeposit !== undefined && numericDeposit >= 0 ? numericDeposit : undefined,
+        images,
+        availabilitySlots: cleanedSlots,
+        deliveryMethods,
+      });
+      setFormError(null);
+    } catch {
       setFormError("Sačuvavanje nije uspelo. Pokušajte ponovo.");
     } finally {
       setIsSubmitting(false);
@@ -530,6 +593,21 @@ export function ItemWizardForm({
                   onChange={(event) => setPricePerDay(event.target.value)}
                   placeholder="1500"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="item-deposit">Sigurnosni depozit (opciono)</Label>
+                <Input
+                  id="item-deposit"
+                  type="number"
+                  min="0"
+                  value={deposit}
+                  onChange={(event) => setDeposit(event.target.value)}
+                  placeholder="npr. 5000"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Iznos u RSD koji se vraća nakon vraćanja predmeta
+                </p>
               </div>
             </div>
           ) : null}
@@ -779,40 +857,44 @@ export function ItemWizardForm({
         </div>
       ) : null}
 
-      <div className="flex flex-wrap items-center gap-3">
-        {currentStep > 0 ? (
-          <Button type="button" variant="outline" onClick={handleBack}>
-            Nazad
-          </Button>
-        ) : null}
-        {currentStep < steps.length - 1 ? (
-          <Button
-            type="button"
-            className="bg-podeli-accent text-podeli-dark hover:bg-podeli-accent/90"
-            onClick={handleNext}
-          >
-            Nastavi
-          </Button>
-        ) : (
-          <Button
-            type="button"
-            className="bg-podeli-accent text-podeli-dark hover:bg-podeli-accent/90"
-            disabled={isSubmitting || invalidSteps.size > 0}
-            onClick={handleSubmit}
-          >
-            {item ? "Sačuvaj izmene" : "Sačuvaj predmet"}
-          </Button>
-        )}
-        {item && onCancel && currentStep < steps.length - 1 ? (
-          <Button
-            type="button"
-            className="bg-podeli-accent text-podeli-dark hover:bg-podeli-accent/90"
-            disabled={isSubmitting}
-            onClick={handleSubmit}
-          >
-            Sačuvaj izmene
-          </Button>
-        ) : null}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {currentStep > 0 ? (
+            <Button type="button" variant="outline" onClick={handleBack}>
+              Nazad
+            </Button>
+          ) : null}
+          {currentStep < steps.length - 1 ? (
+            <Button
+              type="button"
+              className="bg-podeli-accent text-white hover:bg-podeli-accent/90"
+              onClick={handleNext}
+            >
+              Napred
+            </Button>
+          ) : null}
+        </div>
+        <div>
+          {item ? (
+            <Button
+              type="button"
+              className="bg-podeli-accent text-white hover:bg-podeli-accent/90"
+              disabled={isSubmitting}
+              onClick={handleSaveFromAnyStep}
+            >
+              Sačuvaj izmene
+            </Button>
+          ) : currentStep === steps.length - 1 ? (
+            <Button
+              type="button"
+              className="bg-podeli-accent text-white hover:bg-podeli-accent/90"
+              disabled={isSubmitting || invalidSteps.size > 0}
+              onClick={handleSubmit}
+            >
+              Sačuvaj predmet
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       <Dialog open={contactModalOpen} onOpenChange={setContactModalOpen}>

@@ -71,7 +71,7 @@ export default function NotFound() {
 
             {/* Action buttons */}
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-              <Button asChild className="bg-podeli-accent text-podeli-dark hover:bg-podeli-accent/90">
+              <Button asChild className="bg-podeli-accent text-white hover:bg-podeli-accent/90">
                 <Link href="/">
                   <Home className="mr-2 h-4 w-4" />
                   Početna stranica

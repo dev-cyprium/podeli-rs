@@ -29,7 +29,7 @@ export function ModeSelector() {
           href="/kontrolna-tabla/predmeti"
           className="group relative overflow-hidden rounded-2xl border-2 border-transparent bg-card p-8 text-left shadow-md transition-all hover:-translate-y-1 hover:border-podeli-accent hover:shadow-xl"
         >
-          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-podeli-accent/10 text-podeli-accent transition-colors group-hover:bg-podeli-accent group-hover:text-podeli-dark">
+          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-podeli-accent/10 text-podeli-accent transition-colors group-hover:bg-podeli-accent group-hover:text-white">
             <Package className="h-7 w-7" />
           </div>
           <h2 className="text-2xl font-bold text-podeli-dark">Podeli</h2>
@@ -49,7 +49,7 @@ export function ModeSelector() {
           href="/kontrolna-tabla/zakupi"
           className="group relative overflow-hidden rounded-2xl border-2 border-transparent bg-card p-8 text-left shadow-md transition-all hover:-translate-y-1 hover:border-podeli-accent hover:shadow-xl"
         >
-          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-podeli-blue/10 text-podeli-blue transition-colors group-hover:bg-podeli-accent group-hover:text-podeli-dark">
+          <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-podeli-blue/10 text-podeli-blue transition-colors group-hover:bg-podeli-accent group-hover:text-white">
             <Search className="h-7 w-7" />
           </div>
           <h2 className="text-2xl font-bold text-podeli-dark">Zakupi</h2>

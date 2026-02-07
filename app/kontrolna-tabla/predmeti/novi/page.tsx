@@ -38,10 +38,12 @@ function NoviPredmetContent() {
   async function handleSave(data: ItemFormData) {
     setPageError(null);
     try {
+      const { deposit, ...rest } = data;
+      const payload = deposit !== undefined ? { ...rest, deposit } : rest;
       if (itemId) {
-        await updateItem({ id: itemId as Id<"items">, ...data });
+        await updateItem({ id: itemId as Id<"items">, ...payload });
       } else {
-        await createItem(data);
+        await createItem(payload);
       }
       router.push("/kontrolna-tabla/predmeti");
     } catch (error) {
@@ -81,7 +83,7 @@ function NoviPredmetContent() {
                   Nadogradite plan da biste kreirali više oglasa.
                 </p>
                 <div className="mt-6 flex justify-center gap-3">
-                  <Button asChild className="bg-[#f0a202] text-white hover:bg-[#f0a202]/90">
+                  <Button asChild className="bg-podeli-accent text-white hover:bg-podeli-accent/90">
                     <Link href="/planovi">Pogledajte planove</Link>
                   </Button>
                   <Button asChild variant="outline">

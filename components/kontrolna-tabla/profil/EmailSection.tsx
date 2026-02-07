@@ -313,7 +313,7 @@ export function EmailSection() {
               <Button
                 onClick={handleAddEmail}
                 disabled={isAddingEmail || !newEmail.trim()}
-                className="bg-podeli-accent text-podeli-dark hover:bg-podeli-accent/90"
+                className="bg-podeli-accent text-white hover:bg-podeli-accent/90"
               >
                 {isAddingEmail && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Nastavi
@@ -322,7 +322,7 @@ export function EmailSection() {
               <Button
                 onClick={handleVerifyEmail}
                 disabled={isVerifying || !verificationCode.trim()}
-                className="bg-podeli-accent text-podeli-dark hover:bg-podeli-accent/90"
+                className="bg-podeli-accent text-white hover:bg-podeli-accent/90"
               >
                 {isVerifying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Verifikuj

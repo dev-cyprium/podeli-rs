@@ -63,7 +63,7 @@ export function ChatInput({
         onClick={handleSend}
         disabled={!canSend}
         size="icon"
-        className="h-11 w-11 flex-shrink-0 bg-podeli-accent text-podeli-dark hover:bg-podeli-accent/90"
+        className="h-11 w-11 flex-shrink-0 bg-podeli-accent text-white hover:bg-podeli-accent/90"
       >
         {isSending ? (
           <Loader2 className="h-5 w-5 animate-spin" />

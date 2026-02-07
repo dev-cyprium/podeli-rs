@@ -208,7 +208,7 @@ export function BookingForm({ item }: BookingFormProps) {
                 </div>
               )}
               <Button
-                className="w-full bg-podeli-accent hover:bg-podeli-accent/90 text-podeli-dark"
+                className="w-full bg-podeli-accent hover:bg-podeli-accent/90 text-white"
                 size="lg"
                 disabled={!canBook || isSubmitting}
                 onClick={handleSubmit}
