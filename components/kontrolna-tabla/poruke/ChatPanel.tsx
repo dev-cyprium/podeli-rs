@@ -39,6 +39,8 @@ import {
   ShieldBan,
   ShieldOff,
   XCircle,
+  Mail,
+  Loader2,
 } from "lucide-react";
 import { DateDisplay } from "@/components/ui/date-display";
 import { getItemUrl } from "@/lib/utils";
@@ -100,6 +102,8 @@ export function ChatPanel({ bookingId, context }: ChatPanelProps) {
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
   const [blockReason, setBlockReason] = useState("");
   const [declineDialogOpen, setDeclineDialogOpen] = useState(false);
+  const [nudgeSent, setNudgeSent] = useState(false);
+  const [nudgeSending, setNudgeSending] = useState(false);
 
   const backUrl =
     context === "podeli"
@@ -118,6 +122,7 @@ export function ChatPanel({ bookingId, context }: ChatPanelProps) {
   const blockUser = useMutation(api.chatBlocks.blockUser);
   const unblockUser = useMutation(api.chatBlocks.unblockUser);
   const cancelBooking = useMutation(api.bookings.cancelBooking);
+  const sendEmailNudge = useMutation(api.messages.sendEmailNudge);
 
   // Mark messages as read and update presence periodically
   useEffect(() => {
@@ -139,9 +144,12 @@ export function ChatPanel({ bookingId, context }: ChatPanelProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Chat uses viewport height minus the dashboard header (4rem)
+  const chatHeight = "h-[calc(100dvh-4rem)]";
+
   if (chatData === undefined || messages === undefined) {
     return (
-      <div className="flex h-full min-h-[400px] items-center justify-center rounded-xl bg-[#f0f0f0]">
+      <div className={`flex ${chatHeight} items-center justify-center rounded-xl bg-[#f0f0f0]`}>
         <p className="text-sm text-muted-foreground">Učitavanje...</p>
       </div>
     );
@@ -149,7 +157,7 @@ export function ChatPanel({ bookingId, context }: ChatPanelProps) {
 
   if (chatData === null) {
     return (
-      <div className="flex h-full min-h-[400px] flex-col items-center justify-center gap-4 rounded-xl bg-[#f0f0f0]">
+      <div className={`flex ${chatHeight} flex-col items-center justify-center gap-4 rounded-xl bg-[#f0f0f0]`}>
         <MessageSquare className="h-12 w-12 text-muted-foreground/50" />
         <p className="text-sm text-muted-foreground">
           Razgovor nije pronađen ili nemate pristup.
@@ -202,6 +210,28 @@ export function ChatPanel({ bookingId, context }: ChatPanelProps) {
     await cancelBooking({ id: bookingId });
     setDeclineDialogOpen(false);
   };
+
+  const handleEmailNudge = async () => {
+    setNudgeSending(true);
+    try {
+      await sendEmailNudge({ bookingId });
+      setNudgeSent(true);
+    } catch (error) {
+      console.error("Failed to send email nudge:", error);
+    } finally {
+      setNudgeSending(false);
+    }
+  };
+
+  // Show nudge button when other party has been offline for 1+ hour
+  const ONE_HOUR = 60 * 60 * 1000;
+  const showNudge =
+    canChat &&
+    !isBlocked &&
+    !nudgeSent &&
+    presence &&
+    !presence.isOnline &&
+    Date.now() - presence.lastSeenAt >= ONE_HOUR;
 
   // Build grouped messages with date separators
   const renderMessages = () => {
@@ -286,7 +316,7 @@ export function ChatPanel({ bookingId, context }: ChatPanelProps) {
   const inputDisabled = isBlocked || !canChat;
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-[#f0f0f0]">
+    <div className={`flex ${chatHeight} flex-col overflow-hidden rounded-xl border border-border bg-[#f0f0f0]`}>
       {/* Header */}
       <div className="flex items-center gap-3 border-b border-border bg-card p-3">
         <Button variant="ghost" size="icon" asChild className="shrink-0">
@@ -448,6 +478,36 @@ export function ChatPanel({ bookingId, context }: ChatPanelProps) {
         {renderMessages()}
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Email nudge banner */}
+      {showNudge && (
+        <div className="flex items-center justify-between border-t border-border bg-podeli-blue/5 px-4 py-2">
+          <p className="text-xs text-muted-foreground">
+            {otherParty?.firstName ?? "Korisnik"} nije na mreži već duže vreme.
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleEmailNudge}
+            disabled={nudgeSending}
+            className="text-podeli-blue border-podeli-blue/30 hover:bg-podeli-blue/10"
+          >
+            {nudgeSending ? (
+              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Mail className="mr-1.5 h-3.5 w-3.5" />
+            )}
+            Pošalji email
+          </Button>
+        </div>
+      )}
+      {nudgeSent && (
+        <div className="border-t border-border bg-green-50 px-4 py-2 text-center">
+          <p className="text-xs text-green-700">
+            Email obaveštenje je poslato.
+          </p>
+        </div>
+      )}
 
       {/* Input */}
       {!inputDisabled ? (

@@ -110,29 +110,6 @@ export const sendMessage = mutation({
         updatedAt: now,
       });
 
-      // Check if recipient wants email notifications for new messages
-      const recipientPreferences = await ctx.db
-        .query("notificationPreferences")
-        .withIndex("by_userId", (q) => q.eq("userId", recipientId))
-        .first();
-
-      if (recipientPreferences?.emailOnNewMessage) {
-        const recipientProfile = await ctx.db
-          .query("profiles")
-          .withIndex("by_userId", (q) => q.eq("userId", recipientId))
-          .first();
-
-        if (recipientProfile?.email) {
-          await ctx.scheduler.runAfter(0, internal.emails.sendNewMessageEmail, {
-            to: recipientProfile.email,
-            recipientName: recipientProfile.firstName ?? "Korisniče",
-            senderName,
-            itemTitle: item?.title ?? "predmet",
-            messagePreview: content,
-            actionUrl: `https://podeli.rs${chatLink}`,
-          });
-        }
-      }
     }
 
     return messageId;
@@ -741,5 +718,90 @@ export const getOtherPartyPresence = query({
       isOnline: now - presence.lastSeenAt < ONLINE_THRESHOLD,
       lastSeenAt: presence.lastSeenAt,
     };
+  },
+});
+
+/**
+ * Manually send an email nudge to the other party when they've been offline 1h+
+ */
+export const sendEmailNudge = mutation({
+  args: {
+    bookingId: v.id("bookings"),
+  },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    const identity = await requireIdentity(ctx);
+    const userId = identity.subject;
+
+    const booking = await ctx.db.get(args.bookingId);
+    if (!booking) {
+      throw new ConvexError("Rezervacija nije pronađena.");
+    }
+
+    const isRenter = booking.renterId === userId;
+    const isOwner = booking.ownerId === userId;
+    if (!isRenter && !isOwner) {
+      throw new ConvexError("Nemate pristup ovoj rezervaciji.");
+    }
+
+    const recipientId = isRenter ? booking.ownerId : booking.renterId;
+    const now = Date.now();
+
+    // Check recipient hasn't been online in the past hour
+    const recipientPresence = await ctx.db
+      .query("chatPresence")
+      .withIndex("by_booking_and_user", (q) =>
+        q.eq("bookingId", args.bookingId).eq("userId", recipientId)
+      )
+      .first();
+
+    const ONE_HOUR = 60 * 60 * 1000;
+    if (recipientPresence && now - recipientPresence.lastSeenAt < ONE_HOUR) {
+      throw new ConvexError("Korisnik je bio aktivan u poslednjih sat vremena.");
+    }
+
+    // Get sender and recipient profiles
+    const senderProfile = await ctx.db
+      .query("profiles")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .first();
+    const recipientProfile = await ctx.db
+      .query("profiles")
+      .withIndex("by_userId", (q) => q.eq("userId", recipientId))
+      .first();
+
+    if (!recipientProfile?.email) {
+      throw new ConvexError("Korisnik nema registrovanu email adresu.");
+    }
+
+    const item = await ctx.db.get(booking.itemId);
+    const senderName = senderProfile?.firstName ?? "Korisnik";
+
+    const recipientIsOwner = recipientId === booking.ownerId;
+    const chatLink = recipientIsOwner
+      ? `/kontrolna-tabla/predmeti/poruke/${args.bookingId}`
+      : `/kontrolna-tabla/zakupi/poruke/${args.bookingId}`;
+
+    // Get the last few messages as preview
+    const messages = await ctx.db
+      .query("messages")
+      .withIndex("by_booking_and_created", (q) => q.eq("bookingId", args.bookingId))
+      .order("desc")
+      .collect();
+
+    const lastUserMessage = messages.find(
+      (m) => m.senderId === userId && m.type !== "system"
+    );
+
+    await ctx.scheduler.runAfter(0, internal.emails.sendNewMessageEmail, {
+      to: recipientProfile.email,
+      recipientName: recipientProfile.firstName ?? "Korisniče",
+      senderName,
+      itemTitle: item?.title ?? "predmet",
+      messagePreview: lastUserMessage?.content ?? "",
+      actionUrl: `https://podeli.rs${chatLink}`,
+    });
+
+    return true;
   },
 });

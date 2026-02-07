@@ -17,9 +17,10 @@ interface DashboardShellProps {
   context: Context;
   section: Section;
   children: React.ReactNode;
+  noPadding?: boolean;
 }
 
-export function DashboardShell({ context, section, children }: DashboardShellProps) {
+export function DashboardShell({ context, section, children, noPadding }: DashboardShellProps) {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -71,7 +72,7 @@ export function DashboardShell({ context, section, children }: DashboardShellPro
           onContextChange={handleContextChange}
           onMenuClick={() => setSidebarOpen(true)}
         />
-        <main className="px-4 py-6 sm:px-6 sm:py-8">{children}</main>
+        <main className={noPadding ? "" : "px-4 py-6 sm:px-6 sm:py-8"}>{children}</main>
       </div>
     </div>
   );

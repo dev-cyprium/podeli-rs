@@ -12,7 +12,7 @@ export default async function ZakupiChatPage({ params }: ChatPageProps) {
   const { bookingId } = await params;
 
   return (
-    <DashboardShell context="zakupi" section="poruke">
+    <DashboardShell context="zakupi" section="poruke" noPadding>
       <ChatPanel bookingId={bookingId as Id<"bookings">} context="zakupi" />
     </DashboardShell>
   );
