@@ -22,6 +22,14 @@ export const metadata: Metadata = {
   title: "podeli - Podeli sa komšijama. Živi pametnije.",
   description:
     "Lokalna platforma za deljenje i iznajmljivanje stvari u Beogradu. Ne kupuj ono što ćeš koristiti jednom. Podeli sa nekim ko već ima. Samo u Beogradu.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "32x32" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+  manifest: "/site.webmanifest",
 };
 
 export default function RootLayout({
