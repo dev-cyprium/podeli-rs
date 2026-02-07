@@ -2,6 +2,12 @@ import { ReactNode } from "react";
 import Link from "next/link";
 import { Lightbulb, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { BrandName } from "@/components/BrandName";
+import {
+  CategoryDropdownDemo,
+  CategorySuggestDemo,
+  CategoryPendingDemo,
+  CategoryGridDemo,
+} from "@/components/blog/CategoryDemos";
 
 interface StepProps {
   number: number;
@@ -95,6 +101,10 @@ export const mdxComponents = {
   Warning,
   Success,
   BrandName,
+  CategoryDropdownDemo,
+  CategorySuggestDemo,
+  CategoryPendingDemo,
+  CategoryGridDemo,
 
   // Links - handle internal vs external
   a: ({
