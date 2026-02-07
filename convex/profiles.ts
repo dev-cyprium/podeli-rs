@@ -300,6 +300,22 @@ export const ensureProfile = mutation({
       updatedAt: now,
     });
 
+    // Enable email notifications by default for new users
+    const existingPrefs = await ctx.db
+      .query("notificationPreferences")
+      .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
+      .first();
+
+    if (!existingPrefs) {
+      await ctx.db.insert("notificationPreferences", {
+        userId: identity.subject,
+        emailOnBookingRequest: true,
+        emailOnNewMessage: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+
     return null;
   },
 });

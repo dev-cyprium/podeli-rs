@@ -14,6 +14,7 @@ import {
   Trash2,
   Loader2,
   Users,
+  Bell,
 } from "lucide-react";
 
 export function FunctionsPanel() {
@@ -26,6 +27,7 @@ export function FunctionsPanel() {
   const backfillSearchText = useMutation(api.items.backfillSearchText);
   const clearOrphanedBookings = useMutation(api.bookings.clearOrphanedBookings);
   const syncMissingProfiles = useAction(api.clerk.syncMissingProfilesFromClerk);
+  const backfillNotifPrefs = useMutation(api.notificationPreferences.backfillEnableAll);
 
   async function run(
     key: string,
@@ -40,9 +42,11 @@ export function FunctionsPanel() {
         typeof result === "object" && result !== null && "created" in result
           ? "existing" in r
             ? `Kreirano: ${r.created}, postojalo: ${r.existing}`
-            : "total" in r
-              ? `Kreirano profila: ${r.created} / ${r.total} korisnika pregledano`
-              : `Kreirano: ${r.created}`
+            : "updated" in r && "total" in r
+              ? `Kreirano: ${r.created}, ažurirano: ${r.updated} / ${r.total}`
+              : "total" in r
+                ? `Kreirano profila: ${r.created} / ${r.total} korisnika pregledano`
+                : `Kreirano: ${r.created}`
           : typeof result === "object" &&
               result !== null &&
               "updated" in result
@@ -278,6 +282,38 @@ export function FunctionsPanel() {
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
               Sinhronizuj
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Bell className="h-4 w-4 text-podeli-accent" />
+              Uključi email obaveštenja
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Kreira ili uključuje email obaveštenja za sve korisnike koji ih
+              nemaju ili su ih isključili.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                run(
+                  "backfillNotif",
+                  () => backfillNotifPrefs(),
+                  "Email obaveštenja su uključena za sve korisnike."
+                )
+              }
+              disabled={loading !== null}
+            >
+              {loading === "backfillNotif" && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
+              Pokreni
             </Button>
           </CardContent>
         </Card>

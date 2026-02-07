@@ -2,6 +2,56 @@ import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { requireIdentity } from "@/lib/convex-auth";
 
+/** One-time backfill: enable all email preferences for every user with a profile. Super-admin only. */
+export const backfillEnableAll = mutation({
+  args: {},
+  returns: v.object({ created: v.number(), updated: v.number(), total: v.number() }),
+  handler: async (ctx) => {
+    const identity = await requireIdentity(ctx);
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
+      .first();
+
+    if (!profile?.superAdmin) {
+      throw new Error("Samo administratori mogu izvršiti ovu akciju.");
+    }
+
+    const profiles = await ctx.db.query("profiles").collect();
+    let created = 0;
+    let updated = 0;
+    const now = Date.now();
+
+    for (const profile of profiles) {
+      const existing = await ctx.db
+        .query("notificationPreferences")
+        .withIndex("by_userId", (q) => q.eq("userId", profile.userId))
+        .first();
+
+      if (!existing) {
+        await ctx.db.insert("notificationPreferences", {
+          userId: profile.userId,
+          emailOnBookingRequest: true,
+          emailOnNewMessage: true,
+          createdAt: now,
+          updatedAt: now,
+        });
+        created++;
+      } else if (!existing.emailOnBookingRequest || !existing.emailOnNewMessage) {
+        await ctx.db.patch(existing._id, {
+          emailOnBookingRequest: true,
+          emailOnNewMessage: true,
+          updatedAt: now,
+        });
+        updated++;
+      }
+    }
+
+    return { created, updated, total: profiles.length };
+  },
+});
+
 export const getMyPreferences = query({
   args: {},
   returns: v.union(
