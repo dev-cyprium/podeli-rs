@@ -213,11 +213,15 @@ export default defineSchema({
   categories: defineTable({
     name: v.string(),
     order: v.optional(v.number()),
+    isSystem: v.optional(v.boolean()),
+    createdBy: v.optional(v.string()),
+    status: v.optional(v.union(v.literal("active"), v.literal("pending"))),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_name", ["name"])
-    .index("by_order", ["order"]),
+    .index("by_order", ["order"])
+    .index("by_status", ["status"]),
 
   favorites: defineTable({
     userId: v.string(),

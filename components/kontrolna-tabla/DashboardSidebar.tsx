@@ -9,6 +9,7 @@ import {
   X,
   Crown,
   ShoppingBag,
+  Tag,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
@@ -23,7 +24,7 @@ import { TimeTravelWidget } from "@/components/debug/TimeTravelWidget";
 type Context = "podeli" | "zakupi";
 
 // Section within each context
-type Section = "main" | "poruke" | "ocene" | "omiljeno";
+type Section = "main" | "poruke" | "ocene" | "omiljeno" | "kategorije";
 
 interface DashboardSidebarProps {
   context: Context;
@@ -169,6 +170,30 @@ export function DashboardSidebar({
               </Button>
             );
           })}
+        </nav>
+      </div>
+
+      {/* Community section — visible in both contexts */}
+      <div className="mt-6 space-y-2">
+        <p className="px-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Zajednica
+        </p>
+        <nav className="space-y-1">
+          <Button
+            variant="ghost"
+            asChild
+            className={cn(
+              "flex h-auto w-full items-center justify-start gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors",
+              section === "kategorije"
+                ? "bg-podeli-accent/10 text-podeli-accent hover:bg-podeli-accent/10"
+                : "text-muted-foreground hover:bg-muted hover:text-podeli-dark"
+            )}
+          >
+            <Link href="/kontrolna-tabla/kategorije" onClick={onClose}>
+              <Tag className="h-4 w-4" />
+              <span>Kategorije</span>
+            </Link>
+          </Button>
         </nav>
       </div>
 

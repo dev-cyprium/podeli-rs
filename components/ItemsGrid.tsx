@@ -16,7 +16,7 @@ import { Id, Doc } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { DomacinBadge } from "@/components/DomacinBadge";
 import { getItemUrl } from "@/lib/utils";
-import { Drill, Tent, Gamepad2, Bike, MapPin, Heart } from "lucide-react";
+import { Tag, MapPin, Heart } from "lucide-react";
 import { AntIcon } from "@/components/icons/Icons";
 
 type UserSnapshot = {
@@ -26,20 +26,7 @@ type UserSnapshot = {
   email: string | null;
 };
 
-const categoryIcons: Record<
-  string,
-  React.ComponentType<{ className?: string; strokeWidth?: number }>
-> = {
-  Alati: Drill,
-  Kampovanje: Tent,
-  Zabava: Gamepad2,
-  Prevoz: Bike,
-  Elektronika: Gamepad2,
-  "Društvene igre": Gamepad2,
-};
-
 function CategoryIcon({
-  category,
   className,
   strokeWidth,
 }: {
@@ -47,8 +34,7 @@ function CategoryIcon({
   className?: string;
   strokeWidth?: number;
 }) {
-  const Icon = categoryIcons[category] || Drill;
-  return <Icon className={className} strokeWidth={strokeWidth} />;
+  return <Tag className={className} strokeWidth={strokeWidth} />;
 }
 
 type OwnerProfile = {

@@ -22,6 +22,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { PreferredContactForm } from "./PreferredContactForm";
+import { CategoryCombobox } from "./CategoryCombobox";
 
 type AvailabilitySlot = {
   startDate: string;
@@ -558,19 +559,11 @@ export function ItemWizardForm({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="item-category">Kategorija</Label>
-                <select
-                  id="item-category"
-                  className="flex h-10 w-full rounded-md border border-border bg-card px-3 text-sm text-podeli-dark shadow-sm focus:outline-none focus:ring-2 focus:ring-podeli-accent focus:ring-offset-2"
+                <Label>Kategorija</Label>
+                <CategoryCombobox
                   value={category}
-                  onChange={(event) => setCategory(event.target.value)}
-                >
-                  {categories.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setCategory}
+                />
               </div>
 
               <div className="space-y-2">

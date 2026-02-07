@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageSquare, Ticket, X, Zap } from "lucide-react";
+import { Layers, MessageSquare, Ticket, X, Zap } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -57,6 +57,19 @@ export function SuperAdminSidebar({ onClose }: SuperAdminSidebarProps) {
         >
           <Zap className="h-4 w-4" />
           <span>Funkcije</span>
+        </Link>
+        <Link
+          href="/super-admin/kategorije"
+          onClick={onClose}
+          className={cn(
+            "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors",
+            pathname === "/super-admin/kategorije"
+              ? "bg-podeli-accent/10 text-podeli-accent"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground",
+          )}
+        >
+          <Layers className="h-4 w-4" />
+          <span>Kategorije</span>
         </Link>
         <Link
           href="/super-admin/poruke"

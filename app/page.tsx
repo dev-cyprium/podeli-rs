@@ -18,6 +18,8 @@ import { ItemsGrid } from "@/components/ItemsGrid";
 import { ItemsGridSkeleton } from "@/components/ItemsGridSkeleton";
 import { SearchBar } from "@/components/search/SearchBar";
 import { BlogPostCard } from "@/components/blog/BlogPostCard";
+import { HeroCategoryLinks } from "@/components/home/HeroCategoryLinks";
+import { CommunityCategoriesSection } from "@/components/home/CommunityCategoriesSection";
 import { getAllPosts } from "@/lib/blog";
 import { preloadQuery } from "convex/nextjs";
 import { api } from "@/convex/_generated/api";
@@ -51,33 +53,7 @@ function HeroSection() {
           {/* Search Bar */}
           <div className="mt-10 w-full max-w-2xl">
             <SearchBar />
-            <div className="mt-4 flex flex-wrap justify-center gap-2 text-sm text-muted-foreground">
-              <span>Popularno:</span>
-              <Link
-                href="/pretraga?kategorija=Alati"
-                className="font-medium text-podeli-dark hover:text-podeli-accent hover:underline"
-              >
-                Alati
-              </Link>
-              <Link
-                href="/pretraga?kategorija=Kampovanje"
-                className="font-medium text-podeli-dark hover:text-podeli-accent hover:underline"
-              >
-                Kampovanje
-              </Link>
-              <Link
-                href="/pretraga?kategorija=Elektronika"
-                className="font-medium text-podeli-dark hover:text-podeli-accent hover:underline"
-              >
-                Elektronika
-              </Link>
-              <Link
-                href="/pretraga?kategorija=Društvene igre"
-                className="font-medium text-podeli-dark hover:text-podeli-accent hover:underline"
-              >
-                Društvene igre
-              </Link>
-            </div>
+            <HeroCategoryLinks />
             <div className="mt-6 flex justify-center gap-6">
               <a
                 href="https://www.instagram.com/podeli_rs/"
@@ -301,6 +277,8 @@ export default async function Home() {
       <Suspense fallback={<ItemsGridSkeleton />}>
         <ProductShowcaseSection />
       </Suspense>
+
+      <CommunityCategoriesSection />
 
       <WhySharingSection />
 

@@ -11,7 +11,7 @@ import { BackgroundPattern } from "./BackgroundPattern";
 type Context = "podeli" | "zakupi";
 
 // Section within each context
-type Section = "main" | "poruke" | "ocene" | "omiljeno";
+type Section = "main" | "poruke" | "ocene" | "omiljeno" | "kategorije";
 
 interface DashboardShellProps {
   context: Context;
