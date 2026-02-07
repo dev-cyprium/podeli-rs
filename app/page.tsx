@@ -5,6 +5,7 @@ import {
   PiggyBank,
   Instagram,
   Facebook,
+  Linkedin,
   Handshake,
   Sparkles,
   ArrowRight,
@@ -24,7 +25,7 @@ import { Suspense } from "react";
 
 function HeroSection() {
   return (
-    <section className="relative overflow-hidden pt-16 pb-24 lg:pt-32">
+    <section className="relative pt-16 pb-24 lg:pt-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="flex flex-col items-center text-center">
           <h1 className="max-w-4xl text-5xl font-extrabold tracking-tight text-podeli-dark sm:text-6xl lg:text-7xl">
@@ -107,6 +108,16 @@ function HeroSection() {
               >
                 <Facebook className="h-5 w-5" />
                 Facebook
+              </a>
+              <a
+                href="https://www.linkedin.com/company/podeli-rs"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm font-medium text-podeli-dark hover:text-podeli-accent transition-colors"
+                aria-label="LinkedIn"
+              >
+                <Linkedin className="h-5 w-5" />
+                LinkedIn
               </a>
             </div>
           </div>
@@ -463,6 +474,16 @@ export default async function Home() {
             >
               <Facebook className="h-4 w-4" />
               Facebook
+            </a>
+            <a
+              href="https://www.linkedin.com/company/podeli-rs"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 hover:text-podeli-dark"
+              aria-label="LinkedIn"
+            >
+              <Linkedin className="h-4 w-4" />
+              LinkedIn
             </a>
           </div>
         </div>

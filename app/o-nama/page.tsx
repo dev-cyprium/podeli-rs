@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Instagram, Facebook } from "lucide-react";
+import { Instagram, Facebook, Linkedin } from "lucide-react";
 import { NavBar } from "@/components/NavBar";
 import { DiscordIcon } from "@/components/icons/Icons";
 
@@ -138,6 +138,15 @@ export default function ONamaPage() {
               >
                 <Facebook className="h-5 w-5" />
                 Facebook
+              </a>
+              <a
+                href="https://www.linkedin.com/company/podeli-rs"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm text-podeli-light/80 hover:text-podeli-accent transition-colors"
+              >
+                <Linkedin className="h-5 w-5" />
+                LinkedIn
               </a>
             </div>
           </div>
