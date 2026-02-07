@@ -439,6 +439,9 @@ export default async function Home() {
             <Link href="/terms-of-service" className="hover:text-podeli-dark">
               Uslovi korišćenja
             </Link>
+            <Link href="/cookie-policy" className="hover:text-podeli-dark">
+              Politika kolačića
+            </Link>
             <a
               href="mailto:kontakt@podeli.rs"
               className="hover:text-podeli-dark"

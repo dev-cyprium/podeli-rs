@@ -7,6 +7,7 @@ import { srLocalization } from "@/lib/clerk-localization";
 import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from "@/components/ui/sonner";
 import { SSOCallbackHashRedirect } from "@/components/SSOCallbackHashRedirect";
+import { CookieConsent } from "@/components/CookieConsent";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -46,6 +47,7 @@ export default function RootLayout({
           <SSOCallbackHashRedirect />
           <ConvexClientProvider>{children}</ConvexClientProvider>
           <Toaster />
+          <CookieConsent />
           <Analytics />
         </body>
       </html>
