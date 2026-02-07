@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyWebhook } from "@clerk/backend/webhooks";
 import { Resend } from "resend";
 import { NewUserEmail } from "@/components/emails/NewUserEmail";
+import { WelcomeEmail } from "@/components/emails/WelcomeEmail";
 
 const NOTIFY_ADMINS = ["office@podeli.rs"];
 
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest) {
         [user.first_name, user.last_name].filter(Boolean).join(" ") ||
         "Nije uneto";
 
-      await resend.emails.send({
+      const adminEmail = resend.emails.send({
         from: "Podeli.rs <obavestenja@updates.podeli.rs>",
         to: NOTIFY_ADMINS,
         subject: "Novi korisnik se registrovao",
@@ -31,6 +32,18 @@ export async function POST(request: NextRequest) {
           />
         ),
       });
+
+      const welcomeEmail =
+        email !== "N/A"
+          ? resend.emails.send({
+              from: "Podeli.rs <obavestenja@updates.podeli.rs>",
+              to: email,
+              subject: "Dobrodošli na podeli.rs!",
+              react: <WelcomeEmail name={name} />,
+            })
+          : Promise.resolve();
+
+      await Promise.all([adminEmail, welcomeEmail]);
     }
   } catch (error) {
     console.error(error);
