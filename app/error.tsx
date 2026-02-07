@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Home, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { NavBar } from "@/components/NavBar";
+import { Logo } from "@/components/Logo";
 import { WanderingAnts } from "@/components/WanderingAnts";
 
 export default function Error({
@@ -14,7 +14,11 @@ export default function Error({
 }) {
   return (
     <div className="min-h-screen bg-podeli-light font-sans text-podeli-dark selection:bg-podeli-accent/20 selection:text-podeli-dark">
-      <NavBar />
+      <nav className="sticky top-0 z-50 border-b border-border bg-podeli-light/80 backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-7xl items-center px-6 lg:px-8">
+          <Logo href="/" />
+        </div>
+      </nav>
 
       <section className="relative overflow-hidden pt-12 pb-8 sm:pt-20 sm:pb-12">
         <WanderingAnts />
