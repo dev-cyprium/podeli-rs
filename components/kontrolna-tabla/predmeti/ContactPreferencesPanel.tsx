@@ -34,6 +34,7 @@ export function ContactPreferencesPanel() {
       <CardContent>
         <PreferredContactForm
           preferredContactTypes={preferredContactTypes}
+          phoneNumber={profile?.phoneNumber}
           compact={isConfigured}
           embedded
         />

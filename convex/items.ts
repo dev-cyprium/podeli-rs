@@ -147,6 +147,7 @@ export const create = mutation({
     description: v.string(),
     category: v.string(),
     pricePerDay: v.number(),
+    priceByAgreement: v.optional(v.boolean()),
     deposit: v.optional(v.number()),
     images: v.array(v.id("_storage")),
     imageFocalPoint: v.optional(v.object({ x: v.number(), y: v.number() })),
@@ -225,8 +226,8 @@ export const create = mutation({
       throw new Error("Kategorija je obavezna.");
     }
 
-    // Validate price
-    if (Number.isNaN(args.pricePerDay) || args.pricePerDay <= 0) {
+    // Validate price (skip if price is by agreement)
+    if (!args.priceByAgreement && (Number.isNaN(args.pricePerDay) || args.pricePerDay <= 0)) {
       throw new Error("Cena po danu mora biti veća od nule.");
     }
 
@@ -287,6 +288,7 @@ export const update = mutation({
     description: v.string(),
     category: v.string(),
     pricePerDay: v.number(),
+    priceByAgreement: v.optional(v.boolean()),
     deposit: v.optional(v.number()),
     images: v.array(v.id("_storage")),
     imageFocalPoint: v.optional(v.object({ x: v.number(), y: v.number() })),
@@ -342,8 +344,8 @@ export const update = mutation({
       throw new Error("Kategorija je obavezna.");
     }
 
-    // Validate price
-    if (Number.isNaN(args.pricePerDay) || args.pricePerDay <= 0) {
+    // Validate price (skip if price is by agreement)
+    if (!args.priceByAgreement && (Number.isNaN(args.pricePerDay) || args.pricePerDay <= 0)) {
       throw new Error("Cena po danu mora biti veća od nule.");
     }
 
@@ -401,7 +403,6 @@ export const update = mutation({
 // Statuses that prevent item deletion (active bookings)
 const ACTIVE_BOOKING_STATUSES = [
   "confirmed",
-  "agreed",
   "nije_isporucen",
   "isporucen",
 ] as const;
@@ -606,9 +607,25 @@ export const searchItems = query({
     const { query: searchQuery, category, paginationOpts } = args;
     const now = Date.now();
 
-    // Helper to filter expired single listing items
-    function filterActive<T extends { singleListingExpiresAt?: number }>(items: T[]): T[] {
-      return items.filter((item) => !item.singleListingExpiresAt || item.singleListingExpiresAt > now);
+    const today = new Date(now).toISOString().split("T")[0];
+
+    // Helper to filter expired single listing items and items with all past availability slots
+    function filterActive<T extends { singleListingExpiresAt?: number; availabilitySlots: Array<{ startDate: string; endDate: string }> }>(items: T[]): T[] {
+      return items.filter((item) => {
+        // Filter out expired single listings
+        if (item.singleListingExpiresAt && item.singleListingExpiresAt <= now) {
+          return false;
+        }
+        // Filter out items with no availability slots
+        if (item.availabilitySlots.length === 0) {
+          return false;
+        }
+        // Filter out items where every slot's endDate is in the past
+        const hasActiveFutureSlot = item.availabilitySlots.some(
+          (slot) => slot.endDate >= today
+        );
+        return hasActiveFutureSlot;
+      });
     }
 
     // If we have a search query, use the search index

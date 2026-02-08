@@ -18,7 +18,6 @@ const notificationValidator = v.object({
       v.literal("message_received"),
       v.literal("agreement_requested"),
       v.literal("booking_agreed"),
-      v.literal("item_ready"),
       v.literal("item_delivered"),
       v.literal("return_reminder"),
       v.literal("item_returned"),

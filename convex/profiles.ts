@@ -196,6 +196,7 @@ export const updatePreferredContactTypes = mutation({
         v.literal("phone")
       )
     ),
+    phoneNumber: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -212,6 +213,13 @@ export const updatePreferredContactTypes = mutation({
       throw new Error("Nepoznata opcija kontakta.");
     }
 
+    // If phone is selected, require a phone number
+    if (validTypes.includes("phone")) {
+      if (!args.phoneNumber || args.phoneNumber.trim().length === 0) {
+        throw new Error("Unesite broj telefona kada je telefon izabran kao način kontakta.");
+      }
+    }
+
     const profile = await ctx.db
       .query("profiles")
       .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
@@ -224,6 +232,7 @@ export const updatePreferredContactTypes = mutation({
     const now = Date.now();
     await ctx.db.patch(profile._id, {
       preferredContactTypes: validTypes,
+      phoneNumber: validTypes.includes("phone") ? args.phoneNumber!.trim() : undefined,
       updatedAt: now,
     });
 

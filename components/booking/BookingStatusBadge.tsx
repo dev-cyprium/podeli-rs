@@ -5,7 +5,6 @@ import { cn } from "@/lib/utils";
 type BookingStatus =
   | "pending"
   | "confirmed"
-  | "agreed"
   | "nije_isporucen"
   | "isporucen"
   | "vracen"
@@ -14,7 +13,6 @@ type BookingStatus =
 const statusLabels: Record<BookingStatus, string> = {
   pending: "Čeka odobrenje",
   confirmed: "Potvrđeno",
-  agreed: "Dogovoreno",
   nije_isporucen: "Čeka preuzimanje",
   isporucen: "Isporučeno",
   vracen: "Vraćeno",
@@ -24,7 +22,6 @@ const statusLabels: Record<BookingStatus, string> = {
 const statusColors: Record<BookingStatus, string> = {
   pending: "bg-podeli-accent/10 text-podeli-accent border-podeli-accent/30",
   confirmed: "bg-green-100 text-green-700 border-green-300",
-  agreed: "bg-podeli-blue/10 text-podeli-blue border-podeli-blue/30",
   nije_isporucen: "bg-amber-100 text-amber-700 border-amber-300",
   isporucen: "bg-purple-100 text-purple-700 border-purple-300",
   vracen: "bg-muted text-muted-foreground border-border",

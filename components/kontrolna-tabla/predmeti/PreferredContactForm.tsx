@@ -5,6 +5,7 @@ import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 
@@ -18,6 +19,7 @@ const CONTACT_OPTIONS: { value: ContactType; label: string }[] = [
 
 interface PreferredContactFormProps {
   preferredContactTypes: string[];
+  phoneNumber?: string;
   onSave?: () => void;
   compact?: boolean;
   /** When true, render without outer Card (for use inside ContactPreferencesPanel) */
@@ -28,6 +30,7 @@ interface PreferredContactFormProps {
 
 export function PreferredContactForm({
   preferredContactTypes,
+  phoneNumber: initialPhoneNumber,
   onSave,
   compact = false,
   embedded = false,
@@ -39,6 +42,7 @@ export function PreferredContactForm({
       ["chat", "email", "phone"].includes(t)
     )
   );
+  const [phoneNumber, setPhoneNumber] = useState(initialPhoneNumber ?? "");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isExpanded, setIsExpanded] = useState(
@@ -68,10 +72,18 @@ export function PreferredContactForm({
       return;
     }
 
+    if (selected.includes("phone") && !phoneNumber.trim()) {
+      setError("Unesite broj telefona kada je telefon izabran.");
+      return;
+    }
+
     setError(null);
     setIsSubmitting(true);
     try {
-      await updatePrefs({ preferredContactTypes: selected });
+      await updatePrefs({
+        preferredContactTypes: selected,
+        phoneNumber: selected.includes("phone") ? phoneNumber.trim() : undefined,
+      });
       if (compact) {
         setIsExpanded(false);
       }
@@ -132,25 +144,38 @@ export function PreferredContactForm({
           const disabled = cannotToggleOff(option.value);
 
           return (
-            <div
-              key={option.value}
-              className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3"
-            >
-              <div className="flex items-center gap-2">
-                <Switch
-                  id={`contact-${option.value}`}
-                  checked={isChecked}
-                  onCheckedChange={() => toggle(option.value)}
-                  disabled={disabled}
-                  className="data-[state=checked]:bg-podeli-accent"
-                />
-                <Label
-                  htmlFor={`contact-${option.value}`}
-                  className="cursor-pointer font-medium"
-                >
-                  {option.label}
-                </Label>
+            <div key={option.value}>
+              <div className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id={`contact-${option.value}`}
+                    checked={isChecked}
+                    onCheckedChange={() => toggle(option.value)}
+                    disabled={disabled}
+                    className="data-[state=checked]:bg-podeli-accent"
+                  />
+                  <Label
+                    htmlFor={`contact-${option.value}`}
+                    className="cursor-pointer font-medium"
+                  >
+                    {option.label}
+                  </Label>
+                </div>
               </div>
+              {option.value === "phone" && isChecked && (
+                <div className="mt-2 ml-2">
+                  <Input
+                    type="tel"
+                    placeholder="+381..."
+                    value={phoneNumber}
+                    onChange={(e) => {
+                      setPhoneNumber(e.target.value);
+                      setError(null);
+                    }}
+                    className="max-w-xs"
+                  />
+                </div>
+              )}
             </div>
             );
           })}

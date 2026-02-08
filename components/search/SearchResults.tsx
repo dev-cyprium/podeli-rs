@@ -132,11 +132,17 @@ function ItemCard({
             {hasBadge && <DomacinBadge size="sm" />}
           </div>
           <span className="font-bold text-podeli-accent">
-            {item.pricePerDay.toFixed(0)} RSD
-            <span className="text-xs font-normal text-muted-foreground">
-              {" "}
-              /dan
-            </span>
+            {item.priceByAgreement ? (
+              "Po dogovoru"
+            ) : (
+              <>
+                {item.pricePerDay.toFixed(0)} RSD
+                <span className="text-xs font-normal text-muted-foreground">
+                  {" "}
+                  /dan
+                </span>
+              </>
+            )}
           </span>
         </div>
         <div className="mt-auto pt-4">

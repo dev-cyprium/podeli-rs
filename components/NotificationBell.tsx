@@ -11,7 +11,6 @@ import {
   Sparkles,
   MessageSquare,
   Handshake,
-  Package,
   Truck,
   AlertTriangle,
   PartyPopper,
@@ -64,7 +63,6 @@ type NotificationType =
   | "message_received"
   | "agreement_requested"
   | "booking_agreed"
-  | "item_ready"
   | "item_delivered"
   | "return_reminder"
   | "item_returned"
@@ -86,8 +84,6 @@ function getNotificationIcon(type?: NotificationType) {
       return <Handshake className="h-4 w-4 flex-shrink-0 text-amber-500" />;
     case "booking_agreed":
       return <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-green-600" />;
-    case "item_ready":
-      return <Package className="h-4 w-4 flex-shrink-0 text-purple-500" />;
     case "item_delivered":
       return <Truck className="h-4 w-4 flex-shrink-0 text-green-600" />;
     case "return_reminder":

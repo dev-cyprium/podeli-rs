@@ -6,7 +6,6 @@ import { requireIdentity } from "@/lib/convex-auth";
 // Statuses that allow messaging
 const CHAT_ALLOWED_STATUSES = [
   "confirmed",
-  "agreed",
   "nije_isporucen",
   "isporucen",
 ] as const;
@@ -406,12 +405,7 @@ export const getConversations = query({
             .withIndex("by_booking_and_created", (q) => q.eq("bookingId", booking._id))
             .collect();
 
-          // Skip if no messages
-          if (messages.length === 0) {
-            return null;
-          }
-
-          const lastMessage = messages[messages.length - 1];
+          const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
           const unreadCount = messages.filter(
             (m) => m.senderId === otherPartyId && !m.read
           ).length;
@@ -454,7 +448,7 @@ export const getConversations = query({
                   imageUrl: otherProfile.imageUrl,
                 }
               : null,
-            lastMessage: lastMessage
+            lastMessage: lastMessage != null
               ? {
                   content: lastMessage.content,
                   createdAt: lastMessage.createdAt,
@@ -469,9 +463,8 @@ export const getConversations = query({
         })
     );
 
-    // Filter nulls and sort by last message time
+    // Sort by last message time (conversations with no messages sort to end)
     return conversations
-      .filter((c): c is NonNullable<typeof c> => c !== null)
       .sort((a, b) => (b.lastMessage?.createdAt ?? 0) - (a.lastMessage?.createdAt ?? 0));
   },
 });
@@ -608,6 +601,14 @@ export const getBookingForChat = query({
       ),
       isOwner: v.boolean(),
       canChat: v.boolean(),
+      ownerContact: v.union(
+        v.object({
+          email: v.optional(v.string()),
+          phoneNumber: v.optional(v.string()),
+          chat: v.boolean(),
+        }),
+        v.null()
+      ),
     }),
     v.null()
   ),
@@ -642,6 +643,25 @@ export const getBookingForChat = query({
       booking.status as typeof CHAT_ALLOWED_STATUSES[number]
     );
 
+    // Expose owner contact info to renter for confirmed+ bookings
+    const CONTACT_ELIGIBLE_STATUSES = ["confirmed", "nije_isporucen", "isporucen", "vracen"];
+    let ownerContact: { email?: string; phoneNumber?: string; chat: boolean } | null = null;
+    if (isRenter && CONTACT_ELIGIBLE_STATUSES.includes(booking.status)) {
+      const ownerProfile = await ctx.db
+        .query("profiles")
+        .withIndex("by_userId", (q) => q.eq("userId", booking.ownerId))
+        .first();
+
+      if (ownerProfile) {
+        const prefs = ownerProfile.preferredContactTypes ?? [];
+        ownerContact = {
+          email: prefs.includes("email") ? ownerProfile.email : undefined,
+          phoneNumber: prefs.includes("phone") ? ownerProfile.phoneNumber : undefined,
+          chat: prefs.includes("chat"),
+        };
+      }
+    }
+
     return {
       booking: {
         _id: booking._id,
@@ -670,6 +690,7 @@ export const getBookingForChat = query({
         : null,
       isOwner,
       canChat,
+      ownerContact,
     };
   },
 });

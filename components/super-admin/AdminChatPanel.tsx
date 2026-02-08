@@ -105,7 +105,7 @@ export function AdminChatPanel({ bookingId }: AdminChatPanelProps) {
               <span>
                 Zakupac: <span className="font-medium text-podeli-dark">{renter?.firstName ?? "?"}</span>
               </span>
-              <BookingStatusBadge status={booking.status as "pending" | "confirmed" | "agreed" | "nije_isporucen" | "isporucen" | "vracen" | "cancelled"} />
+              <BookingStatusBadge status={booking.status as "pending" | "confirmed" | "nije_isporucen" | "isporucen" | "vracen" | "cancelled"} />
             </div>
           </div>
         </div>

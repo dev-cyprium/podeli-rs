@@ -8,6 +8,7 @@ export default defineSchema({
     description: v.string(),
     category: v.string(),
     pricePerDay: v.number(),
+    priceByAgreement: v.optional(v.boolean()),
     deposit: v.optional(v.number()),
     images: v.array(v.id("_storage")),
     availabilitySlots: v.array(
@@ -89,6 +90,7 @@ export default defineSchema({
         )
       )
     ),
+    phoneNumber: v.optional(v.string()),
     defaultDashboardMode: v.optional(v.union(v.literal("podeli"), v.literal("zakupi"))),
     superAdmin: v.optional(v.boolean()),
     createdAt: v.number(),
@@ -111,7 +113,6 @@ export default defineSchema({
     status: v.union(
       v.literal("pending"),
       v.literal("confirmed"),
-      v.literal("agreed"),
       v.literal("nije_isporucen"),
       v.literal("isporucen"),
       v.literal("vracen"),
@@ -189,7 +190,6 @@ export default defineSchema({
         v.literal("message_received"),
         v.literal("agreement_requested"),
         v.literal("booking_agreed"),
-        v.literal("item_ready"),
         v.literal("item_delivered"),
         v.literal("return_reminder"),
         v.literal("item_returned"),

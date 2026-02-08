@@ -258,7 +258,7 @@ export function ChatPanel({ bookingId, context }: ChatPanelProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            <BookingStatusBadge status={booking.status as "pending" | "confirmed" | "agreed" | "nije_isporucen" | "isporucen" | "vracen" | "cancelled"} />
+            <BookingStatusBadge status={booking.status as "pending" | "confirmed" | "nije_isporucen" | "isporucen" | "vracen" | "cancelled"} />
 
             {/* 3-dot menu */}
             <DropdownMenu>

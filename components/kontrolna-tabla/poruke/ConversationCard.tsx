@@ -93,7 +93,7 @@ export function ConversationCard({
           </div>
 
           <div className="flex flex-col items-end gap-1">
-            <BookingStatusBadge status={bookingStatus as "pending" | "confirmed" | "agreed" | "nije_isporucen" | "isporucen" | "vracen" | "cancelled"} />
+            <BookingStatusBadge status={bookingStatus as "pending" | "confirmed" | "nije_isporucen" | "isporucen" | "vracen" | "cancelled"} />
             {lastMessage && (
               <span className="text-[10px] text-muted-foreground">
                 {formatRelativeTime(lastMessage.createdAt)}
@@ -103,10 +103,10 @@ export function ConversationCard({
         </div>
 
         {/* Last message preview */}
-        {lastMessage && (
-          <div className="mt-1 flex items-center gap-2">
-            <p className="flex-1 truncate text-xs text-muted-foreground">
-              {lastMessage.isSystem ? (
+        <div className="mt-1 flex items-center gap-2">
+          <p className="flex-1 truncate text-xs text-muted-foreground">
+            {lastMessage ? (
+              lastMessage.isSystem ? (
                 <span className="inline-flex items-center gap-1">
                   <ShieldAlert className="inline h-3 w-3 text-amber-600" />
                   <span className="font-medium text-amber-700">PODELI.RS:</span>{" "}
@@ -114,15 +114,17 @@ export function ConversationCard({
                 </span>
               ) : (
                 lastMessage.content
-              )}
-            </p>
-            {unreadCount > 0 && (
-              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-podeli-accent px-1.5 text-[10px] font-medium text-podeli-dark">
-                {unreadCount > 99 ? "99+" : unreadCount}
-              </span>
+              )
+            ) : (
+              <span className="italic">Nema poruka — pošaljite prvu poruku</span>
             )}
-          </div>
-        )}
+          </p>
+          {unreadCount > 0 && (
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-podeli-accent px-1.5 text-[10px] font-medium text-podeli-dark">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          )}
+        </div>
       </div>
     </Link>
   );

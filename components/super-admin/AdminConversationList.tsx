@@ -187,7 +187,7 @@ function AdminConversationCard({
           </div>
 
           <div className="flex flex-col items-end gap-1">
-            <BookingStatusBadge status={booking.status as "pending" | "confirmed" | "agreed" | "nije_isporucen" | "isporucen" | "vracen" | "cancelled"} />
+            <BookingStatusBadge status={booking.status as "pending" | "confirmed" | "nije_isporucen" | "isporucen" | "vracen" | "cancelled"} />
             <span className="text-[10px] text-muted-foreground">
               {messageCount} poruka
             </span>

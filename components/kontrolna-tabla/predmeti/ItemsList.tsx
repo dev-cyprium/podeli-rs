@@ -8,6 +8,17 @@ import { AnimatePresence, motion } from "framer-motion";
 import { api } from "@/convex/_generated/api";
 import { Doc, Id } from "@/convex/_generated/dataModel";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PodeliEmptyState } from "@/components/kontrolna-tabla/PodeliEmptyState";
@@ -72,9 +83,6 @@ function ItemsListContent() {
   const atLimit = limits && !isUnlimited && limits.listingCount >= limits.maxListings;
 
   async function handleDelete(id: Doc<"items">["_id"]) {
-    if (!confirm("Da li ste sigurni da želite da obrišete predmet?")) {
-      return;
-    }
     await removeItem({ id });
   }
 
@@ -237,14 +245,34 @@ function ItemCard({
           <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={onEdit}>
             Izmeni
           </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            className="flex-1 border border-podeli-red/30 sm:flex-none"
-            onClick={onDelete}
-          >
-            Obriši
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="flex-1 border border-podeli-red/30 sm:flex-none"
+              >
+                Obriši
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Brisanje predmeta</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Da li ste sigurni da želite da obrišete predmet?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Ne</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={onDelete}
+                  className="bg-[#dd1c1a] text-white hover:bg-[#dd1c1a]/90"
+                >
+                  Da, obriši
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
     </div>

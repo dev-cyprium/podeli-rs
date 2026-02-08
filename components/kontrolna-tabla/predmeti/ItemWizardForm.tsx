@@ -54,6 +54,7 @@ export type ItemFormData = {
   description: string;
   category: string;
   pricePerDay: number;
+  priceByAgreement?: boolean;
   deposit?: number;
   images: Id<"_storage">[];
   imageFocalPoint?: { x: number; y: number };
@@ -94,6 +95,9 @@ export function ItemWizardForm({
   );
   const [deposit, setDeposit] = useState(
     item?.deposit?.toString() ?? "",
+  );
+  const [priceByAgreement, setPriceByAgreement] = useState(
+    item?.priceByAgreement ?? false,
   );
   const [images, setImages] = useState<Id<"_storage">[]>(
     item?.images && item.images.length > 0 ? [item.images[0]] : [],
@@ -247,7 +251,7 @@ export function ItemWizardForm({
       if (!description.trim()) {
         return "Unesite opis predmeta.";
       }
-      if (Number.isNaN(numericPrice) || numericPrice <= 0) {
+      if (!priceByAgreement && (Number.isNaN(numericPrice) || numericPrice <= 0)) {
         return "Cena po danu mora biti veća od nule.";
       }
     }
@@ -307,7 +311,7 @@ export function ItemWizardForm({
       setInvalidSteps(newInvalidSteps);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, description, category, pricePerDay, images.length, availabilitySlots.length, deliveryMethods.length, visitedSteps.size]);
+  }, [title, description, category, pricePerDay, priceByAgreement, images.length, availabilitySlots.length, deliveryMethods.length, visitedSteps.size]);
 
   function handleNext() {
     // Mark current step as visited when trying to proceed
@@ -405,7 +409,7 @@ export function ItemWizardForm({
     }
 
     setFormError(null);
-    const numericPrice = Number(pricePerDay);
+    const numericPrice = priceByAgreement ? 0 : Number(pricePerDay);
     const numericDeposit = deposit.trim() ? Number(deposit) : undefined;
     const cleanedSlots = availabilitySlots.filter(
       (slot) => slot.startDate && slot.endDate,
@@ -418,6 +422,7 @@ export function ItemWizardForm({
         description: description.trim(),
         category,
         pricePerDay: numericPrice,
+        priceByAgreement: priceByAgreement || undefined,
         deposit: numericDeposit !== undefined && numericDeposit >= 0 ? numericDeposit : undefined,
         images,
         imageFocalPoint,
@@ -463,7 +468,7 @@ export function ItemWizardForm({
     }
 
     setFormError(null);
-    const numericPrice = Number(pricePerDay);
+    const numericPrice = priceByAgreement ? 0 : Number(pricePerDay);
     const numericDeposit = deposit.trim() ? Number(deposit) : undefined;
     const cleanedSlots = availabilitySlots.filter(
       (slot) => slot.startDate && slot.endDate,
@@ -476,6 +481,7 @@ export function ItemWizardForm({
         description: description.trim(),
         category,
         pricePerDay: numericPrice,
+        priceByAgreement: priceByAgreement || undefined,
         deposit: numericDeposit !== undefined && numericDeposit >= 0 ? numericDeposit : undefined,
         images,
         imageFocalPoint,
@@ -585,16 +591,30 @@ export function ItemWizardForm({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="item-price">Cena po danu (RSD)</Label>
-                <Input
-                  id="item-price"
-                  type="number"
-                  min="0"
-                  value={pricePerDay}
-                  onChange={(event) => setPricePerDay(event.target.value)}
-                  placeholder="1500"
-                />
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <Checkbox
+                    checked={priceByAgreement}
+                    onChange={(e) => setPriceByAgreement(e.target.checked)}
+                  />
+                  <span className="text-sm font-medium text-podeli-dark">
+                    Cena po dogovoru
+                  </span>
+                </label>
               </div>
+
+              {!priceByAgreement && (
+                <div className="space-y-2">
+                  <Label htmlFor="item-price">Cena po danu (RSD)</Label>
+                  <Input
+                    id="item-price"
+                    type="number"
+                    min="0"
+                    value={pricePerDay}
+                    onChange={(event) => setPricePerDay(event.target.value)}
+                    placeholder="1500"
+                  />
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="item-deposit">Sigurnosni depozit (opciono)</Label>

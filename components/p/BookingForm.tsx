@@ -177,15 +177,26 @@ export function BookingForm({ item }: BookingFormProps) {
 
           {totalDays > 0 && (
             <div className="rounded-lg bg-muted p-4">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">
-                  {item.pricePerDay.toFixed(0)} RSD × {totalDays} dan
-                  {totalDays > 1 && "a"}
-                </span>
-                <span className="font-semibold text-podeli-dark">
-                  {totalPrice.toFixed(0)} RSD
-                </span>
-              </div>
+              {item.priceByAgreement ? (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    {totalDays} dan{totalDays > 1 ? "a" : ""}
+                  </span>
+                  <span className="font-semibold text-podeli-accent">
+                    Po dogovoru
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    {item.pricePerDay.toFixed(0)} RSD × {totalDays} dan
+                    {totalDays > 1 && "a"}
+                  </span>
+                  <span className="font-semibold text-podeli-dark">
+                    {totalPrice.toFixed(0)} RSD
+                  </span>
+                </div>
+              )}
             </div>
           )}
 
