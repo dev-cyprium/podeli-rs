@@ -8,8 +8,19 @@ import { useMutation, useQuery } from "convex/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { api } from "@/convex/_generated/api";
 import { Doc, Id } from "@/convex/_generated/dataModel";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookingStatusBadge } from "@/components/booking/BookingStatusBadge";
 import { AgreementStatus } from "@/components/booking/AgreementStatus";
 import {
@@ -18,8 +29,8 @@ import {
   Inbox,
   X,
   Check,
+  Info,
   MessageSquare,
-  Package,
   Truck,
   RotateCcw,
   Handshake,
@@ -43,6 +54,7 @@ type BookingWithItem = Doc<"bookings"> & {
     count: number;
   } | null;
   renterCompletedRentals?: number;
+  ownerChatEnabled?: boolean;
 };
 
 export function IncomingBookings() {
@@ -77,7 +89,6 @@ function IncomingBookingsContent() {
   const activeBookings = bookings.filter(
     (b) =>
       b.status === "confirmed" ||
-      b.status === "agreed" ||
       b.status === "nije_isporucen" ||
       b.status === "isporucen"
   );
@@ -190,7 +201,7 @@ function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
 
   const agreeToBooking = useMutation(api.bookings.agreeToBooking);
-  const markAsReady = useMutation(api.bookings.markAsReady);
+  const confirmOffPlatformDeal = useMutation(api.bookings.confirmOffPlatformDeal);
   const markAsDelivered = useMutation(api.bookings.markAsDelivered);
   const markAsReturned = useMutation(api.bookings.markAsReturned);
   const cancelBooking = useMutation(api.bookings.cancelBooking);
@@ -224,20 +235,27 @@ function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
   // Get time override for debugging (if set by super-admin)
   const timeOverride = useQuery(api.debug.getTimeOverride);
 
+  const ownerChatEnabled = booking.ownerChatEnabled !== false;
+
   const canChat =
-    booking.status === "confirmed" ||
-    booking.status === "agreed" ||
+    ownerChatEnabled &&
+    (booking.status === "confirmed" ||
     booking.status === "nije_isporucen" ||
-    booking.status === "isporucen";
+    booking.status === "isporucen");
 
   const canAgree =
     booking.status === "confirmed" &&
     !booking.ownerAgreed &&
     booking.renterAgreed &&
     hasMessages &&
+    !isBlocked &&
+    ownerChatEnabled;
+
+  const canConfirmOffPlatform =
+    booking.status === "confirmed" &&
+    !ownerChatEnabled &&
     !isBlocked;
 
-  const canMarkReady = booking.status === "agreed";
   const canMarkDelivered = booking.status === "nije_isporucen";
 
   // Can mark as returned on the last day (end date) or after
@@ -280,11 +298,11 @@ function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
     }
   };
 
-  const handleMarkReady = async () => {
+  const handleConfirmOffPlatform = async () => {
     setError(null);
     setIsUpdating(true);
     try {
-      await markAsReady({ id: booking._id });
+      await confirmOffPlatformDeal({ id: booking._id });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Greška");
     } finally {
@@ -317,9 +335,6 @@ function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
   };
 
   const handleCancel = async () => {
-    if (!confirm("Da li ste sigurni da želite da otkažete ovu rezervaciju?")) {
-      return;
-    }
     setError(null);
     setIsUpdating(true);
     try {
@@ -376,7 +391,7 @@ function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
             >
               {booking.item?.title ?? "Predmet nije dostupan"}
             </Link>
-            <BookingStatusBadge status={booking.status as "pending" | "confirmed" | "agreed" | "nije_isporucen" | "isporucen" | "vracen" | "cancelled"} />
+            <BookingStatusBadge status={booking.status as "pending" | "confirmed" | "nije_isporucen" | "isporucen" | "vracen" | "cancelled"} />
           </div>
 
           {/* Price */}
@@ -443,13 +458,23 @@ function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
       </div>
 
       {/* Agreement status for confirmed bookings */}
-      {booking.status === "confirmed" && !isBlocked && (
+      {booking.status === "confirmed" && !isBlocked && ownerChatEnabled && (
         <AgreementStatus
           renterAgreed={booking.renterAgreed}
           ownerAgreed={booking.ownerAgreed}
           isOwner={true}
           className="mt-3"
         />
+      )}
+
+      {/* Off-platform deal info banner */}
+      {booking.status === "confirmed" && !isBlocked && !ownerChatEnabled && (
+        <div className="mt-3 flex items-center gap-2 rounded-lg bg-podeli-blue/5 px-3 py-2">
+          <Info className="h-4 w-4 shrink-0 text-podeli-blue" />
+          <span className="text-xs text-podeli-dark">
+            Dogovorite se sa zakupcem van platforme i potvrdite dogovor.
+          </span>
+        </div>
       )}
 
       {/* Block status banner */}
@@ -504,17 +529,39 @@ function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
             </Button>
           )}
 
-          {canMarkReady && (
-            <Button
-              size="xs"
-              variant="outline"
-              onClick={handleMarkReady}
-              disabled={isUpdating}
-              className="text-amber-600 hover:bg-amber-50"
-            >
-              <Package className="mr-1 h-3 w-3" />
-              Spreman za preuzimanje
-            </Button>
+          {canConfirmOffPlatform && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  size="xs"
+                  variant="outline"
+                  disabled={isUpdating}
+                  className="text-green-600 hover:bg-green-50"
+                >
+                  <Handshake className="mr-1 h-3 w-3" />
+                  Potvrdi dogovor
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Potvrda dogovora van platforme</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Potvrđujete da ste se dogovorili sa zakupcem van platforme
+                    (telefonom, emailom ili uživo). Predmet će preći u status
+                    &quot;čeka preuzimanje&quot;.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Otkaži</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleConfirmOffPlatform}
+                    className="bg-green-600 text-white hover:bg-green-700"
+                  >
+                    Da, potvrdi
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           )}
 
           {canMarkDelivered && (
@@ -551,16 +598,36 @@ function OwnerBookingCard({ booking }: { booking: BookingWithItem }) {
           )}
 
           {canCancel && (
-            <Button
-              size="xs"
-              variant="outline"
-              onClick={handleCancel}
-              disabled={isUpdating}
-              className="text-podeli-red hover:bg-podeli-red/10"
-            >
-              <X className="mr-1 h-3 w-3" />
-              Otkaži
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  size="xs"
+                  variant="outline"
+                  disabled={isUpdating}
+                  className="text-podeli-red hover:bg-podeli-red/10"
+                >
+                  <X className="mr-1 h-3 w-3" />
+                  Otkaži
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Otkazivanje rezervacije</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Da li ste sigurni da želite da otkažete ovu rezervaciju?
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Ne</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleCancel}
+                    className="bg-[#dd1c1a] text-white hover:bg-[#dd1c1a]/90"
+                  >
+                    Da, otkaži
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           )}
 
           {canRateRenter && !showRatingForm && (
@@ -683,9 +750,6 @@ function PendingBookingCard({ booking }: { booking: BookingWithItem }) {
   };
 
   const handleReject = async () => {
-    if (!confirm("Da li ste sigurni da želite da odbijete ovu rezervaciju?")) {
-      return;
-    }
     setError(null);
     setIsUpdating(true);
     try {
@@ -732,7 +796,7 @@ function PendingBookingCard({ booking }: { booking: BookingWithItem }) {
             >
               {booking.item?.title ?? "Predmet nije dostupan"}
             </Link>
-            <BookingStatusBadge status={booking.status as "pending" | "confirmed" | "agreed" | "nije_isporucen" | "isporucen" | "vracen" | "cancelled"} />
+            <BookingStatusBadge status={booking.status as "pending" | "confirmed" | "nije_isporucen" | "isporucen" | "vracen" | "cancelled"} />
           </div>
 
           {/* Price */}
@@ -820,16 +884,36 @@ function PendingBookingCard({ booking }: { booking: BookingWithItem }) {
           <Check className="mr-1.5 h-4 w-4" />
           Odobri
         </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={handleReject}
-          disabled={isUpdating}
-          className="flex-1 text-podeli-red hover:bg-podeli-red/10"
-        >
-          <X className="mr-1.5 h-4 w-4" />
-          Odbij
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={isUpdating}
+              className="flex-1 text-podeli-red hover:bg-podeli-red/10"
+            >
+              <X className="mr-1.5 h-4 w-4" />
+              Odbij
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Odbijanje rezervacije</AlertDialogTitle>
+              <AlertDialogDescription>
+                Da li ste sigurni da želite da odbijete ovu rezervaciju?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Ne</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleReject}
+                className="bg-[#dd1c1a] text-white hover:bg-[#dd1c1a]/90"
+              >
+                Da, odbij
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

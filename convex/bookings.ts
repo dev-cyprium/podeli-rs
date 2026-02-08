@@ -27,7 +27,6 @@ function calculateDays(startDate: string, endDate: string): number {
 // Statuses that block dates (active bookings)
 const ACTIVE_STATUSES = [
   "confirmed",
-  "agreed",
   "nije_isporucen",
   "isporucen",
 ] as const;
@@ -186,12 +185,34 @@ export const getBookingsAsRenter = query({
       .order("desc")
       .collect();
 
+    const CONTACT_ELIGIBLE_STATUSES = ["confirmed", "nije_isporucen", "isporucen", "vracen"];
+
     const bookingsWithItems = await Promise.all(
       bookings.map(async (booking) => {
         const item = await ctx.db.get(booking.itemId);
+
+        // For confirmed+ bookings, include owner's contact info based on their preferences
+        let ownerContact: { email?: string; phoneNumber?: string; chat: boolean } | null = null;
+        if (CONTACT_ELIGIBLE_STATUSES.includes(booking.status)) {
+          const ownerProfile = await ctx.db
+            .query("profiles")
+            .withIndex("by_userId", (q) => q.eq("userId", booking.ownerId))
+            .first();
+
+          if (ownerProfile) {
+            const prefs = ownerProfile.preferredContactTypes ?? [];
+            ownerContact = {
+              email: prefs.includes("email") ? ownerProfile.email : undefined,
+              phoneNumber: prefs.includes("phone") ? ownerProfile.phoneNumber : undefined,
+              chat: prefs.includes("chat"),
+            };
+          }
+        }
+
         return {
           ...booking,
           item,
+          ownerContact,
         };
       })
     );
@@ -210,6 +231,13 @@ export const getBookingsAsOwner = query({
       .withIndex("by_owner", (q) => q.eq("ownerId", identity.subject))
       .order("desc")
       .collect();
+
+    // Fetch owner profile once to determine chat preference
+    const ownerProfile = await ctx.db
+      .query("profiles")
+      .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
+      .first();
+    const ownerChatEnabled = (ownerProfile?.preferredContactTypes ?? []).includes("chat");
 
     const bookingsWithDetails = await Promise.all(
       bookings.map(async (booking) => {
@@ -257,6 +285,7 @@ export const getBookingsAsOwner = query({
             : null,
           renterRating,
           renterCompletedRentals: completedCount,
+          ownerChatEnabled,
         };
       })
     );
@@ -466,9 +495,9 @@ export const agreeToBooking = mutation({
     const shouldTransition = bothAgreed && updatedBooking?.status === "confirmed";
 
     if (shouldTransition) {
-      // Transition to agreed status only if still in confirmed state
+      // Transition directly to nije_isporucen (waiting for pickup)
       await ctx.db.patch(args.id, {
-        status: "agreed",
+        status: "nije_isporucen",
         agreedAt: now,
         updatedAt: now,
       });
@@ -476,7 +505,7 @@ export const agreeToBooking = mutation({
       // Notify both parties
       await ctx.db.insert("notifications", {
         userId: booking.renterId,
-        message: `Dogovor za "${item?.title ?? "predmet"}" je postignut!`,
+        message: `Dogovor postignut! Predmet "${item?.title ?? "predmet"}" čeka preuzimanje.`,
         type: "booking_agreed",
         link: `/kontrolna-tabla/zakupi/poruke/${args.id}`,
         createdAt: now,
@@ -485,7 +514,7 @@ export const agreeToBooking = mutation({
 
       await ctx.db.insert("notifications", {
         userId: booking.ownerId,
-        message: `Dogovor za "${item?.title ?? "predmet"}" je postignut!`,
+        message: `Dogovor postignut! Predmet "${item?.title ?? "predmet"}" čeka preuzimanje.`,
         type: "booking_agreed",
         link: `/kontrolna-tabla/predmeti/poruke/${args.id}`,
         createdAt: now,
@@ -506,53 +535,6 @@ export const agreeToBooking = mutation({
         updatedAt: now,
       });
     }
-
-    return null;
-  },
-});
-
-/**
- * Mark item as ready for pickup (owner only)
- * agreed -> nije_isporucen
- */
-export const markAsReady = mutation({
-  args: {
-    id: v.id("bookings"),
-  },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    const identity = await requireIdentity(ctx);
-    const booking = await ctx.db.get(args.id);
-
-    if (!booking) {
-      throw new ConvexError("Rezervacija nije pronađena.");
-    }
-
-    if (booking.ownerId !== identity.subject) {
-      throw new ConvexError("Samo vlasnik može označiti predmet kao spreman.");
-    }
-
-    if (booking.status !== "agreed") {
-      throw new ConvexError("Predmet može biti označen kao spreman samo nakon postignutog dogovora.");
-    }
-
-    const now = Date.now();
-    const item = await ctx.db.get(booking.itemId);
-
-    await ctx.db.patch(args.id, {
-      status: "nije_isporucen",
-      updatedAt: now,
-    });
-
-    // Notify renter
-    await ctx.db.insert("notifications", {
-      userId: booking.renterId,
-      message: `Predmet "${item?.title ?? "predmet"}" je spreman za preuzimanje!`,
-      type: "item_ready",
-      link: `/kontrolna-tabla/zakupi/poruke/${args.id}`,
-      createdAt: now,
-      updatedAt: now,
-    });
 
     return null;
   },
@@ -705,6 +687,78 @@ export const cancelBooking = mutation({
       message: `${userName} je otkazao/la rezervaciju za "${item?.title ?? "predmet"}".`,
       type: "booking_rejected",
       link: isOwner ? "/kontrolna-tabla/zakupi" : "/kontrolna-tabla/predmeti",
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return null;
+  },
+});
+
+/**
+ * Confirm off-platform deal (owner only, when chat is disabled)
+ * confirmed -> nije_isporucen without requiring messages
+ */
+export const confirmOffPlatformDeal = mutation({
+  args: {
+    id: v.id("bookings"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await requireIdentity(ctx);
+    const userId = identity.subject;
+    const booking = await ctx.db.get(args.id);
+
+    if (!booking) {
+      throw new ConvexError("Rezervacija nije pronađena.");
+    }
+
+    if (booking.ownerId !== userId) {
+      throw new ConvexError("Samo vlasnik može potvrditi dogovor van platforme.");
+    }
+
+    if (booking.status !== "confirmed") {
+      throw new ConvexError("Dogovor je moguć samo za potvrđene rezervacije.");
+    }
+
+    // Verify owner has chat disabled
+    const ownerProfile = await ctx.db
+      .query("profiles")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .first();
+
+    const prefs = ownerProfile?.preferredContactTypes ?? [];
+    if (prefs.includes("chat")) {
+      throw new ConvexError("Ova opcija je dostupna samo kada je chat isključen.");
+    }
+
+    const now = Date.now();
+    const item = await ctx.db.get(booking.itemId);
+
+    await ctx.db.patch(args.id, {
+      status: "nije_isporucen",
+      ownerAgreed: true,
+      renterAgreed: true,
+      agreedAt: now,
+      updatedAt: now,
+    });
+
+    // Notify renter
+    await ctx.db.insert("notifications", {
+      userId: booking.renterId,
+      message: `Dogovor postignut! Predmet "${item?.title ?? "predmet"}" čeka preuzimanje.`,
+      type: "booking_agreed",
+      link: "/kontrolna-tabla/zakupi",
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    // Notify owner
+    await ctx.db.insert("notifications", {
+      userId: booking.ownerId,
+      message: `Dogovor postignut! Predmet "${item?.title ?? "predmet"}" čeka preuzimanje.`,
+      type: "booking_agreed",
+      link: "/kontrolna-tabla/predmeti",
       createdAt: now,
       updatedAt: now,
     });
