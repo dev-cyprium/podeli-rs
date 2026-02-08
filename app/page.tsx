@@ -27,7 +27,7 @@ import { Suspense } from "react";
 
 function HeroSection() {
   return (
-    <section className="relative pt-16 pb-24 lg:pt-32">
+    <section className="relative pt-16 pb-12 lg:pt-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="flex flex-col items-center text-center">
           <h1 className="max-w-4xl text-5xl font-extrabold tracking-tight text-podeli-dark sm:text-6xl lg:text-7xl">
@@ -54,7 +54,7 @@ function HeroSection() {
           <div className="mt-10 w-full max-w-2xl">
             <SearchBar />
             <HeroCategoryLinks />
-            <div className="mt-6 flex justify-center gap-6">
+            <div className="mt-6 grid grid-cols-2 gap-x-6 gap-y-3 justify-items-center">
               <a
                 href="https://www.instagram.com/podeli_rs/"
                 target="_blank"
