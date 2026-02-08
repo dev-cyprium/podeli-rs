@@ -27,6 +27,7 @@ import type * as plans from "../plans.js";
 import type * as profiles from "../profiles.js";
 import type * as promotionalCodes from "../promotionalCodes.js";
 import type * as reviews from "../reviews.js";
+import type * as seed from "../seed.js";
 
 import type {
   ApiFromModules,
@@ -54,6 +55,7 @@ declare const fullApi: ApiFromModules<{
   profiles: typeof profiles;
   promotionalCodes: typeof promotionalCodes;
   reviews: typeof reviews;
+  seed: typeof seed;
 }>;
 
 /**
