@@ -54,12 +54,12 @@ function HeroSection() {
           <div className="mt-10 w-full max-w-2xl">
             <SearchBar />
             <HeroCategoryLinks />
-            <div className="mt-6 grid grid-cols-2 gap-x-6 gap-y-3 justify-items-center">
+            <div className="mt-6 grid grid-cols-2 gap-3 sm:flex sm:items-center sm:justify-center sm:gap-3 mx-auto">
               <a
                 href="https://www.instagram.com/podeli_rs/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-sm font-medium text-podeli-dark hover:text-podeli-accent transition-colors"
+                className="flex items-center justify-center gap-2 rounded-lg border border-transparent px-4 py-2.5 text-sm font-medium text-podeli-dark transition-all hover:-translate-y-0.5 hover:border-podeli-accent/20 hover:bg-podeli-accent/15 hover:text-podeli-accent hover:shadow-sm"
                 aria-label="Instagram"
               >
                 <Instagram className="h-5 w-5" />
@@ -69,7 +69,7 @@ function HeroSection() {
                 href="https://discord.gg/69MBaCTEnz"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-sm font-medium text-podeli-dark hover:text-podeli-accent transition-colors"
+                className="flex items-center justify-center gap-2 rounded-lg border border-transparent px-4 py-2.5 text-sm font-medium text-podeli-dark transition-all hover:-translate-y-0.5 hover:border-podeli-accent/20 hover:bg-podeli-accent/15 hover:text-podeli-accent hover:shadow-sm"
                 aria-label="Discord"
               >
                 <DiscordIcon className="h-5 w-5" />
@@ -79,7 +79,7 @@ function HeroSection() {
                 href="https://www.facebook.com/profile.php?id=61587392755718"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-sm font-medium text-podeli-dark hover:text-podeli-accent transition-colors"
+                className="flex items-center justify-center gap-2 rounded-lg border border-transparent px-4 py-2.5 text-sm font-medium text-podeli-dark transition-all hover:-translate-y-0.5 hover:border-podeli-accent/20 hover:bg-podeli-accent/15 hover:text-podeli-accent hover:shadow-sm"
                 aria-label="Facebook"
               >
                 <Facebook className="h-5 w-5" />
@@ -89,7 +89,7 @@ function HeroSection() {
                 href="https://www.linkedin.com/company/podeli-rs"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-sm font-medium text-podeli-dark hover:text-podeli-accent transition-colors"
+                className="flex items-center justify-center gap-2 rounded-lg border border-transparent px-4 py-2.5 text-sm font-medium text-podeli-dark transition-all hover:-translate-y-0.5 hover:border-podeli-accent/20 hover:bg-podeli-accent/15 hover:text-podeli-accent hover:shadow-sm"
                 aria-label="LinkedIn"
               >
                 <Linkedin className="h-5 w-5" />
@@ -375,34 +375,18 @@ export default async function Home() {
         ></div>
         <div className="relative mx-auto flex max-w-2xl flex-col items-center px-6">
           <h2 className="text-3xl font-bold tracking-tight text-podeli-light sm:text-4xl">
-            Spreman da živiš pametnije?
+            Gradimo nešto zajedno
           </h2>
           <p className="mt-6 max-w-xl text-center text-lg text-podeli-light/80">
-            Pridruži se listi čekanja za Beograd. Obavestićemo te čim platforma
-            postane aktivna u tvom kraju.
+            Podeli.rs aktivno raste. Pogledaj šta planiramo za 2026. godinu i
+            kako možeš biti deo priče.
           </p>
-
-          <form className="mx-auto mt-10 flex max-w-md flex-col items-center">
-            <div className="w-full rounded-2xl bg-podeli-light p-2 shadow-xl shadow-podeli-dark/30">
-              <div className="flex flex-col items-center gap-3 sm:flex-row">
-                <input
-                  type="email"
-                  required
-                  placeholder="tvoja@email.adresa"
-                  className="flex-1 rounded-xl border border-border px-5 py-3.5 text-podeli-dark placeholder:text-muted-foreground focus:border-podeli-accent focus:outline-none focus:ring-2 focus:ring-podeli-accent/30"
-                />
-                <Button
-                  type="submit"
-                  className="flex-none bg-podeli-accent px-8 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-podeli-accent/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-podeli-accent"
-                >
-                  Prijavi se
-                </Button>
-              </div>
-            </div>
-            <p className="mt-4 text-xs text-podeli-light/60">
-              *Bez spama. Samo važne informacije o lansiranju.
-            </p>
-          </form>
+          <Link href="/roadmap">
+            <Button className="mt-10 bg-podeli-accent px-8 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-podeli-accent/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-podeli-accent">
+              Pogledaj plan za 2026.
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
         </div>
       </section>
 
