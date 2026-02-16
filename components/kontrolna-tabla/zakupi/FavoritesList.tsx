@@ -13,16 +13,14 @@ export function FavoritesList() {
 
   if (favorites === undefined) {
     return (
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div
-            key={i}
-            className="overflow-hidden rounded-xl bg-card shadow-sm"
-          >
-            <div className="h-40 animate-pulse bg-muted" />
-            <div className="p-4">
-              <div className="mb-2 h-5 w-3/4 animate-pulse rounded bg-muted" />
-              <div className="h-4 w-1/3 animate-pulse rounded bg-muted" />
+      <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i}>
+            <div className="aspect-square animate-pulse rounded-xl bg-muted" />
+            <div className="space-y-1.5 pt-2">
+              <div className="h-4 w-3/4 rounded bg-muted" />
+              <div className="h-3 w-1/2 rounded bg-muted" />
+              <div className="h-4 w-1/3 rounded bg-muted" />
             </div>
           </div>
         ))}
@@ -51,62 +49,61 @@ export function FavoritesList() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4">
       {favorites.map((fav) => {
         const itemUrl = fav.item.shortId && fav.item.slug
           ? `/p/${fav.item.shortId}/${fav.item.slug}`
           : "#";
 
         return (
-          <div
-            key={fav.favoriteId}
-            className="group overflow-hidden rounded-xl bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
-          >
-            <Link href={itemUrl}>
-              <div className="relative h-40 w-full bg-muted">
-                {fav.item.imageUrl ? (
-                  <Image
-                    src={fav.item.imageUrl}
-                    alt={fav.item.title}
-                    fill
-                    sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center">
-                    <span className="text-4xl text-muted-foreground/20">📦</span>
-                  </div>
-                )}
-              </div>
-            </Link>
-            <div className="p-4">
-              <div className="flex items-start justify-between gap-2">
-                <Link href={itemUrl} className="min-w-0 flex-1">
-                  <h3 className="line-clamp-1 font-semibold text-podeli-dark group-hover:text-podeli-accent">
-                    {fav.item.title}
-                  </h3>
-                  <div className="mt-1 flex items-center gap-2">
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                      {fav.item.category}
-                    </span>
-                    <span className="text-sm font-bold text-podeli-accent">
-                      {fav.item.pricePerDay.toFixed(0)} RSD/dan
-                    </span>
-                  </div>
-                </Link>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => toggleFavorite({ itemId: fav.item._id })}
-                  className="h-8 w-8 shrink-0 rounded-full text-[#dd1c1a] hover:bg-[#dd1c1a]/10"
-                  title="Ukloni iz omiljenih"
-                >
-                  <Heart className="h-4 w-4 fill-current" />
-                </Button>
-              </div>
+          <Link key={fav.favoriteId} href={itemUrl} className="group block">
+            {/* Image */}
+            <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-muted">
+              {fav.item.imageUrl ? (
+                <Image
+                  src={fav.item.imageUrl}
+                  alt={fav.item.title}
+                  fill
+                  sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+                  className="object-cover"
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center">
+                  <span className="text-4xl text-muted-foreground/20">📦</span>
+                </div>
+              )}
+
+              {/* Heart — top-right */}
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleFavorite({ itemId: fav.item._id });
+                }}
+                className="absolute right-2 top-2 z-10 h-8 w-8 rounded-full bg-white/80 shadow-md transition-colors hover:bg-white"
+                title="Ukloni iz omiljenih"
+              >
+                <Heart className="h-4 w-4 fill-[#dd1c1a] text-[#dd1c1a]" />
+              </Button>
             </div>
-          </div>
+
+            {/* Text content */}
+            <div className="pt-2">
+              <h3 className="line-clamp-1 text-sm font-semibold text-podeli-dark">
+                {fav.item.title}
+              </h3>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {fav.item.category}
+              </p>
+              <p className="mt-1 text-sm font-semibold text-podeli-accent">
+                {fav.item.pricePerDay.toFixed(0)} RSD
+                <span className="text-xs font-normal text-muted-foreground"> /dan</span>
+              </p>
+            </div>
+          </Link>
         );
       })}
     </div>

@@ -235,8 +235,8 @@ export const create = mutation({
     if (args.images.length === 0) {
       throw new Error("Dodajte bar jednu fotografiju.");
     }
-    if (args.images.length > 1) {
-      throw new Error("Dozvoljena je samo jedna fotografija.");
+    if (args.images.length > 10) {
+      throw new Error("Maksimalno 10 fotografija po predmetu.");
     }
 
     // Validate availability slots
@@ -353,8 +353,8 @@ export const update = mutation({
     if (args.images.length === 0) {
       throw new Error("Dodajte bar jednu fotografiju.");
     }
-    if (args.images.length > 1) {
-      throw new Error("Dozvoljena je samo jedna fotografija.");
+    if (args.images.length > 10) {
+      throw new Error("Maksimalno 10 fotografija po predmetu.");
     }
 
     // Validate availability slots
