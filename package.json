@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "check": "npm run lint && npm run typecheck",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:seed": "npx convex run devSeed:run",
+    "db:fresh": "npx convex run devSeed:wipeAll",
+    "db:reset": "npx convex run devSeed:run"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.36.10",
@@ -46,6 +49,7 @@
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
+    "@faker-js/faker": "^10.3.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
