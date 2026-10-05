@@ -95,7 +95,7 @@ export const initialProspects = contacts.map(
     website,
     contactPerson,
     status: "new" as const,
-    nextAction: "Prvi poziv: proveriti interesovanje za saradnju",
+    nextAction: "Prvi kontakt: proveriti interesovanje za saradnju",
     followUpDate: "",
   }),
 );

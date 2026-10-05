@@ -6,10 +6,11 @@ import { api } from "../convex/_generated/api";
 import { initialProspects } from "../lib/outreach-prospects";
 import {
   belgradeToday,
-  isToCallToday,
+  isToContactToday,
   csvColumns,
   encodeCsv,
   parseCsv,
+  parseProspectCsv,
   prospectKey,
   validFollowUp,
 } from "../lib/outreach";
@@ -188,20 +189,127 @@ describe("dates and CSV", () => {
 
 it("shows overdue and new contacts today, excluding future and closed contacts", () => {
   const today = "2026-10-05";
-  expect(isToCallToday({ status: "new", followUpDate: "" }, today)).toBe(true);
+  expect(isToContactToday({ status: "new", followUpDate: "" }, today)).toBe(
+    true,
+  );
   expect(
-    isToCallToday({ status: "follow_up", followUpDate: "2026-10-04" }, today),
+    isToContactToday(
+      { status: "follow_up", followUpDate: "2026-10-04" },
+      today,
+    ),
   ).toBe(true);
   expect(
-    isToCallToday({ status: "interested", followUpDate: today }, today),
+    isToContactToday({ status: "interested", followUpDate: today }, today),
   ).toBe(true);
   expect(
-    isToCallToday({ status: "follow_up", followUpDate: "2026-10-06" }, today),
+    isToContactToday(
+      { status: "follow_up", followUpDate: "2026-10-06" },
+      today,
+    ),
   ).toBe(false);
   expect(
-    isToCallToday({ status: "not_interested", followUpDate: today }, today),
+    isToContactToday({ status: "not_interested", followUpDate: today }, today),
   ).toBe(false);
   expect(
-    isToCallToday({ status: "onboarded", followUpDate: today }, today),
+    isToContactToday({ status: "onboarded", followUpDate: today }, today),
   ).toBe(false);
+});
+
+describe("outreach contact channels", () => {
+  it("saves email-only and form-only prospects and keeps activity channels independent", async () => {
+    const { admin } = await setup();
+    const prospect = {
+      ...initialProspects[0],
+      phone: "",
+      email: "hello@example.com",
+      contactFormUrl: "https://example.com/contact",
+      preferredChannel: "email" as const,
+    };
+    const id = await admin.mutation(api.outreach.save, {
+      prospect,
+      note: "Poslat mejl",
+      outcome: "contacted",
+      channel: "email",
+    });
+    await admin.mutation(api.outreach.save, {
+      id,
+      prospect: { ...prospect, email: "", preferredChannel: "contact_form" },
+      note: "Poslata forma",
+      channel: "contact_form",
+    });
+    await admin.mutation(api.outreach.save, {
+      id,
+      prospect: { ...prospect, preferredChannel: "email" },
+      note: "Telefonski razgovor",
+      channel: "phone",
+    });
+    const [saved] = await admin.query(api.outreach.list, {});
+    expect(saved.email).toBe("hello@example.com");
+    expect(saved.preferredChannel).toBe("email");
+    expect(saved.latestActivity?.channel).toBe("phone");
+    await admin.mutation(api.outreach.save, {
+      id,
+      prospect: { ...prospect, preferredChannel: undefined },
+      note: "",
+    });
+    expect(
+      (await admin.query(api.outreach.list, {}))[0].preferredChannel,
+    ).toBeUndefined();
+    const history = await admin.query(api.outreach.history, { id });
+    expect(history.map((entry) => entry.channel)).toEqual([
+      "phone",
+      "contact_form",
+      "email",
+    ]);
+  });
+  it("rejects malformed emails and unsafe contact form URLs before saving", async () => {
+    const { admin } = await setup();
+    for (const fields of [
+      { email: "bad-address" },
+      { contactFormUrl: "javascript:alert(1)" },
+    ]) {
+      await expect(
+        admin.mutation(api.outreach.save, {
+          prospect: { ...initialProspects[0], ...fields },
+          note: "",
+        }),
+      ).rejects.toThrow();
+    }
+    expect(await admin.query(api.outreach.list, {})).toEqual([]);
+  });
+  it("round-trips all channels in CSV and accepts existing eight-column files", () => {
+    const base = [
+      "Firma",
+      "Oprema",
+      "",
+      "https://example.com",
+      "",
+      "new",
+      "Poslati predlog",
+      "",
+    ];
+    const rows = ["email", "contact_form", "phone"].map((channel) => [
+      ...base,
+      "hello@example.com",
+      "https://example.com/contact",
+      channel,
+    ]);
+    const parsed = parseProspectCsv(encodeCsv([[...csvColumns], ...rows]));
+    expect(parsed.map((row) => row.preferredChannel)).toEqual([
+      "email",
+      "contact_form",
+      "phone",
+    ]);
+    expect(parsed[0].email).toBe("hello@example.com");
+    expect(
+      parseProspectCsv(encodeCsv([[...csvColumns.slice(0, 8)], base]))[0],
+    ).toMatchObject({
+      email: "",
+      contactFormUrl: "",
+      preferredChannel: undefined,
+    });
+    expect(() =>
+      parseProspectCsv(encodeCsv([[...csvColumns], [...base, "", "", "fax"]])),
+    ).toThrow();
+  });
 });

@@ -7,10 +7,18 @@ export const outreachStatus = v.union(
   v.literal("not_interested"),
   v.literal("onboarded"),
 );
+export const outreachChannel = v.union(
+  v.literal("email"),
+  v.literal("contact_form"),
+  v.literal("phone"),
+);
 export const prospectFields = {
   name: v.string(),
   category: v.string(),
   phone: v.string(),
+  email: v.optional(v.string()),
+  contactFormUrl: v.optional(v.string()),
+  preferredChannel: v.optional(outreachChannel),
   website: v.string(),
   contactPerson: v.string(),
   status: outreachStatus,
@@ -34,5 +42,6 @@ export const activityDocument = v.object({
   authorId: v.string(),
   outcome: outreachStatus,
   note: v.string(),
+  channel: v.optional(outreachChannel),
   createdAt: v.number(),
 });
