@@ -72,8 +72,8 @@ export default function ONamaPage() {
                 <span className="text-podeli-accent font-bold">•</span>
                 <span>
                   <strong className="text-podeli-dark">Fer.</strong> Nema
-                  skrivenih provizija na razmenu. Pretplata je simbolična i
-                  omogućava pristup platformi.
+                  skrivenih provizija na razmenu. U početnoj fazi objavljivanje
+                  je besplatno. Plaćanje najma dogovarate direktno sa vlasnikom.
                 </span>
               </li>
             </ul>

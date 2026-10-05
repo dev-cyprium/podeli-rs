@@ -1,31 +1,19 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { fetchQuery } from "convex/nextjs";
+import { fetchQuery, preloadQuery, preloadedQueryResult } from "convex/nextjs";
 import { clerkClient } from "@clerk/nextjs/server";
 import { api } from "@/convex/_generated/api";
-import { ArrowLeft, MapPin, Truck, Calendar, User } from "lucide-react";
+import { ArrowLeft, User } from "lucide-react";
 import { DomacinBadge } from "@/components/DomacinBadge";
-import { ItemImageGallery } from "@/components/p/ItemImageGallery";
-import { BookingForm } from "@/components/p/BookingForm";
-import { ReviewsList } from "@/components/p/ReviewsList";
-import { FavoriteButton } from "@/components/p/FavoriteButton";
 import { NavBar } from "@/components/NavBar";
-import { Badge } from "@/components/ui/badge";
-import { DateDisplay } from "@/components/ui/date-display";
 import { Metadata } from "next";
+import { ItemDetailContent } from "@/components/p/ItemDetailContent";
 
 type UserSnapshot = {
   id: string;
   firstName: string | null;
   lastName: string | null;
   email: string | null;
-};
-
-const DELIVERY_OPTIONS: Record<string, string> = {
-  licno: "Lično preuzimanje",
-  glovo: "Glovo",
-  wolt: "Wolt",
-  cargo: "Cargo",
 };
 
 export async function generateMetadata({
@@ -63,9 +51,8 @@ export default async function ItemDetailPage({ params }: PageProps) {
   const resolvedParams = await params;
   const { shortId, slug } = resolvedParams;
 
-  const item = await fetchQuery(api.items.getByShortId, {
-    shortId,
-  });
+  const preloadedItem = await preloadQuery(api.items.getByShortId, { shortId });
+  const item = preloadedQueryResult(preloadedItem);
 
   if (!item) {
     return (
@@ -129,129 +116,40 @@ export default async function ItemDetailPage({ params }: PageProps) {
           Nazad na ponudu
         </Link>
 
-        <div className="grid gap-8 lg:grid-cols-3">
-          <div className="space-y-8 lg:col-span-2">
-            <ItemImageGallery images={item.images} title={item.title} imageFocalPoint={item.imageFocalPoint} />
-
-            <div className="rounded-xl bg-card p-6 shadow-sm">
-              <div className="flex flex-wrap items-start justify-between gap-4">
+        <ItemDetailContent
+          preloadedItem={preloadedItem}
+          slug={slug}
+          ownerCard={
+            <div className="mt-6 border-t border-border pt-6">
+              <h2 className="flex items-center gap-2 font-semibold text-podeli-dark">
+                <User className="h-4 w-4" />
+                Vlasnik
+              </h2>
+              <div className="mt-3 flex items-center gap-3">
+                <div
+                  className={`flex h-12 w-12 items-center justify-center rounded-full bg-muted text-lg font-medium text-muted-foreground ${ownerProfile?.hasBadge ? "ring-2 ring-[#f0a202]/50" : ""}`}
+                >
+                  {owner?.firstName?.[0] ??
+                    owner?.email?.[0]?.toUpperCase() ??
+                    "K"}
+                </div>
                 <div>
-                  <div className="flex items-center gap-3">
-                    <h1 className="text-2xl font-bold text-podeli-dark">
-                      {item.title}
-                    </h1>
-                    <Badge>{item.category}</Badge>
-                    <FavoriteButton itemId={item._id} />
-                  </div>
-                  <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4" />
-                    <span>Beograd</span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  {item.priceByAgreement ? (
-                    <p className="text-2xl font-bold text-podeli-accent">
-                      Po dogovoru
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-podeli-dark">
+                      {owner?.firstName && owner?.lastName
+                        ? `${owner.firstName} ${owner.lastName[0]}.`
+                        : "Komšija"}
                     </p>
-                  ) : (
-                    <>
-                      <p className="text-2xl font-bold text-podeli-accent">
-                        {item.pricePerDay.toFixed(0)} RSD
-                      </p>
-                      <p className="text-sm text-muted-foreground">po danu</p>
-                    </>
-                  )}
-                  {item.deposit != null && item.deposit > 0 && (
-                    <span className="mt-2 inline-block rounded-full bg-podeli-accent px-3 py-0.5 text-sm font-semibold text-white">
-                      Depozit: {item.deposit.toFixed(0)} RSD
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div className="mt-6 border-t border-border pt-6">
-                <h2 className="font-semibold text-podeli-dark">Opis</h2>
-                <p className="mt-2 text-muted-foreground">{item.description}</p>
-              </div>
-
-              <div className="mt-6 border-t border-border pt-6">
-                <h2 className="flex items-center gap-2 font-semibold text-podeli-dark">
-                  <Truck className="h-4 w-4" />
-                  Dostupni načini dostave
-                </h2>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {item.deliveryMethods.map((method) => (
-                    <span
-                      key={method}
-                      className="rounded-full bg-muted px-3 py-1 text-sm text-muted-foreground"
-                    >
-                      {DELIVERY_OPTIONS[method] ?? method}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {item.availabilitySlots.length > 0 && (
-                <div className="mt-6 border-t border-border pt-6">
-                  <h2 className="flex items-center gap-2 font-semibold text-podeli-dark">
-                    <Calendar className="h-4 w-4" />
-                    Dostupnost
-                  </h2>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Ovo prikazuje dostupnost{" "}
-                    <strong className="text-podeli-dark">bez trenutnih aktivnih rezervacija</strong>.
-                    Pogledajte <strong className="text-podeli-dark">kalendar</strong> ispod za
-                    rezervacije i više detalja.
+                    {ownerProfile?.hasBadge && <DomacinBadge size="sm" />}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Vlasnik oglasa
                   </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {item.availabilitySlots.map((slot, index) => (
-                      <span
-                        key={index}
-                        className="rounded-full bg-podeli-blue/10 px-3 py-1 text-sm text-podeli-blue"
-                      >
-                        <DateDisplay value={slot.startDate} format="short" /> –{" "}
-                        <DateDisplay value={slot.endDate} format="short" />
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="mt-6 border-t border-border pt-6">
-                <h2 className="flex items-center gap-2 font-semibold text-podeli-dark">
-                  <User className="h-4 w-4" />
-                  Vlasnik
-                </h2>
-                <div className="mt-3 flex items-center gap-3">
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-full bg-muted text-lg font-medium text-muted-foreground ${ownerProfile?.hasBadge ? "ring-2 ring-[#f0a202]/50" : ""}`}>
-                    {owner?.firstName?.[0] ??
-                      owner?.email?.[0]?.toUpperCase() ??
-                      "K"}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-podeli-dark">
-                        {owner?.firstName && owner?.lastName
-                          ? `${owner.firstName} ${owner.lastName[0]}.`
-                          : "Komšija"}
-                      </p>
-                      {ownerProfile?.hasBadge && <DomacinBadge size="sm" />}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Verifikovan korisnik
-                    </p>
-                  </div>
                 </div>
               </div>
             </div>
-
-            <ReviewsList itemId={item._id} />
-          </div>
-
-          <div className="lg:sticky lg:top-24 lg:self-start">
-            <BookingForm item={item} />
-          </div>
-        </div>
+          }
+        />
       </main>
     </div>
   );

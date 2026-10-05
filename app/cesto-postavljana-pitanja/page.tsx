@@ -11,31 +11,25 @@ export const metadata: Metadata = {
 
 const faqs = [
   {
-    question: "Kako da iskoristim kupon?",
-    answer: `Da biste iskoristili kupon, pratite sledeće korake:
-1. Prijavite se na svoj nalog
-2. Idite na stranicu "Planovi" (ili kliknite na dugme "Aktiviraj pretplatu")
-3. Kliknite na dugme "Imam kupon kod"
-4. Unesite vaš kupon kod u polje koje se pojavi
-5. Kliknite na "Aktiviraj" i vaša pretplata će biti automatski aktivirana
-
-Napomena: Svaki kupon može da se iskoristi samo jednom i vezan je za vaš nalog.`,
+    question: "Da li je objavljivanje besplatno?",
+    answer:
+      "Da. U početnoj fazi možete objavljivati bez pretplate i komercijalnog limita oglasa, uz do 10 fotografija po predmetu. Tačni oglasi i ažurna dostupnost su obavezni; spam i duplirani oglasi nisu dozvoljeni.",
   },
   {
     question: "Kako funkcioniše plaćanje za iznajmljivanje?",
     answer: (
       <>
-        Plaćanje se obavlja direktno između vlasnika i korisnika koji iznajmljuje
-        stvar. <BrandName /> platforma ne posreduje u samoj transakciji — mi
-        samo povezujemo korisnike.
+        Plaćanje se obavlja direktno između vlasnika i korisnika koji
+        iznajmljuje stvar. <BrandName /> platforma ne posreduje u samoj
+        transakciji — mi samo povezujemo korisnike.
         {"\n\n"}
         Preporučeni koraci:
         {"\n"}• Dogovorite cenu unapred preko chat-a
         {"\n"}• Dogovorite način plaćanja (gotovina, prenos, itd.)
         {"\n"}• Sačuvajte dokaz o plaćanju za svaki slučaj
         {"\n\n"}
-        Pretplata na <BrandName /> služi za objavljivanje stvari, a ne za samo
-        iznajmljivanje.
+        Objavljivanje je besplatno. Platforma ne prima uplatu za najam niti čuva
+        depozit; način plaćanja i povrat depozita dogovarate sa vlasnikom.
       </>
     ),
   },

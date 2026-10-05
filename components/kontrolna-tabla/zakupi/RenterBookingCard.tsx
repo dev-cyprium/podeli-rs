@@ -1,5 +1,7 @@
 "use client";
 
+import { formatRentalTotal } from "@/lib/rental-pricing";
+
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -68,7 +70,7 @@ export function RenterBookingCard({ booking }: RenterBookingCardProps) {
     api.items.getImageUrl,
     booking.item?.images[0]
       ? { storageId: booking.item.images[0] as Id<"_storage"> }
-      : "skip"
+      : "skip",
   );
   const blockStatus = useQuery(api.chatBlocks.getBlockStatus, {
     bookingId: booking._id,
@@ -80,8 +82,8 @@ export function RenterBookingCard({ booking }: RenterBookingCardProps) {
   const canChat =
     ownerAllowsChat &&
     (booking.status === "confirmed" ||
-    booking.status === "nije_isporucen" ||
-    booking.status === "isporucen");
+      booking.status === "nije_isporucen" ||
+      booking.status === "isporucen");
 
   const canCancel =
     booking.status === "pending" || booking.status === "confirmed";
@@ -93,8 +95,7 @@ export function RenterBookingCard({ booking }: RenterBookingCardProps) {
     !isBlocked &&
     ownerAllowsChat;
 
-  const canReview =
-    booking.status === "vracen" && existingReview === null;
+  const canReview = booking.status === "vracen" && existingReview === null;
 
   const handleCancel = async () => {
     setError(null);
@@ -158,7 +159,17 @@ export function RenterBookingCard({ booking }: RenterBookingCardProps) {
                 <span>Beograd</span>
               </div>
             </div>
-            <BookingStatusBadge status={booking.status as "pending" | "confirmed" | "nije_isporucen" | "isporucen" | "vracen" | "cancelled"} />
+            <BookingStatusBadge
+              status={
+                booking.status as
+                  | "pending"
+                  | "confirmed"
+                  | "nije_isporucen"
+                  | "isporucen"
+                  | "vracen"
+                  | "cancelled"
+              }
+            />
           </div>
 
           <div className="mt-3 flex flex-wrap items-center gap-4 text-sm">
@@ -189,35 +200,40 @@ export function RenterBookingCard({ booking }: RenterBookingCardProps) {
             <div className="mt-2 flex items-center gap-2 rounded-lg bg-podeli-blue/5 px-3 py-2">
               <Info className="h-4 w-4 shrink-0 text-podeli-blue" />
               <span className="text-xs text-podeli-dark">
-                Vlasnik koristi kontakt van platforme. Dogovorite se telefonom ili emailom.
+                Vlasnik koristi kontakt van platforme. Dogovorite se telefonom
+                ili emailom.
               </span>
             </div>
           )}
 
           {/* Owner contact info for confirmed+ bookings */}
-          {booking.ownerContact && (booking.ownerContact.email || booking.ownerContact.phoneNumber) && (
-            <div className="mt-2 flex flex-wrap items-center gap-3 rounded-lg bg-podeli-blue/5 px-3 py-2 text-xs">
-              <span className="font-medium text-podeli-dark">Kontakt vlasnika:</span>
-              {booking.ownerContact.email && (
-                <a
-                  href={`mailto:${booking.ownerContact.email}`}
-                  className="inline-flex items-center gap-1 text-podeli-blue hover:underline"
-                >
-                  <Mail className="h-3 w-3" />
-                  {booking.ownerContact.email}
-                </a>
-              )}
-              {booking.ownerContact.phoneNumber && (
-                <a
-                  href={`tel:${booking.ownerContact.phoneNumber}`}
-                  className="inline-flex items-center gap-1 text-podeli-blue hover:underline"
-                >
-                  <Phone className="h-3 w-3" />
-                  {booking.ownerContact.phoneNumber}
-                </a>
-              )}
-            </div>
-          )}
+          {booking.ownerContact &&
+            (booking.ownerContact.email ||
+              booking.ownerContact.phoneNumber) && (
+              <div className="mt-2 flex flex-wrap items-center gap-3 rounded-lg bg-podeli-blue/5 px-3 py-2 text-xs">
+                <span className="font-medium text-podeli-dark">
+                  Kontakt vlasnika:
+                </span>
+                {booking.ownerContact.email && (
+                  <a
+                    href={`mailto:${booking.ownerContact.email}`}
+                    className="inline-flex items-center gap-1 text-podeli-blue hover:underline"
+                  >
+                    <Mail className="h-3 w-3" />
+                    {booking.ownerContact.email}
+                  </a>
+                )}
+                {booking.ownerContact.phoneNumber && (
+                  <a
+                    href={`tel:${booking.ownerContact.phoneNumber}`}
+                    className="inline-flex items-center gap-1 text-podeli-blue hover:underline"
+                  >
+                    <Phone className="h-3 w-3" />
+                    {booking.ownerContact.phoneNumber}
+                  </a>
+                )}
+              </div>
+            )}
 
           {/* Block status banner */}
           {isBlocked && (
@@ -244,7 +260,7 @@ export function RenterBookingCard({ booking }: RenterBookingCardProps) {
 
           <div className="mt-auto flex items-center justify-between pt-3">
             <span className="font-bold text-podeli-accent">
-              {booking.totalPrice.toFixed(0)} RSD
+              {formatRentalTotal(booking)}
             </span>
 
             <div className="flex flex-wrap gap-2">
@@ -290,7 +306,9 @@ export function RenterBookingCard({ booking }: RenterBookingCardProps) {
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Otkazivanje rezervacije</AlertDialogTitle>
+                      <AlertDialogTitle>
+                        Otkazivanje rezervacije
+                      </AlertDialogTitle>
                       <AlertDialogDescription>
                         Da li ste sigurni da želite da otkažete ovu rezervaciju?
                       </AlertDialogDescription>

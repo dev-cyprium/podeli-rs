@@ -12,7 +12,7 @@ export const toggle = mutation({
     const existing = await ctx.db
       .query("favorites")
       .withIndex("by_userId_and_itemId", (q) =>
-        q.eq("userId", userId).eq("itemId", args.itemId)
+        q.eq("userId", userId).eq("itemId", args.itemId),
       )
       .first();
 
@@ -40,7 +40,7 @@ export const isFavorited = query({
     const existing = await ctx.db
       .query("favorites")
       .withIndex("by_userId_and_itemId", (q) =>
-        q.eq("userId", identity.subject).eq("itemId", args.itemId)
+        q.eq("userId", identity.subject).eq("itemId", args.itemId),
       )
       .first();
 
@@ -76,15 +76,10 @@ export const listMyFavorites = query({
       .order("desc")
       .collect();
 
-    const now = Date.now();
     const items = await Promise.all(
       favorites.map(async (fav) => {
         const item = await ctx.db.get(fav.itemId);
         if (!item) return null;
-        // Filter out expired single-listing items
-        if (item.singleListingExpiresAt && item.singleListingExpiresAt < now) {
-          return null;
-        }
         // Get first image URL
         const imageUrl = item.images[0]
           ? await ctx.storage.getUrl(item.images[0])
@@ -97,12 +92,13 @@ export const listMyFavorites = query({
             title: item.title,
             category: item.category,
             pricePerDay: item.pricePerDay,
+            priceByAgreement: item.priceByAgreement,
             shortId: item.shortId,
             slug: item.slug,
             imageUrl,
           },
         };
-      })
+      }),
     );
 
     return items.filter((i): i is NonNullable<typeof i> => i !== null);

@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Home, RotateCcw } from "lucide-react";
 import { WanderingAnts } from "@/components/WanderingAnts";
@@ -34,14 +35,15 @@ export default function GlobalError({
                 <Home className="h-4 w-4" />
                 Početna stranica
               </Link>
-              <button
+              <Button
+                variant="outline"
                 type="button"
                 onClick={() => reset()}
                 className="inline-flex items-center gap-2 rounded-lg border border-[#02020a]/20 bg-white px-5 py-2.5 text-sm font-semibold text-[#02020a] transition-colors hover:bg-[#02020a]/5"
               >
                 <RotateCcw className="h-4 w-4" />
                 Pokušaj ponovo
-              </button>
+              </Button>
             </div>
           </div>
         </section>

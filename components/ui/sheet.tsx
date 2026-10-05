@@ -1,51 +1,55 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { createPortal } from "react-dom"
-import { motion, AnimatePresence } from "framer-motion"
-import { XIcon } from "lucide-react"
+import { Button } from "@/components/ui/button";
+import * as React from "react";
+import { createPortal } from "react-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { XIcon } from "lucide-react";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 interface SheetContextValue {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-const SheetContext = React.createContext<SheetContextValue | null>(null)
+const SheetContext = React.createContext<SheetContextValue | null>(null);
 
 function useSheet() {
-  const context = React.useContext(SheetContext)
+  const context = React.useContext(SheetContext);
   if (!context) {
-    throw new Error("Sheet components must be used within a Sheet")
+    throw new Error("Sheet components must be used within a Sheet");
   }
-  return context
+  return context;
 }
 
 interface SheetProps {
-  open?: boolean
-  onOpenChange?: (open: boolean) => void
-  children: React.ReactNode
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  children: React.ReactNode;
 }
 
 function Sheet({ open = false, onOpenChange, children }: SheetProps) {
-  const handleOpenChange = React.useCallback((newOpen: boolean) => {
-    onOpenChange?.(newOpen)
-  }, [onOpenChange])
+  const handleOpenChange = React.useCallback(
+    (newOpen: boolean) => {
+      onOpenChange?.(newOpen);
+    },
+    [onOpenChange],
+  );
 
   return (
     <SheetContext.Provider value={{ open, onOpenChange: handleOpenChange }}>
       {children}
     </SheetContext.Provider>
-  )
+  );
 }
 
 interface SheetContentProps {
-  children: React.ReactNode
-  side?: "left" | "right"
-  showCloseButton?: boolean
-  accessibleTitle?: string
-  className?: string
+  children: React.ReactNode;
+  side?: "left" | "right";
+  showCloseButton?: boolean;
+  accessibleTitle?: string;
+  className?: string;
 }
 
 function SheetContent({
@@ -55,39 +59,39 @@ function SheetContent({
   accessibleTitle,
   className,
 }: SheetContentProps) {
-  const { open, onOpenChange } = useSheet()
-  const [mounted, setMounted] = React.useState(false)
+  const { open, onOpenChange } = useSheet();
+  const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
-    setMounted(true)
-  }, [])
+    setMounted(true);
+  }, []);
 
   // Lock body scroll when open
   React.useEffect(() => {
     if (open) {
-      const originalOverflow = document.body.style.overflow
-      document.body.style.overflow = "hidden"
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
       return () => {
-        document.body.style.overflow = originalOverflow
-      }
+        document.body.style.overflow = originalOverflow;
+      };
     }
-  }, [open])
+  }, [open]);
 
   // Handle escape key
   React.useEffect(() => {
-    if (!open) return
+    if (!open) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        onOpenChange(false)
+        onOpenChange(false);
       }
-    }
+    };
 
-    document.addEventListener("keydown", handleKeyDown)
-    return () => document.removeEventListener("keydown", handleKeyDown)
-  }, [open, onOpenChange])
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open, onOpenChange]);
 
-  if (!mounted) return null
+  if (!mounted) return null;
 
   return createPortal(
     <AnimatePresence>
@@ -113,33 +117,35 @@ function SheetContent({
               "fixed z-50 flex h-full flex-col bg-background shadow-xl focus:outline-none",
               side === "left" && "inset-y-0 left-0",
               side === "right" && "inset-y-0 right-0",
-              className
+              className,
             )}
             initial={{ x: side === "left" ? "-100%" : "100%" }}
             animate={{ x: 0 }}
             exit={{ x: side === "left" ? "-100%" : "100%" }}
-            transition={{ type: "tween", duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
+            transition={{
+              type: "tween",
+              duration: 0.25,
+              ease: [0.32, 0.72, 0, 1],
+            }}
           >
             {children}
             {showCloseButton && (
-              <button
+              <Button
+                variant="outline"
                 type="button"
                 onClick={() => onOpenChange(false)}
                 className="absolute top-4 right-4 rounded-sm p-1 opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
               >
                 <XIcon className="h-5 w-5" />
                 <span className="sr-only">Close</span>
-              </button>
+              </Button>
             )}
           </motion.div>
         </>
       )}
     </AnimatePresence>,
-    document.body
-  )
+    document.body,
+  );
 }
 
-export {
-  Sheet,
-  SheetContent,
-}
+export { Sheet, SheetContent };

@@ -13,11 +13,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { CalendarDays, Truck, Send, Loader2, CheckCircle } from "lucide-react";
 import { DateRange } from "react-day-picker";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { formatDateString } from "@/lib/date-utils";
 import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
-import { parseDateString, formatDateString } from "@/lib/date-utils";
+  getBelgradeDate,
+  rentalDays,
+  rentalDatesOverlap,
+  rentalRangeError,
+} from "@/lib/rental-dates";
 
 type DeliveryMethod = "licno" | "glovo" | "wolt" | "cargo";
 
@@ -37,7 +40,7 @@ export function BookingForm({ item }: BookingFormProps) {
   const { isSignedIn } = useAuth();
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>(
-    (item.deliveryMethods[0] as DeliveryMethod) ?? "licno"
+    (item.deliveryMethods[0] as DeliveryMethod) ?? "licno",
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
@@ -48,33 +51,48 @@ export function BookingForm({ item }: BookingFormProps) {
     itemId: item._id,
   });
 
-  const disabledDates = useMemo(() => {
-    if (!bookedDates) return [];
-
-    const dates: Date[] = [];
-    for (const booking of bookedDates) {
-      const start = parseDateString(booking.startDate);
-      const end = parseDateString(booking.endDate);
-      const current = new Date(start);
-
-      while (current <= end) {
-        dates.push(new Date(current));
-        current.setDate(current.getDate() + 1);
-      }
-    }
-    return dates;
-  }, [bookedDates]);
-
-  const totalDays = useMemo(() => {
-    if (!dateRange?.from || !dateRange?.to) return 0;
-    const diffTime = dateRange.to.getTime() - dateRange.from.getTime();
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-  }, [dateRange]);
-
+  const today = getBelgradeDate();
+  const selectedRange =
+    dateRange?.from && dateRange?.to
+      ? {
+          startDate: formatDateString(dateRange.from),
+          endDate: formatDateString(dateRange.to),
+        }
+      : null;
+  const rangeError = selectedRange
+    ? rentalRangeError(selectedRange, item.availabilitySlots, today)
+    : null;
+  const hasConflict =
+    selectedRange &&
+    bookedDates?.some((booking) => rentalDatesOverlap(selectedRange, booking));
+  const totalDays =
+    selectedRange && !rangeError
+      ? rentalDays(selectedRange.startDate, selectedRange.endDate)
+      : 0;
   const totalPrice = totalDays * item.pricePerDay;
-
-  const canBook =
-    isSignedIn && dateRange?.from && dateRange?.to && totalDays > 0;
+  const canBook = Boolean(
+    isSignedIn &&
+    selectedRange &&
+    !rangeError &&
+    !hasConflict &&
+    bookedDates !== undefined,
+  );
+  const disabledDates = useMemo(
+    () => (date: Date) => {
+      const day = formatDateString(date);
+      return (
+        day < today ||
+        bookedDates === undefined ||
+        !item.availabilitySlots.some(
+          (slot) => slot.startDate <= day && slot.endDate >= day,
+        ) ||
+        bookedDates.some(
+          (booking) => booking.startDate <= day && booking.endDate >= day,
+        )
+      );
+    },
+    [today, bookedDates, item.availabilitySlots],
+  );
 
   const handleSubmit = async () => {
     if (!canBook || !dateRange?.from || !dateRange?.to) {
@@ -107,7 +125,7 @@ export function BookingForm({ item }: BookingFormProps) {
   };
 
   const availableDeliveryMethods = DELIVERY_OPTIONS.filter((option) =>
-    item.deliveryMethods.includes(option.value)
+    item.deliveryMethods.includes(option.value),
   );
 
   return (
@@ -129,7 +147,9 @@ export function BookingForm({ item }: BookingFormProps) {
                 mode="range"
                 selected={dateRange}
                 onSelect={setDateRange}
-                disabled={[{ before: new Date() }, ...disabledDates]}
+                disabled={disabledDates}
+                excludeDisabled
+                min={0}
                 numberOfMonths={1}
                 className="mx-auto"
               />
@@ -200,6 +220,17 @@ export function BookingForm({ item }: BookingFormProps) {
             </div>
           )}
 
+          {(rangeError || hasConflict) && (
+            <p role="alert" className="text-sm text-podeli-red">
+              {rangeError ?? "Predmet je već rezervisan za izabrani period."}
+            </p>
+          )}
+          <p className="text-sm text-muted-foreground">
+            Zahtev čeka potvrdu vlasnika. Cenu, depozit i vreme preuzimanja i
+            vraćanja dogovarate direktno sa vlasnikom. Platforma ne prima uplatu
+            niti čuva depozit.
+          </p>
+
           {error && (
             <div className="rounded-lg bg-podeli-red/10 p-3 text-sm text-podeli-red">
               {error}
@@ -243,7 +274,11 @@ export function BookingForm({ item }: BookingFormProps) {
 
       {/* Success Dialog */}
       <Dialog open={isComplete}>
-        <DialogContent className="sm:max-w-md" showCloseButton={false} accessibleTitle="Zahtev poslat">
+        <DialogContent
+          className="sm:max-w-md"
+          showCloseButton={false}
+          accessibleTitle="Zahtev poslat"
+        >
           <div className="py-8 text-center">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-podeli-blue/10">
               <CheckCircle className="h-8 w-8 text-podeli-blue" />

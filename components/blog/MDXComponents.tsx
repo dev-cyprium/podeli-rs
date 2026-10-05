@@ -10,7 +10,7 @@ import {
 } from "@/components/blog/CategoryDemos";
 
 interface StepProps {
-  number: number;
+  number: number | string;
   title: string;
   children: ReactNode;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { type DateRange } from "react-day-picker";
 import { format, parseISO, addWeeks, addMonths, addYears } from "date-fns";
 import { Trash2 } from "lucide-react";
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { PreferredContactForm } from "./PreferredContactForm";
 import { CategoryCombobox } from "./CategoryCombobox";
+import { availabilityError } from "@/lib/rental-dates";
 
 type AvailabilitySlot = {
   startDate: string;
@@ -31,20 +32,11 @@ type AvailabilitySlot = {
 
 type DeliveryMethod = "licno";
 
-type PlanLimits = {
-  planName: string;
-  planSlug: string;
-  maxListings: number;
-  allowedDeliveryMethods: string[];
-  hasBadge: boolean;
-  badgeLabel?: string;
-  listingCount: number;
-  planExpiresAt?: number;
-  listingDurationDays?: number;
-  isSubscription: boolean;
-};
-
-const ALL_DELIVERY_OPTIONS: { value: string; label: string; comingSoon?: boolean }[] = [
+const ALL_DELIVERY_OPTIONS: {
+  value: string;
+  label: string;
+  comingSoon?: boolean;
+}[] = [
   { value: "licno", label: "Lično preuzimanje" },
   { value: "kurir", label: "Partnerska kurirska služba", comingSoon: true },
 ];
@@ -72,19 +64,17 @@ interface ItemWizardFormProps {
   item: Doc<"items"> | null;
   onSave: (data: ItemFormData) => Promise<void>;
   onCancel?: () => void;
-  planLimits?: PlanLimits;
   preferredContactTypes?: string[];
 }
 
 export function ItemWizardForm({
   item,
   onSave,
-  onCancel,
-  planLimits: _planLimits,
   preferredContactTypes = [],
 }: ItemWizardFormProps) {
   const generateUploadUrl = useMutation(api.items.generateUploadUrl);
-  const categories = useQuery(api.categories.listNames) ?? [];
+  const categoryNames = useQuery(api.categories.listNames);
+  const categories = useMemo(() => categoryNames ?? [], [categoryNames]);
   const [title, setTitle] = useState(item?.title ?? "");
   const [description, setDescription] = useState(item?.description ?? "");
   const [category, setCategory] = useState(
@@ -93,18 +83,15 @@ export function ItemWizardForm({
   const [pricePerDay, setPricePerDay] = useState(
     item?.pricePerDay?.toString() ?? "",
   );
-  const [deposit, setDeposit] = useState(
-    item?.deposit?.toString() ?? "",
-  );
+  const [deposit, setDeposit] = useState(item?.deposit?.toString() ?? "");
   const [priceByAgreement, setPriceByAgreement] = useState(
     item?.priceByAgreement ?? false,
   );
-  const [images, setImages] = useState<Id<"_storage">[]>(
-    item?.images && item.images.length > 0 ? [item.images[0]] : [],
-  );
-  const [imageFocalPoint, setImageFocalPoint] = useState<{ x: number; y: number }>(
-    item?.imageFocalPoint ?? { x: 50, y: 50 },
-  );
+  const [images, setImages] = useState<Id<"_storage">[]>(item?.images ?? []);
+  const [imageFocalPoint, setImageFocalPoint] = useState<{
+    x: number;
+    y: number;
+  }>(item?.imageFocalPoint ?? { x: 50, y: 50 });
   const [availabilitySlots, setAvailabilitySlots] = useState<
     AvailabilitySlot[]
   >(item?.availabilitySlots ?? []);
@@ -129,7 +116,7 @@ export function ItemWizardForm({
   // Get URLs for all images
   const imageUrlsMap = useQuery(
     api.items.getImageUrls,
-    images.length > 0 ? { storageIds: images } : "skip"
+    images.length > 0 ? { storageIds: images } : "skip",
   );
 
   const steps = [
@@ -156,7 +143,7 @@ export function ItemWizardForm({
   ];
 
   function removeImage() {
-    setImages([]);
+    setImages((previous) => previous.slice(1));
     setImageFocalPoint({ x: 50, y: 50 });
   }
 
@@ -207,35 +194,54 @@ export function ItemWizardForm({
     );
   }
 
-  async function handleImageUpload(files: FileList | null) {
+  async function handleImageUpload(
+    files: FileList | null,
+    replaceCover = false,
+  ) {
     if (!files || files.length === 0) return;
-    setIsProcessingImages(true);
-    // Only take the first file
-    const file = files[0];
-    
-    // Delete the old image if it exists
-    if (images.length > 0) {
-      // Note: We don't delete from storage here as it will be handled by the update mutation
-      // when the form is submitted
+    const selected = replaceCover ? [files[0]] : Array.from(files);
+    if (
+      images.length +
+        selected.length -
+        (replaceCover && images.length > 0 ? 1 : 0) >
+      10
+    ) {
+      setFormError("Maksimalno 10 fotografija po predmetu.");
+      return;
     }
-    
+    if (
+      selected.some(
+        (file) =>
+          !file.type.startsWith("image/") || file.size > 10 * 1024 * 1024,
+      )
+    ) {
+      setFormError("Izaberite fotografije do 10 MB po fajlu.");
+      return;
+    }
+    setIsProcessingImages(true);
+    setFormError(null);
     try {
-      // Generate upload URL
-      const uploadUrl = await generateUploadUrl();
-      // Upload file to Convex
-      const result = await fetch(uploadUrl, {
-        method: "POST",
-        headers: { "Content-Type": file.type },
-        body: file,
-      });
-      if (!result.ok) {
-        throw new Error("Neuspešno učitavanje fajla");
+      for (const file of selected) {
+        // Generate upload URL
+        const uploadUrl = await generateUploadUrl();
+        // Upload file to Convex
+        const result = await fetch(uploadUrl, {
+          method: "POST",
+          headers: { "Content-Type": file.type },
+          body: file,
+        });
+        if (!result.ok) {
+          throw new Error("Neuspešno učitavanje fajla");
+        }
+        const { storageId } = await result.json();
+        setImages((previous) =>
+          replaceCover
+            ? [storageId as Id<"_storage">, ...previous.slice(1)]
+            : [...previous, storageId as Id<"_storage">],
+        );
       }
-      const { storageId } = await result.json();
-      // Replace the image instead of appending
-      setImages([storageId as Id<"_storage">]);
-      setImageFocalPoint({ x: 50, y: 50 });
-    } catch (error) {
+      if (replaceCover) setImageFocalPoint({ x: 50, y: 50 });
+    } catch {
       setFormError("Greška pri učitavanju slike. Pokušajte ponovo.");
     } finally {
       setIsProcessingImages(false);
@@ -251,7 +257,17 @@ export function ItemWizardForm({
       if (!description.trim()) {
         return "Unesite opis predmeta.";
       }
-      if (!priceByAgreement && (Number.isNaN(numericPrice) || numericPrice <= 0)) {
+      if (!category.trim()) return "Izaberite kategoriju.";
+      if (
+        deposit.trim() &&
+        (!Number.isFinite(Number(deposit)) || Number(deposit) < 0)
+      ) {
+        return "Depozit mora biti pozitivan broj ili nula.";
+      }
+      if (
+        !priceByAgreement &&
+        (!Number.isFinite(numericPrice) || numericPrice <= 0)
+      ) {
         return "Cena po danu mora biti veća od nule.";
       }
     }
@@ -261,12 +277,8 @@ export function ItemWizardForm({
       }
     }
     if (stepIndex === 2) {
-      const cleanedSlots = availabilitySlots.filter(
-        (slot) => slot.startDate && slot.endDate,
-      );
-      if (cleanedSlots.length === 0) {
-        return "Dodajte bar jedan termin dostupnosti.";
-      }
+      const slotError = availabilityError(availabilitySlots);
+      if (slotError) return slotError;
     }
     if (stepIndex === 3) {
       if (deliveryMethods.length === 0) {
@@ -291,10 +303,6 @@ export function ItemWizardForm({
     return newInvalidSteps.size === 0;
   }
 
-  function isStepValid(stepIndex: number): boolean {
-    return validateStep(stepIndex) === null;
-  }
-
   // Re-validate visited steps when form data changes
   useEffect(() => {
     if (visitedSteps.size > 0) {
@@ -311,7 +319,18 @@ export function ItemWizardForm({
       setInvalidSteps(newInvalidSteps);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, description, category, pricePerDay, priceByAgreement, images.length, availabilitySlots.length, deliveryMethods.length, visitedSteps.size]);
+  }, [
+    title,
+    description,
+    category,
+    deposit,
+    pricePerDay,
+    priceByAgreement,
+    images.length,
+    availabilitySlots,
+    deliveryMethods.length,
+    visitedSteps.size,
+  ]);
 
   function handleNext() {
     // Mark current step as visited when trying to proceed
@@ -365,7 +384,9 @@ export function ItemWizardForm({
         for (let i = 0; i < stepIndex; i++) {
           const error = validateStep(i);
           if (error) {
-            setFormError(`Molimo popunite korak ${i + 1} pre nego što nastavite.`);
+            setFormError(
+              `Molimo popunite korak ${i + 1} pre nego što nastavite.`,
+            );
             const newInvalidSteps = new Set(invalidSteps);
             newInvalidSteps.add(i);
             setInvalidSteps(newInvalidSteps);
@@ -386,55 +407,7 @@ export function ItemWizardForm({
       handleNext();
       return;
     }
-
-    // Mark all steps as visited when trying to submit
-    const newVisitedSteps = new Set(visitedSteps);
-    for (let i = 0; i < steps.length; i++) {
-      newVisitedSteps.add(i);
-    }
-    setVisitedSteps(newVisitedSteps);
-
-    // Validate all steps before submission
-    const allValid = validateAllSteps();
-    if (!allValid) {
-      setFormError("Molimo popunite sve obavezne polja pre nego što sačuvate predmet.");
-      // Navigate to first invalid step
-      for (let i = 0; i < steps.length; i++) {
-        if (invalidSteps.has(i)) {
-          setCurrentStep(i);
-          break;
-        }
-      }
-      return;
-    }
-
-    setFormError(null);
-    const numericPrice = priceByAgreement ? 0 : Number(pricePerDay);
-    const numericDeposit = deposit.trim() ? Number(deposit) : undefined;
-    const cleanedSlots = availabilitySlots.filter(
-      (slot) => slot.startDate && slot.endDate,
-    );
-
-    setIsSubmitting(true);
-    try {
-      await onSave({
-        title: title.trim(),
-        description: description.trim(),
-        category,
-        pricePerDay: numericPrice,
-        priceByAgreement: priceByAgreement || undefined,
-        deposit: numericDeposit !== undefined && numericDeposit >= 0 ? numericDeposit : undefined,
-        images,
-        imageFocalPoint,
-        availabilitySlots: cleanedSlots,
-        deliveryMethods,
-      });
-      setFormError(null);
-    } catch (submitError) {
-      setFormError("Sačuvavanje nije uspelo. Pokušajte ponovo.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    await handleSaveFromAnyStep();
   }
 
   async function handleSaveFromAnyStep() {
@@ -470,9 +443,7 @@ export function ItemWizardForm({
     setFormError(null);
     const numericPrice = priceByAgreement ? 0 : Number(pricePerDay);
     const numericDeposit = deposit.trim() ? Number(deposit) : undefined;
-    const cleanedSlots = availabilitySlots.filter(
-      (slot) => slot.startDate && slot.endDate,
-    );
+    const cleanedSlots = availabilitySlots;
 
     setIsSubmitting(true);
     try {
@@ -482,7 +453,10 @@ export function ItemWizardForm({
         category,
         pricePerDay: numericPrice,
         priceByAgreement: priceByAgreement || undefined,
-        deposit: numericDeposit !== undefined && numericDeposit >= 0 ? numericDeposit : undefined,
+        deposit:
+          numericDeposit !== undefined && numericDeposit >= 0
+            ? numericDeposit
+            : undefined,
         images,
         imageFocalPoint,
         availabilitySlots: cleanedSlots,
@@ -524,7 +498,8 @@ export function ItemWizardForm({
         </div>
         <div className="mt-4 grid gap-2 sm:grid-cols-4">
           {steps.map((step, index) => {
-            const isInvalid = invalidSteps.has(index) && visitedSteps.has(index);
+            const isInvalid =
+              invalidSteps.has(index) && visitedSteps.has(index);
             return (
               <motion.div
                 key={step.id}
@@ -574,10 +549,7 @@ export function ItemWizardForm({
 
               <div className="space-y-2">
                 <Label>Kategorija</Label>
-                <CategoryCombobox
-                  value={category}
-                  onChange={setCategory}
-                />
+                <CategoryCombobox value={category} onChange={setCategory} />
               </div>
 
               <div className="space-y-2">
@@ -617,7 +589,9 @@ export function ItemWizardForm({
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="item-deposit">Sigurnosni depozit (opciono)</Label>
+                <Label htmlFor="item-deposit">
+                  Sigurnosni depozit (opciono)
+                </Label>
                 <Input
                   id="item-deposit"
                   type="number"
@@ -640,7 +614,9 @@ export function ItemWizardForm({
               </div>
               {isProcessingImages ? (
                 <div className="flex items-center justify-center rounded-lg border border-border bg-muted p-12">
-                  <p className="text-sm text-muted-foreground">Učitavanje fotografije...</p>
+                  <p className="text-sm text-muted-foreground">
+                    Učitavanje fotografije...
+                  </p>
                 </div>
               ) : null}
               {!isProcessingImages && images.length === 0 ? (
@@ -648,9 +624,8 @@ export function ItemWizardForm({
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={(event) =>
-                      handleImageUpload(event.target.files)
-                    }
+                    multiple
+                    onChange={(event) => handleImageUpload(event.target.files)}
                     className="hidden"
                   />
                   <div className="mb-3 text-muted-foreground">
@@ -683,8 +658,12 @@ export function ItemWizardForm({
                     className="relative cursor-crosshair overflow-hidden rounded-lg border-2 border-border bg-muted"
                     onClick={(e) => {
                       const rect = e.currentTarget.getBoundingClientRect();
-                      const x = Math.round(((e.clientX - rect.left) / rect.width) * 100);
-                      const y = Math.round(((e.clientY - rect.top) / rect.height) * 100);
+                      const x = Math.round(
+                        ((e.clientX - rect.left) / rect.width) * 100,
+                      );
+                      const y = Math.round(
+                        ((e.clientY - rect.top) / rect.height) * 100,
+                      );
                       setImageFocalPoint({ x, y });
                     }}
                   >
@@ -702,7 +681,8 @@ export function ItemWizardForm({
                           style={{
                             left: `${imageFocalPoint.x}%`,
                             top: `${imageFocalPoint.y}%`,
-                            background: "radial-gradient(circle, rgba(240,162,2,0.8) 30%, transparent 70%)",
+                            background:
+                              "radial-gradient(circle, rgba(240,162,2,0.8) 30%, transparent 70%)",
                           }}
                         />
                       </>
@@ -721,7 +701,7 @@ export function ItemWizardForm({
                         type="file"
                         accept="image/*"
                         onChange={(event) =>
-                          handleImageUpload(event.target.files)
+                          handleImageUpload(event.target.files, true)
                         }
                         className="hidden"
                       />
@@ -738,6 +718,46 @@ export function ItemWizardForm({
                     </Button>
                   </div>
                 </div>
+              ) : null}
+              {images.length > 1 ? (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {images.slice(1).map((image, index) => (
+                    <div key={image} className="space-y-2">
+                      <img
+                        src={imageUrlsMap?.[image] ?? undefined}
+                        alt={`Fotografija ${index + 2}`}
+                        className="h-24 w-full rounded-lg object-cover"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setImages((previous) =>
+                            previous.filter((id) => id !== image),
+                          )
+                        }
+                        aria-label={`Ukloni fotografiju ${index + 2}`}
+                      >
+                        Ukloni
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+              {images.length > 0 &&
+              images.length < 10 &&
+              !isProcessingImages ? (
+                <label className="inline-flex cursor-pointer rounded-md border border-border px-4 py-2 text-sm font-semibold">
+                  Dodaj fotografije ({images.length}/10)
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="sr-only"
+                    onChange={(event) => handleImageUpload(event.target.files)}
+                  />
+                </label>
               ) : null}
             </div>
           ) : null}
@@ -840,54 +860,63 @@ export function ItemWizardForm({
                   </p>
                   <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-muted-foreground">
                     {preferredContactTypes.map((t) => (
-                      <li key={t}>
-                        {CONTACT_LABELS[t] ?? t}
-                      </li>
+                      <li key={t}>{CONTACT_LABELS[t] ?? t}</li>
                     ))}
                   </ul>
-                  <button
+                  <Button
+                    variant="link"
                     type="button"
                     onClick={() => setContactModalOpen(true)}
                     className="mt-2 inline-block text-sm font-medium text-podeli-blue hover:text-podeli-blue/90 hover:underline"
                   >
                     Izmeni način kontakta
-                  </button>
+                  </Button>
                 </div>
               ) : null}
               <div className="space-y-2">
                 <Label>Način dostave</Label>
                 <div className="grid gap-2">
-                {ALL_DELIVERY_OPTIONS.map((option) => {
-                  // "comingSoon" options are always locked regardless of plan
-                  const isLocked = option.comingSoon === true;
+                  {ALL_DELIVERY_OPTIONS.map((option) => {
+                    // "comingSoon" options are always locked regardless of plan
+                    const isLocked = option.comingSoon === true;
 
-                  return (
-                    <label
-                      key={option.value}
-                      className={`flex items-center gap-2 rounded-lg border px-2 py-1 text-sm ${
-                        isLocked
-                          ? "border-border bg-muted opacity-60 cursor-not-allowed"
-                          : "border-border text-podeli-dark cursor-pointer hover:bg-muted"
-                      }`}
-                    >
-                      <Checkbox
-                        checked={!isLocked && deliveryMethods.includes(option.value as DeliveryMethod)}
-                        onChange={() => !isLocked && toggleDelivery(option.value as DeliveryMethod)}
-                        disabled={isLocked}
-                      />
-                      <span className="flex items-center gap-2">
-                        <span className={isLocked ? "text-muted-foreground" : ""}>
-                          {option.label}
-                        </span>
-                        {isLocked && (
-                          <span className="rounded-full bg-[#f0a202]/10 px-1.5 py-0.5 text-[10px] font-medium text-[#f0a202]">
-                            Uskoro
+                    return (
+                      <label
+                        key={option.value}
+                        className={`flex items-center gap-2 rounded-lg border px-2 py-1 text-sm ${
+                          isLocked
+                            ? "border-border bg-muted opacity-60 cursor-not-allowed"
+                            : "border-border text-podeli-dark cursor-pointer hover:bg-muted"
+                        }`}
+                      >
+                        <Checkbox
+                          checked={
+                            !isLocked &&
+                            deliveryMethods.includes(
+                              option.value as DeliveryMethod,
+                            )
+                          }
+                          onChange={() =>
+                            !isLocked &&
+                            toggleDelivery(option.value as DeliveryMethod)
+                          }
+                          disabled={isLocked}
+                        />
+                        <span className="flex items-center gap-2">
+                          <span
+                            className={isLocked ? "text-muted-foreground" : ""}
+                          >
+                            {option.label}
                           </span>
-                        )}
-                      </span>
-                    </label>
-                  );
-                })}
+                          {isLocked && (
+                            <span className="rounded-full bg-[#f0a202]/10 px-1.5 py-0.5 text-[10px] font-medium text-[#f0a202]">
+                              Uskoro
+                            </span>
+                          )}
+                        </span>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
             </div>

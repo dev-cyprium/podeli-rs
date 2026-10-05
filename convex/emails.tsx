@@ -1,5 +1,7 @@
 "use node";
 
+import { formatRentalTotal } from "@/lib/rental-pricing";
+
 import { internalAction } from "./_generated/server";
 import { v } from "convex/values";
 import { Resend } from "resend";
@@ -114,6 +116,7 @@ function BookingRequestEmail({
   startDate,
   endDate,
   totalPrice,
+  priceByAgreement,
   actionUrl,
 }: {
   ownerName: string;
@@ -122,10 +125,13 @@ function BookingRequestEmail({
   startDate: string;
   endDate: string;
   totalPrice: number;
+  priceByAgreement?: boolean;
   actionUrl: string;
 }) {
   return (
-    <EmailWrapper preview={`Nova rezervacija za "${itemTitle}" od ${renterName}`}>
+    <EmailWrapper
+      preview={`Nova rezervacija za "${itemTitle}" od ${renterName}`}
+    >
       <Text
         style={{
           fontSize: "20px",
@@ -205,7 +211,8 @@ function BookingRequestEmail({
             margin: 0,
           }}
         >
-          <strong>Ukupna cena:</strong> {totalPrice.toLocaleString("sr-RS")} RSD
+          <strong>Ukupna cena:</strong>{" "}
+          {formatRentalTotal({ totalPrice, priceByAgreement })}
         </Text>
       </Section>
 
@@ -257,7 +264,9 @@ function NewMessageEmail({
   actionUrl: string;
 }) {
   return (
-    <EmailWrapper preview={`Nova poruka od ${senderName}: "${messagePreview.slice(0, 50)}..."`}>
+    <EmailWrapper
+      preview={`Nova poruka od ${senderName}: "${messagePreview.slice(0, 50)}..."`}
+    >
       <Text
         style={{
           fontSize: "20px",
@@ -311,7 +320,11 @@ function NewMessageEmail({
             lineHeight: "22px",
           }}
         >
-          &quot;{messagePreview.length > 200 ? messagePreview.slice(0, 200) + "..." : messagePreview}&quot;
+          &quot;
+          {messagePreview.length > 200
+            ? messagePreview.slice(0, 200) + "..."
+            : messagePreview}
+          &quot;
         </Text>
       </Section>
 
@@ -358,6 +371,7 @@ export const sendBookingRequestEmail = internalAction({
     startDate: v.string(),
     endDate: v.string(),
     totalPrice: v.number(),
+    priceByAgreement: v.optional(v.boolean()),
     actionUrl: v.string(),
   },
   returns: v.boolean(),
@@ -384,6 +398,7 @@ export const sendBookingRequestEmail = internalAction({
             startDate={args.startDate}
             endDate={args.endDate}
             totalPrice={args.totalPrice}
+            priceByAgreement={args.priceByAgreement}
             actionUrl={args.actionUrl}
           />
         ),

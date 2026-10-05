@@ -1,4 +1,8 @@
-import { internalMutation, mutation } from "./_generated/server";
+import {
+  internalMutation,
+  mutation,
+  type MutationCtx,
+} from "./_generated/server";
 import { v } from "convex/values";
 import { requireIdentity } from "@/lib/convex-auth";
 import { parseDateString } from "@/lib/date-utils";
@@ -10,10 +14,10 @@ const TIME_OVERRIDE_KEY = "timeOverride";
 /**
  * Helper to get current time (respects debug time override)
  */
-async function getCurrentTime(ctx: { db: any }): Promise<number> {
+async function getCurrentTime(ctx: Pick<MutationCtx, "db">): Promise<number> {
   const override = await ctx.db
     .query("debugSettings")
-    .withIndex("by_key", (q: any) => q.eq("key", TIME_OVERRIDE_KEY))
+    .withIndex("by_key", (q) => q.eq("key", TIME_OVERRIDE_KEY))
     .first();
 
   if (override) {
@@ -138,12 +142,14 @@ export const triggerReturnReminders = mutation({
       currentTime: v.string(),
       bookingsFound: v.number(),
       bookingsAlreadyReminded: v.number(),
-      bookingsChecked: v.array(v.object({
-        endDate: v.string(),
-        returnDayStart: v.string(),
-        hoursUntilReturnDay: v.number(),
-        wouldSend: v.boolean(),
-      })),
+      bookingsChecked: v.array(
+        v.object({
+          endDate: v.string(),
+          returnDayStart: v.string(),
+          hoursUntilReturnDay: v.number(),
+          wouldSend: v.boolean(),
+        }),
+      ),
     }),
   }),
   handler: async (ctx) => {
@@ -187,7 +193,8 @@ export const triggerReturnReminders = mutation({
       const returnDayTime = returnDayStart.getTime();
       const timeUntilReturnDay = returnDayTime - now;
       const hoursUntil = timeUntilReturnDay / (60 * 60 * 1000);
-      const wouldSend = timeUntilReturnDay > 0 && timeUntilReturnDay <= TWENTY_FOUR_HOURS;
+      const wouldSend =
+        timeUntilReturnDay > 0 && timeUntilReturnDay <= TWENTY_FOUR_HOURS;
 
       bookingsChecked.push({
         endDate: booking.endDate,

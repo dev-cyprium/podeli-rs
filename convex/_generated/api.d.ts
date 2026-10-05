@@ -23,6 +23,8 @@ import type * as items from "../items.js";
 import type * as messages from "../messages.js";
 import type * as notificationPreferences from "../notificationPreferences.js";
 import type * as notifications from "../notifications.js";
+import type * as outreach from "../outreach.js";
+import type * as outreachModel from "../outreachModel.js";
 import type * as plans from "../plans.js";
 import type * as profiles from "../profiles.js";
 import type * as promotionalCodes from "../promotionalCodes.js";
@@ -51,6 +53,8 @@ declare const fullApi: ApiFromModules<{
   messages: typeof messages;
   notificationPreferences: typeof notificationPreferences;
   notifications: typeof notifications;
+  outreach: typeof outreach;
+  outreachModel: typeof outreachModel;
   plans: typeof plans;
   profiles: typeof profiles;
   promotionalCodes: typeof promotionalCodes;

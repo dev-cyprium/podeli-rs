@@ -1,57 +1,54 @@
-import { fetchQuery } from "convex/nextjs";
-import { api } from "@/convex/_generated/api";
+import Link from "next/link";
 import { NavBar } from "@/components/NavBar";
-import { PricingCards } from "@/components/planovi/PricingCards";
 import { BackButton } from "@/components/ui/back-button";
-import { DiscordIcon } from "@/components/icons/Icons";
+import { Button } from "@/components/ui/button";
 
 export const metadata = {
-  title: "Planovi | podeli.rs",
-  description: "Izaberite plan koji najbolje odgovara vašim potrebama. Od besplatnog do doživotnog pristupa.",
+  title: "Besplatno objavljivanje | podeli.rs",
+  description:
+    "Objavljivanje je besplatno tokom početne faze platforme, bez pretplate i komercijalnog limita oglasa.",
 };
 
-export default async function PlanoviPage() {
-  const plans = await fetchQuery(api.plans.list);
+export default function PlanoviPage() {
   return (
     <div className="min-h-screen bg-background">
       <NavBar />
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-3xl px-6 py-12">
         <BackButton />
-
-        <div className="mb-12 text-center">
-          <h1 className="text-3xl font-bold text-foreground sm:text-4xl">
-            Izaberite plan
-          </h1>
-          <p className="mt-4 text-lg text-muted-foreground">
-            Pronađite plan koji najbolje odgovara vašim potrebama za deljenje i iznajmljivanje.
-          </p>
-        </div>
-
-        <PricingCards plans={plans} />
-
-        <div className="mt-12 w-full text-center">
-          <p className="inline-block text-sm text-muted-foreground">
-          Imate pitanja? Kontaktirajte nas na{" "}
+        <h1 className="mt-6 text-3xl font-bold text-podeli-dark">
+          Objavljivanje je besplatno
+        </h1>
+        <p className="mt-4 text-lg text-muted-foreground">
+          podeli.rs je u početnoj fazi. Objavite predmete bez pretplate i
+          komercijalnog limita oglasa.
+        </p>
+        <ul className="mt-6 list-inside list-disc space-y-3 text-muted-foreground">
+          <li>Do 10 fotografija po predmetu.</li>
+          <li>Dogovor i plaćanje direktno sa vlasnikom.</li>
+          <li>Tačni podaci, dostupnost i uslovi u svakom oglasu.</li>
+          <li>Spam i duplirani oglasi nisu dozvoljeni.</li>
+        </ul>
+        <p className="mt-6 text-sm text-muted-foreground">
+          Platforma ne naplaćuje najam niti čuva depozit i ne nudi osiguranje.
+          Cenu, depozit, vreme preuzimanja i vraćanja dogovarate sa vlasnikom.
+          Ako se uslovi objavljivanja promene, obavestićemo vas unapred.
+        </p>
+        <Button
+          asChild
+          className="mt-8 bg-podeli-accent text-white hover:bg-podeli-accent/90"
+        >
+          <Link href="/kontrolna-tabla/predmeti/novi">Objavi predmet</Link>
+        </Button>
+        <p className="mt-8 text-sm text-muted-foreground">
+          Potrebna vam je pomoć?{" "}
           <a
             href="mailto:kontakt@podeli.rs"
-            className="font-medium text-accent hover:underline"
+            className="text-podeli-blue underline"
           >
             kontakt@podeli.rs
-          </a>{" "}
-          ili na{" "}
-          <a
-            href="https://discord.gg/69MBaCTEnz"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 align-middle font-medium text-[#5865F2] hover:underline"
-          >
-            <DiscordIcon className="h-4 w-4 shrink-0" />
-            Discord-u
           </a>
-          .
-          </p>
-        </div>
-      </div>
+        </p>
+      </main>
     </div>
   );
 }
