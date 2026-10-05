@@ -1,7 +1,10 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { prospectFields, outreachStatus } from "./outreachModel";
 
 export default defineSchema({
+  prospects: defineTable({ ...prospectFields, key: v.string(), createdAt: v.number(), updatedAt: v.number() }).index("by_key", ["key"]),
+  prospectActivities: defineTable({ prospectId: v.id("prospects"), authorId: v.string(), outcome: outreachStatus, note: v.string(), createdAt: v.number() }).index("by_prospectId", ["prospectId"]),
   items: defineTable({
     ownerId: v.string(),
     title: v.string(),
@@ -108,6 +111,7 @@ export default defineSchema({
     endDate: v.string(),
     totalDays: v.number(),
     pricePerDay: v.number(),
+    priceByAgreement: v.optional(v.boolean()),
     totalPrice: v.number(),
     deliveryMethod: v.string(),
     status: v.union(

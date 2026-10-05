@@ -1,6 +1,6 @@
 "use client";
 
-import { Layers, MessageSquare, Ticket, X, Zap } from "lucide-react";
+import { Layers, MessageSquare, Ticket, X, Zap, Phone } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -32,6 +32,19 @@ export function SuperAdminSidebar({ onClose }: SuperAdminSidebarProps) {
         )}
       </div>
       <nav className="space-y-1">
+        <Link
+          href="/super-admin/saradnja"
+          onClick={onClose}
+          className={cn(
+            "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors",
+            pathname === "/super-admin/saradnja"
+              ? "bg-podeli-accent/10 text-podeli-accent"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground",
+          )}
+        >
+          <Phone className="h-4 w-4" />
+          <span>Saradnja</span>
+        </Link>
         <Link
           href="/super-admin"
           onClick={onClose}

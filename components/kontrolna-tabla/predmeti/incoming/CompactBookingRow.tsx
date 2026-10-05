@@ -1,5 +1,7 @@
 "use client";
 
+import { formatRentalTotal } from "@/lib/rental-pricing";
+
 import Image from "next/image";
 import { Star, User } from "lucide-react";
 import { BookingStatusBadge } from "@/components/booking/BookingStatusBadge";
@@ -87,12 +89,10 @@ export function CompactBookingRow({ booking }: CompactBookingRowProps) {
             <DateDisplay value={booking.startDate} format="short" />
             {" – "}
             <DateDisplay value={booking.endDate} format="short" />
-            <span className="ml-1 text-[#02020a]">
-              ({days}d)
-            </span>
+            <span className="ml-1 text-[#02020a]">({days}d)</span>
           </span>
           <span className="font-semibold text-[#f0a202]">
-            {booking.totalPrice.toFixed(0)} RSD
+            {formatRentalTotal(booking)}
           </span>
         </div>
       </div>

@@ -7,12 +7,8 @@ import {
   Heart,
   ChevronLeft,
   X,
-  Crown,
   ShoppingBag,
   Tag,
-  Circle,
-  Diamond,
-  Gem,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
@@ -45,54 +41,19 @@ type NavItem = {
   showBadge?: boolean;
 };
 
-const planIconMap: Record<string, LucideIcon> = {
-  free: Circle,
-  starter: Diamond,
-  ultimate: Gem,
-  lifetime: Crown,
-  single_listing: Circle,
-};
-
-function PlanIndicator() {
-  const limits = useQuery(api.profiles.getMyPlanLimits);
-
-  if (!limits) return null;
-
-  const Icon = planIconMap[limits.planSlug] ?? Circle;
-  const isTopTier = limits.planSlug === "lifetime" || limits.planSlug === "ultimate";
-
+function PostingIndicator() {
   return (
     <div className="mt-6 px-2">
       <Link
         href="/planovi"
-        className={cn(
-          "group relative flex items-center gap-3 overflow-hidden rounded-xl border px-3 py-3 transition-all hover:shadow-md",
-          isTopTier
-            ? "border-[#f0a202]/30 bg-gradient-to-r from-[#f0a202]/5 to-[#f0a202]/10 hover:border-[#f0a202]/50"
-            : "border-border hover:bg-muted"
-        )}
+        className="block rounded-xl border border-border px-3 py-3 text-sm"
       >
-        <div
-          className={cn(
-            "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
-            isTopTier
-              ? "bg-[#f0a202]/15"
-              : "bg-[#f0a202]/10"
-          )}
-        >
-          <Icon className="h-4 w-4 text-[#f0a202]" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-medium text-muted-foreground">Tvoj plan</p>
-          <p className="truncate text-sm font-bold text-[#02020a]">
-            {limits.planName}
-          </p>
-        </div>
-        {limits.hasBadge && limits.badgeLabel && (
-          <span className="shrink-0 rounded-full bg-[#f0a202] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
-            {limits.badgeLabel}
-          </span>
-        )}
+        <p className="font-semibold text-podeli-dark">
+          Besplatno objavljivanje
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Bez komercijalnog limita oglasa
+        </p>
       </Link>
     </div>
   );
@@ -118,16 +79,53 @@ export function DashboardSidebar({
 }: DashboardSidebarProps) {
   // Define nav items for each context
   const podeliItems: NavItem[] = [
-    { id: "main", label: "Predmeti", icon: Package, href: "/kontrolna-tabla/predmeti" },
-    { id: "poruke", label: "Poruke", icon: MessageSquare, href: "/kontrolna-tabla/predmeti/poruke", showBadge: true },
-    { id: "ocene", label: "Ocene", icon: Star, href: "/kontrolna-tabla/predmeti/ocene" },
+    {
+      id: "main",
+      label: "Predmeti",
+      icon: Package,
+      href: "/kontrolna-tabla/predmeti",
+    },
+    {
+      id: "poruke",
+      label: "Poruke",
+      icon: MessageSquare,
+      href: "/kontrolna-tabla/predmeti/poruke",
+      showBadge: true,
+    },
+    {
+      id: "ocene",
+      label: "Ocene",
+      icon: Star,
+      href: "/kontrolna-tabla/predmeti/ocene",
+    },
   ];
 
   const zakupiItems: NavItem[] = [
-    { id: "main", label: "Zakupi", icon: ShoppingBag, href: "/kontrolna-tabla/zakupi" },
-    { id: "poruke", label: "Poruke", icon: MessageSquare, href: "/kontrolna-tabla/zakupi/poruke", showBadge: true },
-    { id: "ocene", label: "Ocene", icon: Star, href: "/kontrolna-tabla/zakupi/ocene" },
-    { id: "omiljeno", label: "Omiljeno", icon: Heart, href: "/kontrolna-tabla/zakupi/omiljeno" },
+    {
+      id: "main",
+      label: "Zakupi",
+      icon: ShoppingBag,
+      href: "/kontrolna-tabla/zakupi",
+    },
+    {
+      id: "poruke",
+      label: "Poruke",
+      icon: MessageSquare,
+      href: "/kontrolna-tabla/zakupi/poruke",
+      showBadge: true,
+    },
+    {
+      id: "ocene",
+      label: "Ocene",
+      icon: Star,
+      href: "/kontrolna-tabla/zakupi/ocene",
+    },
+    {
+      id: "omiljeno",
+      label: "Omiljeno",
+      icon: Heart,
+      href: "/kontrolna-tabla/zakupi/omiljeno",
+    },
   ];
 
   const navItems = context === "podeli" ? podeliItems : zakupiItems;
@@ -186,7 +184,7 @@ export function DashboardSidebar({
                   "flex h-auto w-full items-center justify-start gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors",
                   isActive
                     ? "bg-podeli-accent/10 text-podeli-accent hover:bg-podeli-accent/10"
-                    : "text-muted-foreground hover:bg-muted hover:text-podeli-dark"
+                    : "text-muted-foreground hover:bg-muted hover:text-podeli-dark",
                 )}
               >
                 <Link href={item.href} onClick={onClose}>
@@ -213,7 +211,7 @@ export function DashboardSidebar({
               "flex h-auto w-full items-center justify-start gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors",
               section === "kategorije"
                 ? "bg-podeli-accent/10 text-podeli-accent hover:bg-podeli-accent/10"
-                : "text-muted-foreground hover:bg-muted hover:text-podeli-dark"
+                : "text-muted-foreground hover:bg-muted hover:text-podeli-dark",
             )}
           >
             <Link href="/kontrolna-tabla/kategorije" onClick={onClose}>
@@ -224,7 +222,7 @@ export function DashboardSidebar({
         </nav>
       </div>
 
-      {context === "podeli" && <PlanIndicator />}
+      {context === "podeli" && <PostingIndicator />}
 
       <div className="mt-auto space-y-4 px-2 pt-6">
         {/* Dev-only time travel widget */}

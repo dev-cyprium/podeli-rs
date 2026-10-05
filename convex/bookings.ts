@@ -2,34 +2,14 @@ import { v, ConvexError } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { requireIdentity } from "@/lib/convex-auth";
-import { parseDateString } from "@/lib/date-utils";
-
-function datesOverlap(
-  start1: string,
-  end1: string,
-  start2: string,
-  end2: string
-): boolean {
-  const s1 = parseDateString(start1);
-  const e1 = parseDateString(end1);
-  const s2 = parseDateString(start2);
-  const e2 = parseDateString(end2);
-  return s1 <= e2 && s2 <= e1;
-}
-
-function calculateDays(startDate: string, endDate: string): number {
-  const start = parseDateString(startDate);
-  const end = parseDateString(endDate);
-  const diffTime = end.getTime() - start.getTime();
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-}
+import {
+  rentalDays,
+  rentalDatesOverlap,
+  rentalRangeError,
+} from "@/lib/rental-dates";
 
 // Statuses that block dates (active bookings)
-const ACTIVE_STATUSES = [
-  "confirmed",
-  "nije_isporucen",
-  "isporucen",
-] as const;
+const ACTIVE_STATUSES = ["confirmed", "nije_isporucen", "isporucen"] as const;
 
 export const createBooking = mutation({
   args: {
@@ -56,8 +36,13 @@ export const createBooking = mutation({
       item.deliveryMethods.length > 0 &&
       !item.deliveryMethods.includes(args.deliveryMethod)
     ) {
-      throw new ConvexError("Izabrani način dostave nije dostupan za ovaj predmet.");
+      throw new ConvexError(
+        "Izabrani način dostave nije dostupan za ovaj predmet.",
+      );
     }
+
+    const dateError = rentalRangeError(args, item.availabilitySlots);
+    if (dateError) throw new ConvexError(dateError);
 
     // Only check conflicts with active bookings (not pending or cancelled)
     const existingBookings = await ctx.db
@@ -67,22 +52,18 @@ export const createBooking = mutation({
 
     const conflictingBooking = existingBookings.find(
       (booking) =>
-        ACTIVE_STATUSES.includes(booking.status as typeof ACTIVE_STATUSES[number]) &&
-        datesOverlap(
-          args.startDate,
-          args.endDate,
-          booking.startDate,
-          booking.endDate
-        )
+        ACTIVE_STATUSES.includes(
+          booking.status as (typeof ACTIVE_STATUSES)[number],
+        ) && rentalDatesOverlap(args, booking),
     );
 
     if (conflictingBooking) {
       throw new ConvexError(
-        "Predmet je već rezervisan za izabrani period. Molimo izaberite drugi termin."
+        "Predmet je već rezervisan za izabrani period. Molimo izaberite drugi termin.",
       );
     }
 
-    const totalDays = calculateDays(args.startDate, args.endDate);
+    const totalDays = rentalDays(args.startDate, args.endDate);
     const totalPrice = totalDays * item.pricePerDay;
     const now = Date.now();
 
@@ -94,6 +75,7 @@ export const createBooking = mutation({
       endDate: args.endDate,
       totalDays,
       pricePerDay: item.pricePerDay,
+      priceByAgreement: item.priceByAgreement,
       totalPrice,
       deliveryMethod: args.deliveryMethod,
       status: "pending",
@@ -129,16 +111,21 @@ export const createBooking = mutation({
         .first();
 
       if (ownerProfile?.email) {
-        await ctx.scheduler.runAfter(0, internal.emails.sendBookingRequestEmail, {
-          to: ownerProfile.email,
-          ownerName: ownerProfile.firstName ?? "Korisniče",
-          renterName: renterProfile?.firstName ?? "Korisnik",
-          itemTitle: item.title,
-          startDate: args.startDate,
-          endDate: args.endDate,
-          totalPrice,
-          actionUrl: `https://podeli.rs/kontrolna-tabla/predmeti`,
-        });
+        await ctx.scheduler.runAfter(
+          0,
+          internal.emails.sendBookingRequestEmail,
+          {
+            to: ownerProfile.email,
+            ownerName: ownerProfile.firstName ?? "Korisniče",
+            renterName: renterProfile?.firstName ?? "Korisnik",
+            itemTitle: item.title,
+            startDate: args.startDate,
+            endDate: args.endDate,
+            totalPrice,
+            priceByAgreement: item.priceByAgreement,
+            actionUrl: `https://podeli.rs/kontrolna-tabla/predmeti`,
+          },
+        );
       }
     }
 
@@ -185,14 +172,23 @@ export const getBookingsAsRenter = query({
       .order("desc")
       .collect();
 
-    const CONTACT_ELIGIBLE_STATUSES = ["confirmed", "nije_isporucen", "isporucen", "vracen"];
+    const CONTACT_ELIGIBLE_STATUSES = [
+      "confirmed",
+      "nije_isporucen",
+      "isporucen",
+      "vracen",
+    ];
 
     const bookingsWithItems = await Promise.all(
       bookings.map(async (booking) => {
         const item = await ctx.db.get(booking.itemId);
 
         // For confirmed+ bookings, include owner's contact info based on their preferences
-        let ownerContact: { email?: string; phoneNumber?: string; chat: boolean } | null = null;
+        let ownerContact: {
+          email?: string;
+          phoneNumber?: string;
+          chat: boolean;
+        } | null = null;
         if (CONTACT_ELIGIBLE_STATUSES.includes(booking.status)) {
           const ownerProfile = await ctx.db
             .query("profiles")
@@ -203,7 +199,9 @@ export const getBookingsAsRenter = query({
             const prefs = ownerProfile.preferredContactTypes ?? [];
             ownerContact = {
               email: prefs.includes("email") ? ownerProfile.email : undefined,
-              phoneNumber: prefs.includes("phone") ? ownerProfile.phoneNumber : undefined,
+              phoneNumber: prefs.includes("phone")
+                ? ownerProfile.phoneNumber
+                : undefined,
               chat: prefs.includes("chat"),
             };
           }
@@ -214,7 +212,7 @@ export const getBookingsAsRenter = query({
           item,
           ownerContact,
         };
-      })
+      }),
     );
 
     return bookingsWithItems;
@@ -237,7 +235,9 @@ export const getBookingsAsOwner = query({
       .query("profiles")
       .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
       .first();
-    const ownerChatEnabled = (ownerProfile?.preferredContactTypes ?? []).includes("chat");
+    const ownerChatEnabled = (
+      ownerProfile?.preferredContactTypes ?? []
+    ).includes("chat");
 
     const bookingsWithDetails = await Promise.all(
       bookings.map(async (booking) => {
@@ -270,7 +270,7 @@ export const getBookingsAsOwner = query({
           .withIndex("by_renter", (q) => q.eq("renterId", booking.renterId))
           .collect();
         const completedCount = completedRentals.filter(
-          (b) => b.status === "vracen"
+          (b) => b.status === "vracen",
         ).length;
 
         return {
@@ -287,7 +287,7 @@ export const getBookingsAsOwner = query({
           renterCompletedRentals: completedCount,
           ownerChatEnabled,
         };
-      })
+      }),
     );
 
     return bookingsWithDetails;
@@ -306,7 +306,9 @@ export const getItemBookedDates = query({
 
     // Only active bookings block dates
     return bookings
-      .filter((b) => ACTIVE_STATUSES.includes(b.status as typeof ACTIVE_STATUSES[number]))
+      .filter((b) =>
+        ACTIVE_STATUSES.includes(b.status as (typeof ACTIVE_STATUSES)[number]),
+      )
       .map((b) => ({
         startDate: b.startDate,
         endDate: b.endDate,
@@ -335,6 +337,11 @@ export const approveBooking = mutation({
       throw new ConvexError("Samo rezervacije na čekanju mogu biti odobrene.");
     }
 
+    const item = await ctx.db.get(booking.itemId);
+    if (!item) throw new ConvexError("Predmet nije pronađen.");
+    const dateError = rentalRangeError(booking, item.availabilitySlots);
+    if (dateError) throw new ConvexError(dateError);
+
     // Check for conflicts with other active bookings
     const existingBookings = await ctx.db
       .query("bookings")
@@ -344,18 +351,15 @@ export const approveBooking = mutation({
     const conflictingBooking = existingBookings.find(
       (b) =>
         b._id !== booking._id &&
-        ACTIVE_STATUSES.includes(b.status as typeof ACTIVE_STATUSES[number]) &&
-        datesOverlap(
-          booking.startDate,
-          booking.endDate,
-          b.startDate,
-          b.endDate
-        )
+        ACTIVE_STATUSES.includes(
+          b.status as (typeof ACTIVE_STATUSES)[number],
+        ) &&
+        rentalDatesOverlap(booking, b),
     );
 
     if (conflictingBooking) {
       throw new ConvexError(
-        "Datumi su već rezervisani drugom rezervacijom. Odbijte ovu rezervaciju."
+        "Datumi su već rezervisani drugom rezervacijom. Odbijte ovu rezervaciju.",
       );
     }
 
@@ -367,7 +371,6 @@ export const approveBooking = mutation({
     });
 
     // Notify renter about approval - mention chat is now available
-    const item = await ctx.db.get(booking.itemId);
     await ctx.db.insert("notifications", {
       userId: booking.renterId,
       message: `Vaša rezervacija za "${item?.title ?? "predmet"}" je odobrena! Sada možete razgovarati sa vlasnikom.`,
@@ -460,7 +463,9 @@ export const agreeToBooking = mutation({
       .first();
 
     if (!messages) {
-      throw new ConvexError("Pre potvrde dogovora morate razmeniti barem jednu poruku.");
+      throw new ConvexError(
+        "Pre potvrde dogovora morate razmeniti barem jednu poruku.",
+      );
     }
 
     const now = Date.now();
@@ -488,11 +493,13 @@ export const agreeToBooking = mutation({
 
     // Check if both have now agreed (re-read fresh state)
     const updatedBooking = await ctx.db.get(args.id);
-    
+
     // Both must have agreed AND status must still be "confirmed" to transition
     // This prevents race conditions where both parties transition simultaneously
-    const bothAgreed = updatedBooking?.renterAgreed && updatedBooking?.ownerAgreed;
-    const shouldTransition = bothAgreed && updatedBooking?.status === "confirmed";
+    const bothAgreed =
+      updatedBooking?.renterAgreed && updatedBooking?.ownerAgreed;
+    const shouldTransition =
+      bothAgreed && updatedBooking?.status === "confirmed";
 
     if (shouldTransition) {
       // Transition directly to nije_isporucen (waiting for pickup)
@@ -562,7 +569,9 @@ export const markAsDelivered = mutation({
     }
 
     if (booking.status !== "nije_isporucen") {
-      throw new ConvexError("Isporuka može biti potvrđena samo za predmete koji čekaju preuzimanje.");
+      throw new ConvexError(
+        "Isporuka može biti potvrđena samo za predmete koji čekaju preuzimanje.",
+      );
     }
 
     const now = Date.now();
@@ -610,7 +619,9 @@ export const markAsReturned = mutation({
     }
 
     if (booking.status !== "isporucen") {
-      throw new ConvexError("Povratak može biti potvrđen samo za isporučene predmete.");
+      throw new ConvexError(
+        "Povratak može biti potvrđen samo za isporučene predmete.",
+      );
     }
 
     const now = Date.now();
@@ -662,7 +673,9 @@ export const cancelBooking = mutation({
 
     // Can only cancel before agreed status
     if (booking.status !== "pending" && booking.status !== "confirmed") {
-      throw new ConvexError("Rezervacija ne može biti otkazana nakon postignutog dogovora.");
+      throw new ConvexError(
+        "Rezervacija ne može biti otkazana nakon postignutog dogovora.",
+      );
     }
 
     const now = Date.now();
@@ -714,7 +727,9 @@ export const confirmOffPlatformDeal = mutation({
     }
 
     if (booking.ownerId !== userId) {
-      throw new ConvexError("Samo vlasnik može potvrditi dogovor van platforme.");
+      throw new ConvexError(
+        "Samo vlasnik može potvrditi dogovor van platforme.",
+      );
     }
 
     if (booking.status !== "confirmed") {
@@ -729,7 +744,9 @@ export const confirmOffPlatformDeal = mutation({
 
     const prefs = ownerProfile?.preferredContactTypes ?? [];
     if (prefs.includes("chat")) {
-      throw new ConvexError("Ova opcija je dostupna samo kada je chat isključen.");
+      throw new ConvexError(
+        "Ova opcija je dostupna samo kada je chat isključen.",
+      );
     }
 
     const now = Date.now();

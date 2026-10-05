@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PodeliEmptyState } from "@/components/kontrolna-tabla/PodeliEmptyState";
 import { formatSerbianDate } from "@/lib/serbian-date";
-import { AlertTriangle, Calendar, Truck, Coins } from "lucide-react";
+import { Calendar, Truck, Coins } from "lucide-react";
 
 type DeliveryMethod = "licno" | "glovo" | "wolt" | "cargo";
 
@@ -65,7 +65,6 @@ function ItemsListContent() {
   const router = useRouter();
   const items = useQuery(api.items.listMine, {});
   const removeItem = useMutation(api.items.remove);
-  const limits = useQuery(api.profiles.getMyPlanLimits);
   const profile = useQuery(api.profiles.getMyProfile);
 
   const preferredContactTypes = profile?.preferredContactTypes ?? [];
@@ -79,18 +78,11 @@ function ItemsListContent() {
     );
   }
 
-  const isUnlimited = limits?.maxListings === -1;
-  const atLimit = limits && !isUnlimited && limits.listingCount >= limits.maxListings;
-
   async function handleDelete(id: Doc<"items">["_id"]) {
     await removeItem({ id });
   }
 
-  const listingCountLabel = limits
-    ? isUnlimited
-      ? `${items.length}`
-      : `${items.length}/${limits.maxListings}`
-    : `${items.length}`;
+  const listingCountLabel = `${items.length}`;
 
   return (
     <Card>
@@ -102,17 +94,7 @@ function ItemsListContent() {
           </p>
         </div>
         <div className="shrink-0">
-          {atLimit ? (
-            <div className="flex items-center gap-2">
-              <span className="flex items-center gap-1 text-xs text-[#f0a202]">
-                <AlertTriangle className="h-3 w-3" />
-                Limit dostignut
-              </span>
-              <Button asChild size="sm" className="bg-podeli-accent text-white hover:bg-podeli-accent/90">
-                <Link href="/planovi">Nadogradite</Link>
-              </Button>
-            </div>
-          ) : !hasContactPrefs ? (
+          {!hasContactPrefs ? (
             <Button
               disabled
               size="sm"
@@ -123,7 +105,11 @@ function ItemsListContent() {
               Novi predmet
             </Button>
           ) : (
-            <Button asChild size="sm" className="w-full bg-podeli-accent text-white hover:bg-podeli-accent/90 sm:w-auto">
+            <Button
+              asChild
+              size="sm"
+              className="w-full bg-podeli-accent text-white hover:bg-podeli-accent/90 sm:w-auto"
+            >
               <Link href="/kontrolna-tabla/predmeti/novi">Novi predmet</Link>
             </Button>
           )}
@@ -227,7 +213,11 @@ function ItemCard({
           <div className="mt-3 flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:flex-wrap sm:gap-3">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1">
               <Coins className="h-3 w-3 shrink-0" />
-              <span>{item.pricePerDay.toFixed(0)} RSD / dan</span>
+              <span>
+                {item.priceByAgreement
+                  ? "Cena po dogovoru"
+                  : `${item.pricePerDay.toFixed(0)} RSD / dan`}
+              </span>
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1">
               <Calendar className="h-3 w-3 shrink-0" />
@@ -242,7 +232,12 @@ function ItemCard({
 
         {/* Action buttons - row on mobile, column on desktop */}
         <div className="flex shrink-0 gap-2 sm:flex-col">
-          <Button variant="outline" size="sm" className="flex-1 sm:flex-none" onClick={onEdit}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 sm:flex-none"
+            onClick={onEdit}
+          >
             Izmeni
           </Button>
           <AlertDialog>

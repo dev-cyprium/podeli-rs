@@ -150,8 +150,8 @@ function WhySharingSection() {
             </div>
             <h3 className="text-xl font-bold text-podeli-dark">Uštedi novac</h3>
             <p className="mt-3 leading-7 text-muted-foreground">
-              Zašto plaćati punu cenu za nešto što ti treba retko?
-              Iznajmljivanje je 10x jeftinije od kupovine.
+              Zašto plaćati punu cenu za nešto što ti treba retko? Za povremenu
+              upotrebu, iznajmljivanje može biti povoljnije od kupovine.
             </p>
           </div>
 
@@ -163,8 +163,8 @@ function WhySharingSection() {
               Čuvaj planetu
             </h3>
             <p className="mt-3 leading-7 text-muted-foreground">
-              Jedna bušilica se u proseku koristi samo 13 minuta tokom svog
-              životnog veka. Deljenjem smanjujemo otpad.
+              Stvari koje retko koristimo mogu poslužiti i drugima. Deljenjem
+              smanjujemo otpad.
             </p>
           </div>
 
@@ -294,11 +294,11 @@ export default async function Home() {
           <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
             <div>
               <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                Sigurnost je na prvom mestu
+                Dogovor uz jasne informacije
               </h2>
               <p className="mt-6 text-lg text-podeli-light/80">
-                Znamo da je poverenje ključno. Zato smo izgradili sistem koji
-                štiti i vlasnike i one koji iznajmljuju.
+                Pročitajte opis, cenu i uslove, razgovarajte sa vlasnikom i
+                dogovorite detalje pre preuzimanja.
               </p>
 
               <ul className="mt-10 space-y-6">
@@ -306,10 +306,10 @@ export default async function Home() {
                   <ShieldCheck className="h-6 w-6 flex-none text-podeli-accent" />
                   <div>
                     <strong className="block font-semibold text-podeli-light">
-                      Verifikovani korisnici
+                      Direktan kontakt
                     </strong>
                     <span className="text-podeli-light/70">
-                      Svaki nalog prolazi kroz proveru telefona i lokacije.
+                      Vlasnik bira kontakt putem četa, email-a ili telefona.
                     </span>
                   </div>
                 </li>
@@ -328,7 +328,7 @@ export default async function Home() {
                   <ShieldCheck className="h-6 w-6 flex-none text-podeli-accent" />
                   <div>
                     <strong className="block font-semibold text-podeli-light">
-                      Sigurni dogovori
+                      Jasni dogovori
                     </strong>
                     <span className="text-podeli-light/70">
                       Jasna pravila o korišćenju i vraćanju stvari.
@@ -340,25 +340,23 @@ export default async function Home() {
 
             <div className="relative rounded-3xl bg-podeli-dark/80 border border-podeli-accent/20 p-8">
               <div className="absolute -top-4 -right-4 -z-10 h-full w-full rounded-3xl bg-podeli-accent/20 blur-2xl"></div>
-              <blockquote className="space-y-6">
-                <p className="text-xl font-medium italic text-podeli-light/90">
-                  &quot;Imao sam merdevine koje su stajale u garaži 3 godine.
-                  Preko Podeli platforme sam ih iznajmio komšiji za vikend. Ja
-                  zaradio za kafu, on završio krečenje, a merdevine konačno
-                  služe svrsi.&quot;
-                </p>
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-full bg-podeli-blue/30"></div>
-                  <div>
-                    <div className="font-semibold text-podeli-light">
-                      Nikola Jovanović
-                    </div>
-                    <div className="text-sm text-podeli-light/70">
-                      Vračar, Beograd
-                    </div>
-                  </div>
-                </div>
-              </blockquote>
+              <h3 className="text-xl font-semibold">
+                Šta platforma omogućava?
+              </h3>
+              <p className="mt-4 text-podeli-light/80">
+                Besplatno objavljivanje, zahteve za rezervaciju, razgovor i
+                evidenciju preuzimanja i vraćanja.
+              </p>
+              <p className="mt-4 text-podeli-light/80">
+                Plaćanje i depozit dogovarate direktno sa vlasnikom. Platforma
+                ne prima uplatu, ne čuva depozit i ne nudi osiguranje predmeta.
+              </p>
+              <a
+                href="mailto:kontakt@podeli.rs"
+                className="mt-6 inline-block text-podeli-accent underline"
+              >
+                Potrebna vam je pomoć? Pišite nam
+              </a>
             </div>
           </div>
         </div>
@@ -378,8 +376,8 @@ export default async function Home() {
             Gradimo nešto zajedno
           </h2>
           <p className="mt-6 max-w-xl text-center text-lg text-podeli-light/80">
-            Podeli.rs aktivno raste. Pogledaj šta planiramo za 2026. godinu i
-            kako možeš biti deo priče.
+            podeli.rs je u početnoj fazi. Pogledaj šta planiramo za 2026. godinu
+            i kako možeš biti deo priče.
           </p>
           <Link href="/roadmap">
             <Button className="mt-10 bg-podeli-accent px-8 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-podeli-accent/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-podeli-accent">

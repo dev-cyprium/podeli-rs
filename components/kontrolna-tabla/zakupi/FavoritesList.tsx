@@ -38,7 +38,10 @@ export function FavoritesList() {
         <p className="mt-2 text-sm text-muted-foreground">
           Kliknite na srce na bilo kom predmetu da ga sačuvate ovde.
         </p>
-        <Button asChild className="mt-6 bg-podeli-accent text-white hover:bg-podeli-accent/90">
+        <Button
+          asChild
+          className="mt-6 bg-podeli-accent text-white hover:bg-podeli-accent/90"
+        >
           <Link href="/pretraga">
             <Search className="mr-2 h-4 w-4" />
             Pretraži ponudu
@@ -51,9 +54,10 @@ export function FavoritesList() {
   return (
     <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4">
       {favorites.map((fav) => {
-        const itemUrl = fav.item.shortId && fav.item.slug
-          ? `/p/${fav.item.shortId}/${fav.item.slug}`
-          : "#";
+        const itemUrl =
+          fav.item.shortId && fav.item.slug
+            ? `/p/${fav.item.shortId}/${fav.item.slug}`
+            : "#";
 
         return (
           <Link key={fav.favoriteId} href={itemUrl} className="group block">
@@ -99,8 +103,15 @@ export function FavoritesList() {
                 {fav.item.category}
               </p>
               <p className="mt-1 text-sm font-semibold text-podeli-accent">
-                {fav.item.pricePerDay.toFixed(0)} RSD
-                <span className="text-xs font-normal text-muted-foreground"> /dan</span>
+                {fav.item.priceByAgreement
+                  ? "Po dogovoru"
+                  : `${fav.item.pricePerDay.toFixed(0)} RSD`}
+                {!fav.item.priceByAgreement && (
+                  <span className="text-xs font-normal text-muted-foreground">
+                    {" "}
+                    /dan
+                  </span>
+                )}
               </p>
             </div>
           </Link>

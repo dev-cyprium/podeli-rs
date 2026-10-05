@@ -1,6 +1,12 @@
 import { NavBar } from "@/components/NavBar";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Check, Construction, Rocket, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  Check,
+  Construction,
+  Rocket,
+  Sparkles,
+} from "lucide-react";
 import Link from "next/link";
 
 export const metadata = {
@@ -11,55 +17,50 @@ export const metadata = {
 
 const quarters = [
   {
-    label: "Q1",
-    period: "Jan – Mar 2026",
+    label: "Postojeće funkcije",
+    period: "Osnova platforme",
     status: "done" as const,
     icon: Check,
     items: [
-      "Lansiranje platforme u Beogradu",
-      "Sistem rezervacija sa kalendarom",
-      "Ocene i recenzije korisnika",
-      "Kategorije predmeta sa predlozima zajednice",
-      "Blog sa vodičima i savetima",
+      "Oglasi i kalendar dostupnosti za iznajmljivanje",
+      "Upiti, odobrenje vlasnika i dogovor kroz poruke",
+      "Praćenje preuzimanja i vraćanja",
+      "Ocene, recenzije i predlozi kategorija",
     ],
   },
   {
-    label: "Q2",
-    period: "Apr – Jun 2026",
+    label: "Priprema ponovnog pokretanja",
+    period: "Prva serija — u toku",
     status: "current" as const,
     icon: Construction,
     items: [
-      "Unapređen sistem poruka",
-      "Notifikacije u realnom vremenu",
-      "Mobilna optimizacija i PWA podrška",
-      "Proširenje na Novi Sad",
-      "Program za partnere i lokalne biznise",
+      "Besplatno objavljivanje bez komercijalnog limita oglasa",
+      "Do 10 fotografija i jasnija uputstva",
+      "Provera rezervacija i dostupnosti",
+      "Razgovori sa nezavisnim ponuđačima o stvarnim potrebama",
     ],
   },
   {
-    label: "Q3",
-    period: "Jul – Sep 2026",
+    label: "Iznajmljivanje i prodaja",
+    period: "Sledeća serija",
     status: "upcoming" as const,
     icon: Rocket,
     items: [
-      "Plaćanje kroz platformu",
-      "Osiguranje predmeta",
-      "Verifikacija identiteta",
-      "Podrška za još gradova u Srbiji",
-      "API za integracije",
+      "Oglasi za iznajmljivanje, prodaju ili oba",
+      "Upiti za kupovinu kroz isti sistem",
+      "Grad i opština za lakše lokalno preuzimanje",
+      "Bezbedno povlačenje oglasa i očuvanje istorije dogovora",
     ],
   },
   {
-    label: "Q4",
-    period: "Okt – Dec 2026",
+    label: "Dalji razvoj prema rezultatima",
+    period: "Bez obećanih rokova",
     status: "upcoming" as const,
     icon: Sparkles,
     items: [
-      "Mobilna aplikacija (iOS i Android)",
-      "AI preporuke na osnovu lokacije",
-      "Program lojalnosti za aktivne korisnike",
-      "Proširenje na region (Crna Gora, BiH, Hrvatska)",
-      "Godišnji izveštaj zajednice",
+      "Poboljšanja prema stvarnim upitima i iskustvima korisnika",
+      "Proširenje ponude kada se potvrdi korist u prvoj kategoriji",
+      "Dodatna promocija tek kada postoje merljivi rezultati",
     ],
   },
 ];
@@ -82,8 +83,7 @@ const statusStyles = {
     icon: "bg-podeli-accent/10 text-podeli-accent",
   },
   upcoming: {
-    badge:
-      "bg-muted text-muted-foreground border-border",
+    badge: "bg-muted text-muted-foreground border-border",
     badgeText: "Planirano",
     line: "bg-border",
     dot: "bg-border",
@@ -108,8 +108,8 @@ export default function RoadmapPage() {
             Roadmap za 2026.
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-            Transparentno delimo šta gradimo i kuda idemo. Ovo je naš plan —
-            prilagođavamo ga na osnovu onoga što zajednica traži.
+            Platforma je u ranoj fazi. Prvo proveravamo osnovni tok i korist za
+            nezavisne ponuđače. Sledeći koraci zavise od njihovih iskustava.
           </p>
         </div>
 
@@ -184,7 +184,11 @@ export default function RoadmapPage() {
             prioritete. Javi nam se na Discord ili pošalji mejl.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-            <a href="https://discord.gg/69MBaCTEnz" target="_blank" rel="noopener noreferrer">
+            <a
+              href="https://discord.gg/69MBaCTEnz"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <Button className="bg-podeli-accent px-6 py-2.5 text-sm font-semibold text-white hover:bg-podeli-accent/90">
                 Pridruži se na Discord
               </Button>

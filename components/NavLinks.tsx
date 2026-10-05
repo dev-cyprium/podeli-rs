@@ -49,15 +49,13 @@ export function NavLinks() {
             >
               Česta pitanja
             </Link>
-            <PonudaLink
-              onClick={() => setIsMobileMenuOpen(false)}
-            />
+            <PonudaLink onClick={() => setIsMobileMenuOpen(false)} />
             <Link
               href="/planovi"
               onClick={() => setIsMobileMenuOpen(false)}
               className="text-sm font-semibold text-muted-foreground hover:text-podeli-accent"
             >
-              Planovi
+              Besplatno objavljivanje
             </Link>
           </div>
         </div>

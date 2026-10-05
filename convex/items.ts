@@ -1,7 +1,12 @@
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireIdentity } from "@/lib/convex-auth";
 import { Id } from "./_generated/dataModel";
+import {
+  availabilityError,
+  getBelgradeDate,
+  isRangeAvailable,
+} from "@/lib/rental-dates";
 
 const deliveryMethodValues = ["licno", "glovo", "wolt", "cargo"] as const;
 
@@ -47,13 +52,8 @@ export const listAll = query({
   },
   handler: async (ctx, args) => {
     const limit = args.limit ?? 20;
-    const items = await ctx.db.query("items").order("desc").take(limit + 50);
-    // Filter out expired single listing items
-    const now = Date.now();
-    const activeItems = items.filter(
-      (item) => !item.singleListingExpiresAt || item.singleListingExpiresAt > now
-    );
-    return activeItems.slice(0, limit);
+    const items = await ctx.db.query("items").order("desc").take(limit);
+    return items;
   },
 });
 
@@ -64,16 +64,9 @@ export const listAll = query({
 export const listForSitemap = query({
   args: {},
   handler: async (ctx) => {
-    const allItems = await ctx.db
-      .query("items")
-      .order("desc")
-      .collect();
+    const allItems = await ctx.db.query("items").order("desc").collect();
 
-    // Filter out expired single listing items
-    const now = Date.now();
-    const items = allItems.filter(
-      (item) => !item.singleListingExpiresAt || item.singleListingExpiresAt > now
-    );
+    const items = allItems;
 
     // Return only the fields needed for sitemap
     return items.map((item) => ({
@@ -110,7 +103,7 @@ export const getById = query({
       return null;
     }
     if (item.ownerId !== identity.subject) {
-      throw new Error("Nemate dozvolu da pristupite ovom predmetu.");
+      throw new ConvexError("Nemate dozvolu da pristupite ovom predmetu.");
     }
     return item;
   },
@@ -132,10 +125,6 @@ export const getByShortId = query({
     if (items.length === 0) return null;
 
     const item = items[0];
-    // Filter expired single listing items from public view
-    if (item.singleListingExpiresAt && item.singleListingExpiresAt <= Date.now()) {
-      return null;
-    }
 
     return item;
   },
@@ -162,109 +151,96 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const identity = await requireIdentity(ctx);
 
-    // --- Plan enforcement ---
+    // Publishing is free; a profile and contact preferences are still required.
     const profile = await ctx.db
       .query("profiles")
       .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
       .first();
 
     if (!profile) {
-      throw new Error("Profil nije pronađen. Osvežite stranicu i pokušajte ponovo.");
-    }
-
-    const plan = await ctx.db.get(profile.planId);
-    if (!plan) {
-      throw new Error("Plan nije pronađen.");
+      throw new ConvexError(
+        "Profil nije pronađen. Osvežite stranicu i pokušajte ponovo.",
+      );
     }
 
     // Check preferred contact types
     const prefs = profile.preferredContactTypes ?? [];
     if (prefs.length === 0) {
-      throw new Error("Postavite način kontakta pre objavljivanja.");
+      throw new ConvexError("Postavite način kontakta pre objavljivanja.");
     }
 
-    // Check single listing expiration
-    if (profile.planSlug === "single_listing" && profile.planExpiresAt && profile.planExpiresAt < Date.now()) {
-      throw new Error("Vaš pojedinačni oglas je istekao. Nadogradite plan da biste kreirali nove oglase.");
-    }
-
-    // Check listing count vs maxListings
-    if (plan.maxListings !== -1) {
-      const myItems = await ctx.db
-        .query("items")
-        .withIndex("by_owner", (q) => q.eq("ownerId", identity.subject))
-        .collect();
-
-      if (myItems.length >= plan.maxListings) {
-        throw new Error(
-          `Dostigli ste limit od ${plan.maxListings} oglas(a) za vaš "${plan.name}" plan. Nadogradite plan za više oglasa.`
-        );
-      }
-    }
-
-    // Check delivery methods against plan allowed methods
-    for (const method of args.deliveryMethods) {
-      if (!plan.allowedDeliveryMethods.includes(method)) {
-        throw new Error(
-          `Način dostave "${method}" nije dostupan za vaš "${plan.name}" plan. Nadogradite plan za dodatne opcije dostave.`
-        );
-      }
+    const latestItem = await ctx.db
+      .query("items")
+      .withIndex("by_owner", (q) => q.eq("ownerId", identity.subject))
+      .order("desc")
+      .first();
+    if (latestItem && Date.now() - latestItem.createdAt < 10_000) {
+      throw new ConvexError(
+        "Sačekajte 10 sekundi između objavljivanja oglasa.",
+      );
     }
 
     // Validate title
     if (!args.title.trim()) {
-      throw new Error("Naziv predmeta je obavezan.");
+      throw new ConvexError("Naziv predmeta je obavezan.");
     }
 
     // Validate description
     if (!args.description.trim()) {
-      throw new Error("Opis predmeta je obavezan.");
+      throw new ConvexError("Opis predmeta je obavezan.");
     }
 
     // Validate category
     if (!args.category.trim()) {
-      throw new Error("Kategorija je obavezna.");
+      throw new ConvexError("Kategorija je obavezna.");
     }
 
     // Validate price (skip if price is by agreement)
-    if (!args.priceByAgreement && (Number.isNaN(args.pricePerDay) || args.pricePerDay <= 0)) {
-      throw new Error("Cena po danu mora biti veća od nule.");
+    if (
+      !args.priceByAgreement &&
+      (!Number.isFinite(args.pricePerDay) || args.pricePerDay <= 0)
+    ) {
+      throw new ConvexError("Cena po danu mora biti veća od nule.");
+    }
+
+    if (
+      args.title.length > 200 ||
+      args.description.length > 10_000 ||
+      args.category.length > 100
+    ) {
+      throw new ConvexError("Naziv, opis ili kategorija su predugački.");
+    }
+    if (
+      args.deposit !== undefined &&
+      (!Number.isFinite(args.deposit) || args.deposit < 0)
+    ) {
+      throw new ConvexError("Depozit mora biti pozitivan broj ili nula.");
     }
 
     // Validate images
     if (args.images.length === 0) {
-      throw new Error("Dodajte bar jednu fotografiju.");
+      throw new ConvexError("Dodajte bar jednu fotografiju.");
     }
     if (args.images.length > 10) {
-      throw new Error("Maksimalno 10 fotografija po predmetu.");
+      throw new ConvexError("Maksimalno 10 fotografija po predmetu.");
     }
 
-    // Validate availability slots
-    const validSlots = args.availabilitySlots.filter(
-      (slot) => slot.startDate && slot.endDate,
-    );
-    if (validSlots.length === 0) {
-      throw new Error("Dodajte bar jedan termin dostupnosti.");
-    }
+    const validSlots = args.availabilitySlots;
+    const slotError = availabilityError(validSlots);
+    if (slotError) throw new ConvexError(slotError);
 
     // Validate delivery methods
     if (args.deliveryMethods.length === 0) {
-      throw new Error("Odaberite bar jedan način dostave.");
+      throw new ConvexError("Odaberite bar jedan način dostave.");
     }
 
     const now = Date.now();
 
-    // Set single listing expiration if applicable
-    let singleListingExpiresAt: number | undefined;
-    if (profile.planSlug === "single_listing" && plan.listingDurationDays) {
-      singleListingExpiresAt = now + plan.listingDurationDays * 24 * 60 * 60 * 1000;
-    }
-
     const itemId = await ctx.db.insert("items", {
       ...args,
+      pricePerDay: args.priceByAgreement ? 0 : args.pricePerDay,
       availabilitySlots: validSlots,
       ownerId: identity.subject,
-      singleListingExpiresAt,
       createdAt: now,
       updatedAt: now,
     });
@@ -304,70 +280,82 @@ export const update = mutation({
     const identity = await requireIdentity(ctx);
     const item = await ctx.db.get(args.id);
     if (!item) {
-      throw new Error("Predmet nije pronađen.");
+      throw new ConvexError("Predmet nije pronađen.");
     }
     if (item.ownerId !== identity.subject) {
-      throw new Error("Nemate dozvolu da menjate ovaj predmet.");
-    }
-
-    // --- Plan enforcement: delivery method restriction ---
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
-      .first();
-
-    if (profile) {
-      const plan = await ctx.db.get(profile.planId);
-      if (plan) {
-        for (const method of args.deliveryMethods) {
-          if (!plan.allowedDeliveryMethods.includes(method)) {
-            throw new Error(
-              `Način dostave "${method}" nije dostupan za vaš "${plan.name}" plan. Nadogradite plan za dodatne opcije dostave.`
-            );
-          }
-        }
-      }
+      throw new ConvexError("Nemate dozvolu da menjate ovaj predmet.");
     }
 
     // Validate title
     if (!args.title.trim()) {
-      throw new Error("Naziv predmeta je obavezan.");
+      throw new ConvexError("Naziv predmeta je obavezan.");
     }
 
     // Validate description
     if (!args.description.trim()) {
-      throw new Error("Opis predmeta je obavezan.");
+      throw new ConvexError("Opis predmeta je obavezan.");
     }
 
     // Validate category
     if (!args.category.trim()) {
-      throw new Error("Kategorija je obavezna.");
+      throw new ConvexError("Kategorija je obavezna.");
     }
 
     // Validate price (skip if price is by agreement)
-    if (!args.priceByAgreement && (Number.isNaN(args.pricePerDay) || args.pricePerDay <= 0)) {
-      throw new Error("Cena po danu mora biti veća od nule.");
+    if (
+      !args.priceByAgreement &&
+      (!Number.isFinite(args.pricePerDay) || args.pricePerDay <= 0)
+    ) {
+      throw new ConvexError("Cena po danu mora biti veća od nule.");
+    }
+
+    if (
+      args.title.length > 200 ||
+      args.description.length > 10_000 ||
+      args.category.length > 100
+    ) {
+      throw new ConvexError("Naziv, opis ili kategorija su predugački.");
+    }
+    if (
+      args.deposit !== undefined &&
+      (!Number.isFinite(args.deposit) || args.deposit < 0)
+    ) {
+      throw new ConvexError("Depozit mora biti pozitivan broj ili nula.");
     }
 
     // Validate images
     if (args.images.length === 0) {
-      throw new Error("Dodajte bar jednu fotografiju.");
+      throw new ConvexError("Dodajte bar jednu fotografiju.");
     }
     if (args.images.length > 10) {
-      throw new Error("Maksimalno 10 fotografija po predmetu.");
+      throw new ConvexError("Maksimalno 10 fotografija po predmetu.");
     }
 
-    // Validate availability slots
-    const validSlots = args.availabilitySlots.filter(
-      (slot) => slot.startDate && slot.endDate,
-    );
-    if (validSlots.length === 0) {
-      throw new Error("Dodajte bar jedan termin dostupnosti.");
-    }
+    const validSlots = args.availabilitySlots;
+    const slotError = availabilityError(validSlots);
+    if (slotError) throw new ConvexError(slotError);
 
     // Validate delivery methods
     if (args.deliveryMethods.length === 0) {
-      throw new Error("Odaberite bar jedan način dostave.");
+      throw new ConvexError("Odaberite bar jedan način dostave.");
+    }
+
+    // Editing availability must preserve all accepted rental commitments.
+    const bookings = await ctx.db
+      .query("bookings")
+      .withIndex("by_item", (q) => q.eq("itemId", args.id))
+      .collect();
+    if (
+      bookings.some(
+        (booking) =>
+          ACTIVE_BOOKING_STATUSES.includes(
+            booking.status as (typeof ACTIVE_BOOKING_STATUSES)[number],
+          ) && !isRangeAvailable(booking, validSlots),
+      )
+    ) {
+      throw new ConvexError(
+        "Dostupnost mora obuhvatiti postojeće prihvaćene rezervacije.",
+      );
     }
 
     // Delete old images that are no longer in the new list
@@ -394,6 +382,7 @@ export const update = mutation({
     }
     await ctx.db.patch(id, {
       ...rest,
+      pricePerDay: args.priceByAgreement ? 0 : args.pricePerDay,
       availabilitySlots: validSlots,
       ...updates,
     });
@@ -415,10 +404,10 @@ export const remove = mutation({
     const identity = await requireIdentity(ctx);
     const item = await ctx.db.get(args.id);
     if (!item) {
-      throw new Error("Predmet nije pronađen.");
+      throw new ConvexError("Predmet nije pronađen.");
     }
     if (item.ownerId !== identity.subject) {
-      throw new Error("Nemate dozvolu da obrišete ovaj predmet.");
+      throw new ConvexError("Nemate dozvolu da obrišete ovaj predmet.");
     }
 
     // Get all bookings for this item
@@ -429,12 +418,14 @@ export const remove = mutation({
 
     // Check if there are any active bookings that prevent deletion
     const activeBookings = bookings.filter((b) =>
-      ACTIVE_BOOKING_STATUSES.includes(b.status as typeof ACTIVE_BOOKING_STATUSES[number])
+      ACTIVE_BOOKING_STATUSES.includes(
+        b.status as (typeof ACTIVE_BOOKING_STATUSES)[number],
+      ),
     );
 
     if (activeBookings.length > 0) {
-      throw new Error(
-        "Ne možete obrisati predmet dok postoje aktivne rezervacije. Sačekajte da se sve rezervacije završe."
+      throw new ConvexError(
+        "Ne možete obrisati predmet dok postoje aktivne rezervacije. Sačekajte da se sve rezervacije završe.",
       );
     }
 
@@ -578,7 +569,9 @@ export const searchAutocomplete = query({
 
     const results = await ctx.db
       .query("items")
-      .withSearchIndex("search_items", (q) => q.search("searchText", args.query))
+      .withSearchIndex("search_items", (q) =>
+        q.search("searchText", args.query),
+      )
       .take(5);
 
     return results.map((item) => ({
@@ -605,24 +598,22 @@ export const searchItems = query({
   },
   handler: async (ctx, args) => {
     const { query: searchQuery, category, paginationOpts } = args;
-    const now = Date.now();
+    const today = getBelgradeDate();
 
-    const today = new Date(now).toISOString().split("T")[0];
-
-    // Helper to filter expired single listing items and items with all past availability slots
-    function filterActive<T extends { singleListingExpiresAt?: number; availabilitySlots: Array<{ startDate: string; endDate: string }> }>(items: T[]): T[] {
+    // Hide items with no current or future availability.
+    function filterActive<
+      T extends {
+        availabilitySlots: Array<{ startDate: string; endDate: string }>;
+      },
+    >(items: T[]): T[] {
       return items.filter((item) => {
-        // Filter out expired single listings
-        if (item.singleListingExpiresAt && item.singleListingExpiresAt <= now) {
-          return false;
-        }
         // Filter out items with no availability slots
         if (item.availabilitySlots.length === 0) {
           return false;
         }
         // Filter out items where every slot's endDate is in the past
         const hasActiveFutureSlot = item.availabilitySlots.some(
-          (slot) => slot.endDate >= today
+          (slot) => slot.endDate >= today,
         );
         return hasActiveFutureSlot;
       });
@@ -648,11 +639,11 @@ export const searchItems = query({
       const startIndex = cursorIndex + 1;
       const pageResults = allResults.slice(
         startIndex,
-        startIndex + paginationOpts.numItems
+        startIndex + paginationOpts.numItems,
       );
       const nextCursor =
         startIndex + paginationOpts.numItems < allResults.length
-          ? pageResults[pageResults.length - 1]?._id ?? null
+          ? (pageResults[pageResults.length - 1]?._id ?? null)
           : null;
 
       return {
@@ -669,7 +660,7 @@ export const searchItems = query({
           .query("items")
           .withIndex("by_category", (q) => q.eq("category", category))
           .order("desc")
-          .collect()
+          .collect(),
       );
 
       const cursorIndex = paginationOpts.cursor
@@ -678,11 +669,11 @@ export const searchItems = query({
       const startIndex = cursorIndex + 1;
       const pageResults = allResults.slice(
         startIndex,
-        startIndex + paginationOpts.numItems
+        startIndex + paginationOpts.numItems,
       );
       const nextCursor =
         startIndex + paginationOpts.numItems < allResults.length
-          ? pageResults[pageResults.length - 1]?._id ?? null
+          ? (pageResults[pageResults.length - 1]?._id ?? null)
           : null;
 
       return {
@@ -693,7 +684,9 @@ export const searchItems = query({
     }
 
     // Default: return all items ordered by most recent
-    const allResults = filterActive(await ctx.db.query("items").order("desc").collect());
+    const allResults = filterActive(
+      await ctx.db.query("items").order("desc").collect(),
+    );
 
     const cursorIndex = paginationOpts.cursor
       ? allResults.findIndex((item) => item._id === paginationOpts.cursor)
@@ -701,11 +694,11 @@ export const searchItems = query({
     const startIndex = cursorIndex + 1;
     const pageResults = allResults.slice(
       startIndex,
-      startIndex + paginationOpts.numItems
+      startIndex + paginationOpts.numItems,
     );
     const nextCursor =
       startIndex + paginationOpts.numItems < allResults.length
-        ? pageResults[pageResults.length - 1]?._id ?? null
+        ? (pageResults[pageResults.length - 1]?._id ?? null)
         : null;
 
     return {

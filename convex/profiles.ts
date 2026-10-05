@@ -23,7 +23,9 @@ export const createProfilesForUsers = internalMutation({
       .first();
 
     if (!freePlan) {
-      throw new Error("Besplatan plan nije pronađen. Pokrenite inicijalizaciju planova.");
+      throw new Error(
+        "Besplatan plan nije pronađen. Pokrenite inicijalizaciju planova.",
+      );
     }
 
     let created = 0;
@@ -107,9 +109,6 @@ export const getMyPlanLimits = query({
 
     if (!profile) return null;
 
-    const plan = await ctx.db.get(profile.planId);
-    if (!plan) return null;
-
     // Count current listings
     const myItems = await ctx.db
       .query("items")
@@ -118,16 +117,14 @@ export const getMyPlanLimits = query({
     const listingCount = myItems.length;
 
     return {
-      planName: plan.name,
-      planSlug: plan.slug,
-      maxListings: plan.maxListings,
-      allowedDeliveryMethods: plan.allowedDeliveryMethods,
-      hasBadge: plan.hasBadge,
-      badgeLabel: plan.badgeLabel,
+      planName: "Besplatno objavljivanje",
+      planSlug: "free",
+      maxListings: -1,
+      allowedDeliveryMethods: ["licno", "glovo", "wolt", "cargo"],
+      hasBadge: profile.hasBadge,
+      badgeLabel: profile.badgeLabel,
       listingCount,
-      planExpiresAt: profile.planExpiresAt,
-      listingDurationDays: plan.listingDurationDays,
-      isSubscription: plan.isSubscription,
+      isSubscription: false,
     };
   },
 });
@@ -176,12 +173,10 @@ export const getProfilesByUserIds = query({
           badgeLabel: profile.badgeLabel,
           planSlug: profile.planSlug,
         };
-      })
+      }),
     );
 
-    return profiles.filter(
-      (p): p is NonNullable<typeof p> => p !== null
-    );
+    return profiles.filter((p): p is NonNullable<typeof p> => p !== null);
   },
 });
 
@@ -190,11 +185,7 @@ const VALID_CONTACT_TYPES = ["chat", "email", "phone"] as const;
 export const updatePreferredContactTypes = mutation({
   args: {
     preferredContactTypes: v.array(
-      v.union(
-        v.literal("chat"),
-        v.literal("email"),
-        v.literal("phone")
-      )
+      v.union(v.literal("chat"), v.literal("email"), v.literal("phone")),
     ),
     phoneNumber: v.optional(v.string()),
   },
@@ -207,7 +198,7 @@ export const updatePreferredContactTypes = mutation({
     }
 
     const validTypes = args.preferredContactTypes.filter((t) =>
-      VALID_CONTACT_TYPES.includes(t)
+      VALID_CONTACT_TYPES.includes(t),
     );
     if (validTypes.length !== args.preferredContactTypes.length) {
       throw new Error("Nepoznata opcija kontakta.");
@@ -216,7 +207,9 @@ export const updatePreferredContactTypes = mutation({
     // If phone is selected, require a phone number
     if (validTypes.includes("phone")) {
       if (!args.phoneNumber || args.phoneNumber.trim().length === 0) {
-        throw new Error("Unesite broj telefona kada je telefon izabran kao način kontakta.");
+        throw new Error(
+          "Unesite broj telefona kada je telefon izabran kao način kontakta.",
+        );
       }
     }
 
@@ -232,7 +225,9 @@ export const updatePreferredContactTypes = mutation({
     const now = Date.now();
     await ctx.db.patch(profile._id, {
       preferredContactTypes: validTypes,
-      phoneNumber: validTypes.includes("phone") ? args.phoneNumber!.trim() : undefined,
+      phoneNumber: validTypes.includes("phone")
+        ? args.phoneNumber!.trim()
+        : undefined,
       updatedAt: now,
     });
 
@@ -245,7 +240,7 @@ export const updateDefaultDashboardMode = mutation({
     defaultDashboardMode: v.union(
       v.literal("podeli"),
       v.literal("zakupi"),
-      v.null()
+      v.null(),
     ),
   },
   returns: v.null(),
@@ -291,7 +286,9 @@ export const ensureProfile = mutation({
       .first();
 
     if (!freePlan) {
-      throw new Error("Besplatan plan nije pronađen. Pokrenite inicijalizaciju planova.");
+      throw new Error(
+        "Besplatan plan nije pronađen. Pokrenite inicijalizaciju planova.",
+      );
     }
 
     const now = Date.now();

@@ -16,64 +16,66 @@ export default function KakoFunkcionisePage() {
             Jednostavno deljenje, jasna pravila
           </h1>
           <p className="mt-4 text-lg text-muted-foreground">
-            <BrandName /> povezuje komšije koji žele da iznajme ili podele stvari
-            na fer, siguran i jednostavan način. Ovo su osnovna pravila i tok
-            korišćenja platforme.
+            <BrandName /> povezuje komšije koji žele da iznajme ili podele
+            stvari na fer, siguran i jednostavan način. Ovo su osnovna pravila i
+            tok korišćenja platforme.
           </p>
         </section>
 
         <section className="mt-14 grid gap-6 sm:grid-cols-2">
           <div className="rounded-2xl bg-card p-6 shadow-sm">
             <h2 className="text-lg font-semibold text-podeli-dark">
-              1. Pretplata (za vlasnike)
+              1. Besplatno objavljivanje
             </h2>
             <p className="mt-2 text-muted-foreground">
-              Pretplata je vrlo povoljna i odnosi se na korisnike koji
-              objavljuju stvari. Sa jednom pretplatom možeš da izdaš:
-            </p>
-            <ul className="mt-4 space-y-2 text-muted-foreground">
-              <li>• 1 stvar odjednom</li>
-              <li>• +1 dodatnu stvar u okviru istog perioda</li>
-            </ul>
-            <p className="mt-3 text-sm text-muted-foreground">
-              To znači: jedna pretplata = do 2 aktivne ponude po ciklusu.
+              U početnoj fazi objavljivanje je besplatno, bez pretplate i
+              komercijalnog limita oglasa. Dodajte do 10 fotografija po
+              predmetu.
             </p>
           </div>
 
           <div className="rounded-2xl bg-card p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-podeli-dark">2. Pronađi ili objavi</h2>
+            <h2 className="text-lg font-semibold text-podeli-dark">
+              2. Pronađi ili objavi
+            </h2>
             <p className="mt-2 text-muted-foreground">
               Tražiš alat, opremu ili nešto što ti treba? Pretraži ponudu u svom
               kraju. Imaš stvari koje ne koristiš? Objavi ih i zaradi.
             </p>
             <p className="mt-3 text-sm text-muted-foreground">
-              Iznajmljivanje nije vezano za pretplatu — pretplata važi za
-              korisnike koji objavljuju stvari.
+              Postavite način kontakta, tačnu cenu, depozit i termine
+              dostupnosti pre objavljivanja.
             </p>
           </div>
 
           <div className="rounded-2xl bg-card p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-podeli-dark">3. Dogovor i plaćanje</h2>
+            <h2 className="text-lg font-semibold text-podeli-dark">
+              3. Dogovor i plaćanje
+            </h2>
             <p className="mt-2 text-muted-foreground">
               Plaćanje se obavlja direktno između korisnika (vlasnik &lt;&gt;
-              korisnik). <BrandName /> ne uzima uplatu za samu razmenu stvari,
-              već
-              pretplata omogućava pristup platformi.
+              korisnik). <BrandName /> ne prima uplatu za najam niti čuva
+              depozit.
             </p>
             <p className="mt-3 text-sm text-muted-foreground">
-              Dogovorite cenu, vreme i način preuzimanja.
+              Dogovorite cenu, način plaćanja, depozit i tačno vreme i mesto
+              preuzimanja i vraćanja. Zahtev za rezervaciju nije potvrđena
+              rezervacija.
             </p>
           </div>
 
           <div className="rounded-2xl bg-card p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-podeli-dark">4. Poverenje i zaštita</h2>
+            <h2 className="text-lg font-semibold text-podeli-dark">
+              4. Jasni uslovi i podrška
+            </h2>
             <p className="mt-2 text-muted-foreground">
-              Za sada, zaštita se zasniva na ocenama i recenzijama. Svaki
-              korisnik nakon razmene ostavlja utisak, što gradi poverenje u
-              zajednici.
+              Ocene i recenzije pomažu pri izboru. Platforma ne nudi osiguranje
+              predmeta niti garantuje ponašanje korisnika. Pre predaje
+              dogovorite uslove i zabeležite stanje predmeta.
             </p>
             <p className="mt-3 text-sm text-muted-foreground">
-              Što više pozitivnih iskustava, to više sigurnosti za sve.
+              Ako nastane problem, prvo kontaktirajte drugu stranu, a za pomoć
+              sa platformom pišite na kontakt@podeli.rs.
             </p>
           </div>
         </section>
@@ -81,13 +83,11 @@ export default function KakoFunkcionisePage() {
         <section className="mt-14 rounded-3xl bg-podeli-dark px-6 py-10 text-podeli-light">
           <h2 className="text-2xl font-semibold">Ukratko:</h2>
           <ul className="mt-4 space-y-2 text-podeli-light/90">
-            <li>
-              • Jeftina pretplata važi za korisnike koji objavljuju stvari.
-            </li>
-            <li>• 1 pretplata = 1 stvar + 1 dodatna stvar po periodu.</li>
-            <li>• Iznajmljivanje je dostupno bez pretplate.</li>
+            <li>• Objavljivanje je besplatno u početnoj fazi.</li>
+            <li>• Nema komercijalnog limita oglasa.</li>
+            <li>• Vlasnik potvrđuje zahtev za rezervaciju.</li>
             <li>• Plaćanje je direktno između korisnika.</li>
-            <li>• Sigurnost zasnovana na ocenama i recenzijama.</li>
+            <li>• Platforma ne nudi osiguranje niti čuva depozit.</li>
           </ul>
           <div className="mt-6">
             <Link
