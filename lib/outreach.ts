@@ -1,11 +1,17 @@
 export const statuses = {
-  new: "Za poziv",
+  new: "Za kontakt",
   contacted: "Kontaktirani",
-  follow_up: "Ponovni poziv",
+  follow_up: "Ponovni kontakt",
   interested: "Zainteresovani",
   not_interested: "Nisu zainteresovani",
   onboarded: "Uključeni",
 } as const;
+export const channels = {
+  email: "Mejl",
+  contact_form: "Kontakt forma",
+  phone: "Telefon",
+} as const;
+export type OutreachChannel = keyof typeof channels;
 export type OutreachStatus = keyof typeof statuses;
 export function belgradeToday(now = new Date()) {
   const parts = new Intl.DateTimeFormat("en", {
@@ -42,6 +48,9 @@ export const csvColumns = [
   "status",
   "nextAction",
   "followUpDate",
+  "email",
+  "contactFormUrl",
+  "preferredChannel",
 ] as const;
 export function parseCsv(text: string): string[][] {
   const rows: string[][] = [];
@@ -93,9 +102,59 @@ export function isFollowUpDue(p: FollowUpProspect, today: string) {
     isActiveProspect(p) && Boolean(p.followUpDate) && p.followUpDate <= today
   );
 }
-export function isToCallToday(p: FollowUpProspect, today: string) {
+export function isToContactToday(p: FollowUpProspect, today: string) {
   return (
     isFollowUpDue(p, today) ||
     (p.status === "new" && (!p.followUpDate || p.followUpDate <= today))
   );
+}
+
+export function parseProspectCsv(text: string) {
+  const [header, ...rows] = parseCsv(text);
+  const legacy = csvColumns.slice(0, 8);
+  if (
+    !header ||
+    ![legacy, csvColumns].some(
+      (columns) =>
+        columns.length === header.length &&
+        columns.every((c, i) => c === header[i]),
+    )
+  )
+    throw new Error("Koristite CSV kolone iz izvoza ili preuzmite primer.");
+  return rows.map((row, index) => {
+    if (row.length !== header.length)
+      throw new Error(`Neispravan red ${index + 2}.`);
+    const [
+      name,
+      category,
+      phone,
+      website,
+      contactPerson,
+      status,
+      nextAction,
+      followUpDate,
+      email = "",
+      contactFormUrl = "",
+      preferredChannel = "",
+    ] = row;
+    if (!Object.hasOwn(statuses, status))
+      throw new Error(`Neispravan status u redu ${index + 2}.`);
+    if (preferredChannel && !Object.hasOwn(channels, preferredChannel))
+      throw new Error(`Neispravan kanal u redu ${index + 2}.`);
+    return {
+      name,
+      category,
+      phone,
+      website,
+      contactPerson,
+      status: status as OutreachStatus,
+      nextAction,
+      followUpDate,
+      email,
+      contactFormUrl,
+      preferredChannel: (preferredChannel || undefined) as
+        | OutreachChannel
+        | undefined,
+    };
+  });
 }

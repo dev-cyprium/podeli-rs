@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   Phone,
+  Mail,
   Plus,
   Download,
   Upload,
@@ -30,10 +31,12 @@ import {
   belgradeToday,
   isActiveProspect,
   isFollowUpDue,
-  isToCallToday,
+  isToContactToday,
   csvColumns,
   encodeCsv,
-  parseCsv,
+  parseProspectCsv,
+  channels,
+  type OutreachChannel,
   statuses,
   type OutreachStatus,
 } from "@/lib/outreach";
@@ -42,6 +45,9 @@ const blank = {
   name: "",
   category: "",
   phone: "",
+  email: "",
+  contactFormUrl: "",
+  preferredChannel: "" as OutreachChannel | "",
   website: "",
   contactPerson: "",
   status: "new" as OutreachStatus,
@@ -69,16 +75,23 @@ export function OutreachPanel() {
   }, []);
   const active = isActiveProspect;
   const due = (p: Doc<"prospects">) => isFollowUpDue(p, today);
-  const toCall = (p: Doc<"prospects">) => isToCallToday(p, today);
+  const toContact = (p: Doc<"prospects">) => isToContactToday(p, today);
   const rows = (prospects ?? [])
     .filter((p) => {
-      if (view === "today" && !toCall(p)) return false;
+      if (view === "today" && !toContact(p)) return false;
       if (view === "follow_up" && (!active(p) || !p.followUpDate)) return false;
       if (view === "interested" && p.status !== "interested") return false;
       return (
         (!category || p.category === category) &&
         (!status || p.status === status) &&
-        [p.name, p.category, p.phone, p.contactPerson]
+        [
+          p.name,
+          p.category,
+          p.phone,
+          p.email,
+          p.contactFormUrl,
+          p.contactPerson,
+        ]
           .join(" ")
           .toLocaleLowerCase("sr")
           .includes(search.toLocaleLowerCase("sr"))
@@ -94,6 +107,9 @@ export function OutreachPanel() {
     rows: Array<
       Omit<(typeof initialProspects)[number], "status"> & {
         status: OutreachStatus;
+        email?: string;
+        contactFormUrl?: string;
+        preferredChannel?: OutreachChannel;
       }
     >,
   ) {
@@ -113,39 +129,7 @@ export function OutreachPanel() {
     try {
       if (file.size > 1_000_000)
         throw new Error("CSV fajl može imati najviše 1 MB.");
-      const [header, ...data] = parseCsv(await file.text());
-      if (
-        !header ||
-        csvColumns.some((column, index) => header[index] !== column) ||
-        header.length !== csvColumns.length
-      )
-        throw new Error("Koristite CSV kolone iz izvoza ili preuzmite primer.");
-      const parsed = data.map((row, index) => {
-        if (row.length !== csvColumns.length)
-          throw new Error(`Neispravan red ${index + 2}.`);
-        const [
-          name,
-          category,
-          phone,
-          website,
-          contactPerson,
-          status,
-          nextAction,
-          followUpDate,
-        ] = row;
-        if (!Object.hasOwn(statuses, status))
-          throw new Error(`Neispravan status u redu ${index + 2}.`);
-        return {
-          name,
-          category,
-          phone,
-          website,
-          contactPerson,
-          status: status as OutreachStatus,
-          nextAction,
-          followUpDate,
-        };
-      });
+      const parsed = parseProspectCsv(await file.text());
       await importRows(parsed);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Uvoz nije uspeo.");
@@ -155,13 +139,16 @@ export function OutreachPanel() {
     rows: Array<
       Omit<(typeof initialProspects)[number], "status"> & {
         status: OutreachStatus;
+        email?: string;
+        contactFormUrl?: string;
+        preferredChannel?: OutreachChannel;
       }
     >,
     filename: string,
   ) {
     const csv = encodeCsv([
       [...csvColumns],
-      ...rows.map((row) => csvColumns.map((column) => row[column])),
+      ...rows.map((row) => csvColumns.map((column) => row[column] ?? "")),
     ]);
     const url = URL.createObjectURL(
       new Blob([csv], { type: "text/csv;charset=utf-8" }),
@@ -178,7 +165,8 @@ export function OutreachPanel() {
         <div>
           <h1 className="text-2xl font-bold">Saradnja</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Pozovi firmu, zabeleži razgovor i dogovori sledeći korak.
+            Kontaktiraj firmu mejlom, preko kontakt forme ili telefonom i
+            zabeleži sledeći korak.
           </p>
         </div>
         <Button onClick={() => setEditing("new")}>
@@ -188,10 +176,10 @@ export function OutreachPanel() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {(
           [
-            ["today", "Za poziv danas", prospects?.filter(toCall).length],
+            ["today", "Za kontakt danas", prospects?.filter(toContact).length],
             [
               "follow_up",
-              "Zakazani pozivi",
+              "Zakazani kontakti",
               prospects?.filter((p) => active(p) && p.followUpDate).length,
             ],
             [
@@ -220,7 +208,7 @@ export function OutreachPanel() {
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input
             aria-label="Pretraži firme"
-            placeholder="Firma, osoba ili telefon…"
+            placeholder="Firma, osoba, mejl ili telefon…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
@@ -285,11 +273,20 @@ export function OutreachPanel() {
                     {statuses[p.status]}
                   </span>
                 </div>
+                {p.preferredChannel && (
+                  <p className="text-xs text-muted-foreground">
+                    Sledeći kanal: {channels[p.preferredChannel]}
+                  </p>
+                )}
                 {p.nextAction && <p className="text-sm">{p.nextAction}</p>}
                 {p.latestActivity && (
                   <div className="border-l-2 border-podeli-accent pl-3 text-sm text-muted-foreground">
                     <p className="text-xs">
-                      Poslednji kontakt:{" "}
+                      Poslednji kontakt
+                      {p.latestActivity.channel
+                        ? ` (${channels[p.latestActivity.channel]})`
+                        : ""}
+                      :{" "}
                       {new Intl.DateTimeFormat("sr-Latn-RS", {
                         timeZone: "Europe/Belgrade",
                         dateStyle: "medium",
@@ -307,7 +304,7 @@ export function OutreachPanel() {
                     className={`flex items-center gap-2 text-sm ${due(p) ? "font-medium text-[#006992]" : "text-muted-foreground"}`}
                   >
                     <CalendarClock className="h-4 w-4" />
-                    {due(p) ? "Za poziv: " : "Sledeći poziv: "}
+                    {due(p) ? "Za kontakt: " : "Sledeći kontakt: "}
                     {p.followUpDate.split("-").reverse().join(".")}
                   </p>
                 )}
@@ -319,6 +316,26 @@ export function OutreachPanel() {
                     >
                       <Phone className="h-4 w-4" />
                       {p.phone}
+                    </a>
+                  )}
+                  {p.email && (
+                    <a
+                      href={`mailto:${p.email}`}
+                      className="inline-flex items-center gap-2 text-sm font-medium text-[#006992]"
+                    >
+                      <Mail className="h-4 w-4" />
+                      {p.email}
+                    </a>
+                  )}
+                  {p.contactFormUrl && (
+                    <a
+                      href={p.contactFormUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-sm font-medium text-[#006992]"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      Kontakt forma
                     </a>
                   )}
                   {p.website && (
@@ -338,7 +355,7 @@ export function OutreachPanel() {
                     className="ml-auto"
                     onClick={() => setEditing(p)}
                   >
-                    Zabeleži razgovor
+                    Zabeleži kontakt
                   </Button>
                 </div>
               </CardContent>
@@ -421,9 +438,15 @@ function ProspectDialog({
       ? {
           ...blank,
           ...prospect,
+          email: prospect.email ?? "",
+          contactFormUrl: prospect.contactFormUrl ?? "",
+          preferredChannel: prospect.preferredChannel ?? "",
           supplierProfileId: prospect.supplierProfileId ?? "",
         }
       : blank,
+  );
+  const [channel, setChannel] = useState<OutreachChannel | "">(
+    prospect?.preferredChannel ?? "",
   );
   const [note, setNote] = useState("");
   const [outcome, setOutcome] = useState<OutreachStatus | "">("");
@@ -443,7 +466,10 @@ function ProspectDialog({
         prospect: {
           name: form.name,
           category: form.category,
-          phone: form.phone,
+          phone: form.phone.trim(),
+          email: form.email.trim(),
+          contactFormUrl: form.contactFormUrl.trim(),
+          preferredChannel: form.preferredChannel || undefined,
           website: form.website,
           contactPerson: form.contactPerson,
           status: form.status,
@@ -452,6 +478,7 @@ function ProspectDialog({
           supplierProfileId: form.supplierProfileId || undefined,
         },
         note,
+        channel: channel || undefined,
         outcome: outcome || undefined,
       });
       toast.success("Kontakt sačuvan.");
@@ -483,7 +510,7 @@ function ProspectDialog({
         <DialogHeader>
           <DialogTitle>{prospect?.name ?? "Nova firma"}</DialogTitle>
           <DialogDescription>
-            Kontakt i istorija razgovora dostupni su samo administratorima.
+            Kontakt i istorija kontakata dostupni su samo administratorima.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
@@ -493,6 +520,8 @@ function ProspectDialog({
                 [
                   ["name", "Firma"],
                   ["category", "Kategorija"],
+                  ["email", "Mejl"],
+                  ["contactFormUrl", "Kontakt forma (URL)"],
                   ["phone", "Telefon"],
                   ["website", "Sajt"],
                   ["contactPerson", "Kontakt osoba"],
@@ -503,11 +532,13 @@ function ProspectDialog({
                   <Input
                     id={`prospect-${key}`}
                     type={
-                      key === "website"
+                      key === "website" || key === "contactFormUrl"
                         ? "url"
-                        : key === "phone"
-                          ? "tel"
-                          : "text"
+                        : key === "email"
+                          ? "email"
+                          : key === "phone"
+                            ? "tel"
+                            : "text"
                     }
                     maxLength={500}
                     required={key === "name" || key === "category"}
@@ -517,14 +548,57 @@ function ProspectDialog({
                 </div>
               ))}
             </div>
+            <div className="space-y-1">
+              <Label htmlFor="prospect-preferred-channel">
+                Kanal za sledeći kontakt
+              </Label>
+              <select
+                id="prospect-preferred-channel"
+                className={`${selectClass} w-full`}
+                value={form.preferredChannel}
+                onChange={(e) =>
+                  field(
+                    "preferredChannel",
+                    e.target.value as OutreachChannel | "",
+                  )
+                }
+              >
+                <option value="">Nije izabran</option>
+                {Object.entries(channels).map(([key, label]) => (
+                  <option key={key} value={key}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="prospect-activity-channel">
+                Kanal kontakta koji beležiš
+              </Label>
+              <select
+                id="prospect-activity-channel"
+                className={`${selectClass} w-full`}
+                value={channel}
+                onChange={(e) =>
+                  setChannel(e.target.value as OutreachChannel | "")
+                }
+              >
+                <option value="">Bez kanala / interna beleška</option>
+                {Object.entries(channels).map(([key, label]) => (
+                  <option key={key} value={key}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className="space-y-2">
-              <Label>Ishod poziva</Label>
+              <Label>Ishod kontakta</Label>
               <div className="flex flex-wrap gap-2">
                 {(
                   [
                     ["new", "Nema odgovora"],
-                    ["contacted", "Razgovarali smo"],
-                    ["follow_up", "Pozovi kasnije"],
+                    ["contacted", "Poruka poslata / kontakt ostvaren"],
+                    ["follow_up", "Kontaktiraj kasnije"],
                     ["interested", "Zainteresovani"],
                     ["not_interested", "Nisu zainteresovani"],
                     ["onboarded", "Uključeni"],
@@ -561,7 +635,7 @@ function ProspectDialog({
                 </select>
               </div>
               <div className="space-y-1">
-                <Label htmlFor="prospect-date">Sledeći poziv</Label>
+                <Label htmlFor="prospect-date">Sledeći kontakt</Label>
                 <Input
                   id="prospect-date"
                   type="date"
@@ -579,13 +653,13 @@ function ProspectDialog({
               <Input
                 id="prospect-action"
                 maxLength={500}
-                placeholder="Npr. poslati predlog i pozvati u petak"
+                placeholder="Npr. poslati mejl sa primerom oglasa"
                 value={form.nextAction}
                 onChange={(e) => field("nextAction", e.target.value)}
               />
             </div>
             <div className="space-y-1">
-              <Label htmlFor="prospect-note">Beleška o razgovoru</Label>
+              <Label htmlFor="prospect-note">Beleška o kontaktu</Label>
               <textarea
                 id="prospect-note"
                 maxLength={5000}
@@ -635,14 +709,14 @@ function ProspectDialog({
         </form>
         {prospect && (
           <section className="space-y-3 border-t pt-4">
-            <h2 className="font-semibold">Istorija razgovora</h2>
+            <h2 className="font-semibold">Istorija kontakata</h2>
             {history === undefined ? (
               <p role="status" className="text-sm">
                 Učitavanje…
               </p>
             ) : history.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                Još nema zabeleženih razgovora.
+                Još nema zabeleženih kontakata.
               </p>
             ) : (
               history.map((entry) => (
@@ -654,6 +728,7 @@ function ProspectDialog({
                       timeStyle: "short",
                     }).format(entry.createdAt)}{" "}
                     · {statuses[entry.outcome]}
+                    {entry.channel && ` · ${channels[entry.channel]}`}
                   </p>
                   {entry.note && (
                     <p className="mt-1 whitespace-pre-wrap text-sm">

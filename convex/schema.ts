@@ -1,10 +1,10 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-import { prospectFields, outreachStatus } from "./outreachModel";
+import { prospectFields, outreachStatus, outreachChannel } from "./outreachModel";
 
 export default defineSchema({
   prospects: defineTable({ ...prospectFields, key: v.string(), createdAt: v.number(), updatedAt: v.number() }).index("by_key", ["key"]),
-  prospectActivities: defineTable({ prospectId: v.id("prospects"), authorId: v.string(), outcome: outreachStatus, note: v.string(), createdAt: v.number() }).index("by_prospectId", ["prospectId"]),
+  prospectActivities: defineTable({ prospectId: v.id("prospects"), authorId: v.string(), channel: v.optional(outreachChannel), outcome: outreachStatus, note: v.string(), createdAt: v.number() }).index("by_prospectId", ["prospectId"]),
   items: defineTable({
     ownerId: v.string(),
     title: v.string(),

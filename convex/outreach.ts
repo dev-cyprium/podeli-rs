@@ -7,6 +7,7 @@ import {
   prospectDocument,
   activityDocument,
   outreachStatus,
+  outreachChannel,
 } from "./outreachModel";
 async function requireAdmin(ctx: QueryCtx | MutationCtx) {
   const identity = await requireIdentity(ctx);
@@ -22,6 +23,8 @@ function validate(p: {
   name: string;
   category: string;
   phone: string;
+  email?: string;
+  contactFormUrl?: string;
   website: string;
   contactPerson: string;
   nextAction: string;
@@ -35,6 +38,8 @@ function validate(p: {
       p.name,
       p.category,
       p.phone,
+      p.email ?? "",
+      p.contactFormUrl ?? "",
       p.website,
       p.contactPerson,
       p.nextAction,
@@ -44,13 +49,18 @@ function validate(p: {
   if (!validFollowUp(p.followUpDate))
     throw new ConvexError("Neispravan datum.");
   if (p.status === "follow_up" && !p.followUpDate)
-    throw new ConvexError("Izaberite datum ponovnog poziva.");
-  if (p.website) {
+    throw new ConvexError("Izaberite datum ponovnog kontakta.");
+  if (p.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.email))
+    throw new ConvexError("Unesite ispravnu mejl adresu.");
+  for (const url of [p.website, p.contactFormUrl]) {
+    if (!url) continue;
     try {
-      if (!["https:", "http:"].includes(new URL(p.website).protocol))
+      if (!["https:", "http:"].includes(new URL(url).protocol))
         throw new Error();
     } catch {
-      throw new ConvexError("Unesite HTTP ili HTTPS adresu sajta.");
+      throw new ConvexError(
+        "Unesite HTTP ili HTTPS adresu sajta ili kontakt forme.",
+      );
     }
   }
 }
@@ -145,9 +155,10 @@ export const save = mutation({
     prospect: prospectInput,
     note: v.string(),
     outcome: v.optional(outreachStatus),
+    channel: v.optional(outreachChannel),
   },
   returns: v.id("prospects"),
-  handler: async (ctx, { id, prospect, note, outcome }) => {
+  handler: async (ctx, { id, prospect, note, outcome, channel }) => {
     const identity = await requireAdmin(ctx);
     validate(prospect);
     if (note.length > 5000)
@@ -170,6 +181,7 @@ export const save = mutation({
     const data = {
       ...prospect,
       supplierProfileId: prospect.supplierProfileId,
+      preferredChannel: prospect.preferredChannel,
       name: prospect.name.trim(),
       category: prospect.category.trim(),
       key,
@@ -188,6 +200,7 @@ export const save = mutation({
         authorId: identity.subject,
         outcome: outcome ?? prospect.status,
         note: note.trim(),
+        channel,
         createdAt: now,
       });
     return savedId;
