@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { SignedIn, SignedOut } from "@clerk/nextjs";
+import { Show } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -15,16 +15,16 @@ import type { BookingWithItem } from "./incoming/useBookingGroups";
 export function IncomingBookings() {
   return (
     <>
-      <SignedOut>
+      <Show when="signed-out">
         <Card>
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
             Prijavite se da biste videli dolazne rezervacije.
           </CardContent>
         </Card>
-      </SignedOut>
-      <SignedIn>
+      </Show>
+      <Show when="signed-in">
         <IncomingBookingsContent />
-      </SignedIn>
+      </Show>
     </>
   );
 }

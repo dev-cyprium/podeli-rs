@@ -1,3 +1,8 @@
+import { offerFields } from "./listingOfferModel";
+import {
+  imageFocalPointValidator,
+  imageFocalPointsValidator,
+} from "./imageModel";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import {
@@ -7,12 +12,19 @@ import {
 } from "./outreachModel";
 
 export default defineSchema({
+  listingOffers: defineTable(offerFields)
+    .index("by_prospectId", ["prospectId"])
+    .index("by_token", ["token"])
+    .index("by_claimedBy", ["claimedBy"]),
   prospects: defineTable({
     ...prospectFields,
     key: v.string(),
+    importKey: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
-  }).index("by_key", ["key"]),
+  })
+    .index("by_key", ["key"])
+    .index("by_importKey", ["importKey"]),
   prospectActivities: defineTable({
     prospectId: v.id("prospects"),
     authorId: v.string(),
@@ -26,6 +38,10 @@ export default defineSchema({
     title: v.string(),
     description: v.string(),
     category: v.string(),
+    city: v.optional(v.string()),
+    municipality: v.optional(v.string()),
+    cityKey: v.optional(v.string()),
+    municipalityKey: v.optional(v.string()),
     listingType: v.optional(
       v.union(v.literal("rent"), v.literal("sale"), v.literal("both")),
     ),
@@ -45,7 +61,8 @@ export default defineSchema({
     shortId: v.optional(v.string()),
     slug: v.optional(v.string()),
     searchText: v.optional(v.string()),
-    imageFocalPoint: v.optional(v.object({ x: v.number(), y: v.number() })),
+    imageFocalPoint: v.optional(imageFocalPointValidator),
+    imageFocalPoints: v.optional(imageFocalPointsValidator),
     singleListingExpiresAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -53,10 +70,12 @@ export default defineSchema({
     .index("by_owner", ["ownerId"])
     .index("by_shortId", ["shortId"])
     .index("by_category", ["category"])
+    .index("by_cityKey_and_municipalityKey", ["cityKey", "municipalityKey"])
+    .index("by_municipalityKey", ["municipalityKey"])
     .index("by_soldAt", ["soldAt"])
     .searchIndex("search_items", {
       searchField: "searchText",
-      filterFields: ["category", "soldAt"],
+      filterFields: ["category", "cityKey", "municipalityKey", "soldAt"],
     }),
 
   plans: defineTable({

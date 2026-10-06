@@ -1,11 +1,22 @@
 export const statuses = {
-  new: "Za kontakt",
+  new: "Za pripremu ponude",
   contacted: "Kontaktirani",
-  follow_up: "Ponovni kontakt",
+  follow_up: "Pratiti odgovor",
   interested: "Zainteresovani",
   not_interested: "Nisu zainteresovani",
   onboarded: "Uključeni",
+  offer_ready: "Ponuda spremna",
+  offer_sent: "Ponuda poslata",
+  offer_claimed: "Ponuda preuzeta",
 } as const;
+export const nextSteps = {
+  prepare_offer: "Pripremi ponudu",
+  send_offer: "Pošalji link ponude",
+  await_reply: "Sačekaj odgovor",
+  follow_up: "Proveri odgovor na ponudu",
+  help_publish: "Pomozi oko objave",
+} as const;
+export type OutreachStep = keyof typeof nextSteps;
 export const channels = {
   email: "Mejl",
   contact_form: "Kontakt forma",
@@ -105,7 +116,8 @@ export function isFollowUpDue(p: FollowUpProspect, today: string) {
 export function isToContactToday(p: FollowUpProspect, today: string) {
   return (
     isFollowUpDue(p, today) ||
-    (p.status === "new" && (!p.followUpDate || p.followUpDate <= today))
+    (["new", "offer_ready", "offer_claimed"].includes(p.status) &&
+      (!p.followUpDate || p.followUpDate <= today))
   );
 }
 

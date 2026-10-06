@@ -11,6 +11,8 @@ import { SearchResultsSkeleton } from "./SearchResultsSkeleton";
 function SearchResultsInner({
   query,
   category,
+  city,
+  municipality,
   listingType,
 }: SearchResultsInnerProps) {
   const [cursor, setCursor] = useState<string | null>(null);
@@ -31,6 +33,8 @@ function SearchResultsInner({
   const searchResult = useQuery(api.items.searchItems, {
     query: query || undefined,
     category: category || undefined,
+    city: city || undefined,
+    municipality: municipality || undefined,
     listingType,
     paginationOpts: {
       numItems: 12,
@@ -154,12 +158,16 @@ function SearchResultsInner({
 interface SearchResultsInnerProps {
   query?: string;
   category?: string;
+  city?: string;
+  municipality?: string;
   listingType?: "rent" | "sale" | "both";
 }
 
 interface SearchResultsProps {
   query?: string;
   category?: string;
+  city?: string;
+  municipality?: string;
   listingType?: "rent" | "sale" | "both";
 }
 
@@ -167,15 +175,24 @@ interface SearchResultsProps {
 export function SearchResults({
   query,
   category,
+  city,
+  municipality,
   listingType,
 }: SearchResultsProps) {
-  // Using key to force remount when search params change, which resets all state
-  const key = `${query ?? ""}-${category ?? ""}-${listingType ?? ""}`;
+  const key = JSON.stringify([
+    query,
+    category,
+    city,
+    municipality,
+    listingType,
+  ]);
   return (
     <SearchResultsInner
       key={key}
       query={query}
       category={category}
+      city={city}
+      municipality={municipality}
       listingType={listingType}
     />
   );

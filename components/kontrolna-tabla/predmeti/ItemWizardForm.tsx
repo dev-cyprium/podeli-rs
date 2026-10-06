@@ -4,8 +4,11 @@ import { useState, useEffect, useMemo } from "react";
 import { type DateRange } from "react-day-picker";
 import { format, parseISO, addWeeks, addMonths, addYears } from "date-fns";
 import { Trash2 } from "lucide-react";
+import { ItemPhotoEditor } from "./ItemPhotoEditor";
+import { getImageFocalPoint, ImageFocalPoints } from "@/lib/item-photos";
 import { AnimatePresence, motion } from "framer-motion";
 import { useMutation, useQuery } from "convex/react";
+import { ConvexError } from "convex/values";
 import { Doc, Id } from "@/convex/_generated/dataModel";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
@@ -23,6 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import { PreferredContactForm } from "./PreferredContactForm";
 import { CategoryCombobox } from "./CategoryCombobox";
+import { locationError } from "@/lib/item-location";
 import {
   offersRent,
   offersSale,
@@ -51,6 +55,8 @@ export type ItemFormData = {
   title: string;
   description: string;
   category: string;
+  city: string;
+  municipality: string;
   listingType?: ListingType;
   salePrice?: number;
   pricePerDay: number;
@@ -58,6 +64,7 @@ export type ItemFormData = {
   deposit?: number;
   images: Id<"_storage">[];
   imageFocalPoint?: { x: number; y: number };
+  imageFocalPoints?: ImageFocalPoints;
   availabilitySlots: AvailabilitySlot[];
   deliveryMethods: DeliveryMethod[];
 };
@@ -69,20 +76,32 @@ const CONTACT_LABELS: Record<string, string> = {
 };
 
 interface ItemWizardFormProps {
-  item: Doc<"items"> | null;
+  item: Partial<Pick<Doc<"items">, keyof ItemFormData>> | null;
+  mode?: "draft" | "publish";
+  submitLabel?: string;
+  initialStep?: number;
   onSave: (data: ItemFormData) => Promise<void>;
   onCancel?: () => void;
   preferredContactTypes?: string[];
+  phoneNumber?: string;
+  onContactSaved?: () => void;
 }
 
 export function ItemWizardForm({
   item,
   onSave,
   preferredContactTypes = [],
+  phoneNumber,
+  onContactSaved,
+  mode = "publish",
+  submitLabel,
+  initialStep = 0,
 }: ItemWizardFormProps) {
   const generateUploadUrl = useMutation(api.items.generateUploadUrl);
   const categoryNames = useQuery(api.categories.listNames);
   const categories = useMemo(() => categoryNames ?? [], [categoryNames]);
+  const [city, setCity] = useState(item?.city ?? "");
+  const [municipality, setMunicipality] = useState(item?.municipality ?? "");
   const [title, setTitle] = useState(item?.title ?? "");
   const [description, setDescription] = useState(item?.description ?? "");
   const [category, setCategory] = useState(
@@ -104,6 +123,7 @@ export function ItemWizardForm({
   const [imageFocalPoint, setImageFocalPoint] = useState<{
     x: number;
     y: number;
+    points?: ImageFocalPoints;
   }>(item?.imageFocalPoint ?? { x: 50, y: 50 });
   const [availabilitySlots, setAvailabilitySlots] = useState<
     AvailabilitySlot[]
@@ -114,7 +134,7 @@ export function ItemWizardForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isProcessingImages, setIsProcessingImages] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(initialStep);
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [invalidSteps, setInvalidSteps] = useState<Set<number>>(new Set());
   const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set()); // Don't mark any step as visited initially
@@ -140,8 +160,8 @@ export function ItemWizardForm({
     },
     {
       id: "images",
-      title: "Fotografija",
-      description: "Dodajte fotografiju predmeta.",
+      title: "Fotografije",
+      description: "Dodajte fotografije i izaberite naslovnu.",
     },
     {
       id: "availability",
@@ -153,11 +173,34 @@ export function ItemWizardForm({
       title: "Dostava",
       description: "Odaberite opcije preuzimanja.",
     },
-  ];
+  ].filter((step) => mode !== "draft" || step.id !== "availability");
 
-  function removeImage() {
-    setImages((previous) => previous.slice(1));
-    setImageFocalPoint({ x: 50, y: 50 });
+  // Keep the legacy cover coordinates together with the per-photo settings.
+  // A storage ID remains stable when the cover or the photo order changes.
+  const photoPoints: ImageFocalPoints = Object.fromEntries(
+    images.map((id, index) => [
+      id,
+      getImageFocalPoint(
+        id,
+        index,
+        imageFocalPoint.points ?? item?.imageFocalPoints,
+        imageFocalPoint,
+      ),
+    ]),
+  );
+
+  function updatePhotos(
+    nextImages: Id<"_storage">[],
+    points: ImageFocalPoints,
+  ) {
+    const retained = Object.fromEntries(
+      nextImages.map((id) => [id, points[id] ?? { x: 50, y: 50 }]),
+    );
+    setImages(nextImages);
+    setImageFocalPoint({
+      ...(retained[nextImages[0]] ?? { x: 50, y: 50 }),
+      points: retained,
+    });
   }
 
   function addSlot() {
@@ -209,16 +252,11 @@ export function ItemWizardForm({
 
   async function handleImageUpload(
     files: FileList | null,
-    replaceCover = false,
+    replaceId?: Id<"_storage">,
   ) {
     if (!files || files.length === 0) return;
-    const selected = replaceCover ? [files[0]] : Array.from(files);
-    if (
-      images.length +
-        selected.length -
-        (replaceCover && images.length > 0 ? 1 : 0) >
-      10
-    ) {
+    const selected = replaceId ? [files[0]] : Array.from(files);
+    if (images.length + selected.length - (replaceId ? 1 : 0) > 10) {
       setFormError("Maksimalno 10 fotografija po predmetu.");
       return;
     }
@@ -234,6 +272,7 @@ export function ItemWizardForm({
     setIsProcessingImages(true);
     setFormError(null);
     try {
+      let uploadedId: Id<"_storage"> | undefined;
       for (const file of selected) {
         // Generate upload URL
         const uploadUrl = await generateUploadUrl();
@@ -247,13 +286,19 @@ export function ItemWizardForm({
           throw new Error("Neuspešno učitavanje fajla");
         }
         const { storageId } = await result.json();
-        setImages((previous) =>
-          replaceCover
-            ? [storageId as Id<"_storage">, ...previous.slice(1)]
-            : [...previous, storageId as Id<"_storage">],
-        );
+        uploadedId = storageId as Id<"_storage">;
+        if (replaceId) {
+          updatePhotos(
+            images.map((id) =>
+              id === replaceId ? (storageId as Id<"_storage">) : id,
+            ),
+            photoPoints,
+          );
+        } else {
+          setImages((previous) => [...previous, storageId as Id<"_storage">]);
+        }
       }
-      if (replaceCover) setImageFocalPoint({ x: 50, y: 50 });
+      return uploadedId;
     } catch {
       setFormError("Greška pri učitavanju slike. Pokušajte ponovo.");
     } finally {
@@ -262,7 +307,7 @@ export function ItemWizardForm({
   }
 
   function validateStep(stepIndex: number) {
-    if (stepIndex === 0) {
+    if (steps[stepIndex].id === "basic") {
       if (
         offersSale(listing) &&
         (!Number.isFinite(Number(salePrice)) || Number(salePrice) <= 0)
@@ -290,19 +335,21 @@ export function ItemWizardForm({
         return "Cena po danu mora biti veća od nule.";
       }
     }
-    if (stepIndex === 1) {
-      if (images.length === 0) {
+    if (steps[stepIndex].id === "images") {
+      if (mode !== "draft" && images.length === 0) {
         return "Dodajte fotografiju predmeta.";
       }
     }
-    if (stepIndex === 2) {
+    if (steps[stepIndex].id === "availability") {
       const slotError = offersRent(listing)
         ? availabilityError(availabilitySlots)
         : null;
       if (slotError) return slotError;
     }
-    if (stepIndex === 3) {
-      if (deliveryMethods.length === 0) {
+    if (steps[stepIndex].id === "delivery") {
+      const error = locationError(city, municipality);
+      if (error && mode !== "draft") return error;
+      if (mode !== "draft" && deliveryMethods.length === 0) {
         return "Odaberite bar jedan način dostave.";
       }
     }
@@ -341,6 +388,8 @@ export function ItemWizardForm({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    city,
+    municipality,
     title,
     description,
     category,
@@ -463,6 +512,13 @@ export function ItemWizardForm({
       return;
     }
 
+    if (mode !== "draft" && preferredContactTypes.length === 0) {
+      setFormError(null);
+      setCurrentStep(steps.findIndex((step) => step.id === "delivery"));
+      setContactModalOpen(true);
+      return;
+    }
+
     setFormError(null);
     const numericPrice = priceByAgreement ? 0 : Number(pricePerDay);
     const numericDeposit = deposit.trim() ? Number(deposit) : undefined;
@@ -474,6 +530,8 @@ export function ItemWizardForm({
         title: title.trim(),
         description: description.trim(),
         category,
+        city: city.trim(),
+        municipality: municipality.trim(),
         listingType,
         salePrice: offersSale(listing) ? Number(salePrice) : undefined,
         pricePerDay: offersRent(listing) ? numericPrice : 0,
@@ -483,13 +541,23 @@ export function ItemWizardForm({
             ? numericDeposit
             : undefined,
         images,
-        imageFocalPoint,
+        imageFocalPoint: photoPoints[images[0]],
+        imageFocalPoints: photoPoints,
         availabilitySlots: offersRent(listing) ? cleanedSlots : [],
         deliveryMethods,
       });
       setFormError(null);
-    } catch {
-      setFormError("Sačuvavanje nije uspelo. Pokušajte ponovo.");
+    } catch (error) {
+      const message =
+        error instanceof ConvexError && typeof error.data === "string"
+          ? error.data
+          : "Čuvanje nije uspelo. Pokušajte ponovo.";
+      if (message === "Postavite način kontakta pre objavljivanja.") {
+        setContactModalOpen(true);
+        setFormError(null);
+      } else {
+        setFormError(message);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -560,7 +628,7 @@ export function ItemWizardForm({
           transition={{ type: "spring", bounce: 0.35, duration: 0.4 }}
           className="space-y-4"
         >
-          {currentStep === 0 ? (
+          {steps[currentStep].id === "basic" ? (
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="listing-type">Vrsta oglasa</Label>
@@ -666,167 +734,38 @@ export function ItemWizardForm({
             </div>
           ) : null}
 
-          {currentStep === 1 ? (
-            <div className="space-y-4">
-              <div>
-                <Label>Fotografija</Label>
-              </div>
-              {isProcessingImages ? (
-                <div className="flex items-center justify-center rounded-lg border border-border bg-muted p-12">
-                  <p className="text-sm text-muted-foreground">
-                    Učitavanje fotografije...
-                  </p>
-                </div>
-              ) : null}
-              {!isProcessingImages && images.length === 0 ? (
-                <label className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted p-12 text-center transition-colors hover:border-podeli-accent hover:bg-podeli-accent/5 cursor-pointer">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={(event) => handleImageUpload(event.target.files)}
-                    className="hidden"
-                  />
-                  <div className="mb-3 text-muted-foreground">
-                    <svg
-                      className="mx-auto h-12 w-12"
-                      stroke="currentColor"
-                      fill="none"
-                      viewBox="0 0 48 48"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                        strokeWidth={2}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
-                  <p className="text-sm font-medium text-podeli-dark">
-                    Kliknite da dodate fotografiju
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    PNG, JPG ili GIF do 10MB
-                  </p>
-                </label>
-              ) : null}
-              {!isProcessingImages && images.length > 0 ? (
-                <div className="relative group">
-                  <div
-                    className="relative cursor-crosshair overflow-hidden rounded-lg border-2 border-border bg-muted"
-                    onClick={(e) => {
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      const x = Math.round(
-                        ((e.clientX - rect.left) / rect.width) * 100,
-                      );
-                      const y = Math.round(
-                        ((e.clientY - rect.top) / rect.height) * 100,
-                      );
-                      setImageFocalPoint({ x, y });
-                    }}
-                  >
-                    {imageUrlsMap?.[images[0]] ? (
-                      <>
-                        <img
-                          src={imageUrlsMap[images[0]] ?? undefined}
-                          alt="Fotografija predmeta"
-                          className="h-[400px] w-full object-contain"
-                          draggable={false}
-                        />
-                        {/* Focal point marker */}
-                        <div
-                          className="pointer-events-none absolute h-6 w-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.3)]"
-                          style={{
-                            left: `${imageFocalPoint.x}%`,
-                            top: `${imageFocalPoint.y}%`,
-                            background:
-                              "radial-gradient(circle, rgba(240,162,2,0.8) 30%, transparent 70%)",
-                          }}
-                        />
-                      </>
-                    ) : (
-                      <div className="flex h-[400px] w-full items-center justify-center bg-muted text-sm text-muted-foreground">
-                        Učitavanje...
-                      </div>
-                    )}
-                  </div>
-                  <p className="mt-2 text-center text-xs text-muted-foreground">
-                    Kliknite na najvažniji deo slike za pozicioniranje
-                  </p>
-                  <div className="mt-3 flex items-center justify-center gap-3">
-                    <label className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 text-sm font-semibold text-podeli-dark hover:bg-muted transition-colors cursor-pointer">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(event) =>
-                          handleImageUpload(event.target.files, true)
-                        }
-                        className="hidden"
-                      />
-                      Zameni fotografiju
-                    </label>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      onClick={removeImage}
-                      className="inline-flex items-center gap-2 rounded-md border border-podeli-red/30 bg-card px-4 py-2 text-sm font-semibold text-podeli-red hover:bg-podeli-red/10"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Ukloni
-                    </Button>
-                  </div>
-                </div>
-              ) : null}
-              {images.length > 1 ? (
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  {images.slice(1).map((image, index) => (
-                    <div key={image} className="space-y-2">
-                      <img
-                        src={imageUrlsMap?.[image] ?? undefined}
-                        alt={`Fotografija ${index + 2}`}
-                        className="h-24 w-full rounded-lg object-cover"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          setImages((previous) =>
-                            previous.filter((id) => id !== image),
-                          )
-                        }
-                        aria-label={`Ukloni fotografiju ${index + 2}`}
-                      >
-                        Ukloni
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-              {images.length > 0 &&
-              images.length < 10 &&
-              !isProcessingImages ? (
-                <label className="inline-flex cursor-pointer rounded-md border border-border px-4 py-2 text-sm font-semibold">
-                  Dodaj fotografije ({images.length}/10)
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    className="sr-only"
-                    onChange={(event) => handleImageUpload(event.target.files)}
-                  />
-                </label>
-              ) : null}
-            </div>
+          {steps[currentStep].id === "images" ? (
+            <ItemPhotoEditor
+              images={images}
+              urls={imageUrlsMap}
+              points={photoPoints}
+              busy={isProcessingImages}
+              onUpload={handleImageUpload}
+              onRemove={(id) =>
+                updatePhotos(
+                  images.filter((image) => image !== id),
+                  photoPoints,
+                )
+              }
+              onCover={(id) =>
+                updatePhotos(
+                  [id, ...images.filter((image) => image !== id)],
+                  photoPoints,
+                )
+              }
+              onFocus={(id, point) => {
+                const points = { ...photoPoints, [id]: point };
+                setImageFocalPoint({ ...points[images[0]], points });
+              }}
+            />
           ) : null}
 
-          {currentStep === 2 && !offersRent(listing) && (
+          {steps[currentStep].id === "availability" && !offersRent(listing) && (
             <p className="text-sm text-muted-foreground">
               Prodaja ne zahteva izbor datuma.
             </p>
           )}
-          {currentStep === 2 && offersRent(listing) ? (
+          {steps[currentStep].id === "availability" && offersRent(listing) ? (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label>Dostupnost</Label>
@@ -915,12 +854,40 @@ export function ItemWizardForm({
             </div>
           ) : null}
 
-          {currentStep === 3 ? (
+          {steps[currentStep].id === "delivery" ? (
             <div className="space-y-4">
-              {preferredContactTypes.length > 0 ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="item-city">Grad</Label>
+                  <Input
+                    id="item-city"
+                    value={city}
+                    onChange={(event) => setCity(event.target.value)}
+                    maxLength={100}
+                    placeholder="npr. Beograd"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="item-municipality">Opština</Label>
+                  <Input
+                    id="item-municipality"
+                    value={municipality}
+                    onChange={(event) => setMunicipality(event.target.value)}
+                    maxLength={100}
+                    placeholder="npr. Zvezdara"
+                  />
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Unesite samo grad i opštinu. Tačnu adresu preuzimanja dogovarate
+                direktno sa korisnikom.
+              </p>
+              {mode !== "draft" && (
                 <div className="rounded-lg border border-podeli-blue/20 bg-podeli-blue/5 px-4 py-3">
                   <p className="text-sm font-medium text-podeli-dark">
-                    Kako će vas zainteresovani korisnici kontaktirati:
+                    {preferredContactTypes.length > 0
+                      ? "Kako će vas zainteresovani korisnici kontaktirati:"
+                      : "Izaberite način kontakta pre objavljivanja."}
                   </p>
                   <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-muted-foreground">
                     {preferredContactTypes.map((t) => (
@@ -933,10 +900,12 @@ export function ItemWizardForm({
                     onClick={() => setContactModalOpen(true)}
                     className="mt-2 inline-block text-sm font-medium text-podeli-blue hover:text-podeli-blue/90 hover:underline"
                   >
-                    Izmeni način kontakta
+                    {preferredContactTypes.length > 0
+                      ? "Izmeni način kontakta"
+                      : "Postavi način kontakta"}
                   </Button>
                 </div>
-              ) : null}
+              )}
               <div className="space-y-2">
                 <Label>Način dostave</Label>
                 <div className="grid gap-2">
@@ -1019,7 +988,8 @@ export function ItemWizardForm({
               disabled={isSubmitting}
               onClick={handleSaveFromAnyStep}
             >
-              Sačuvaj izmene
+              {submitLabel ??
+                (mode === "draft" ? "Sačuvaj nacrt ponude" : "Sačuvaj izmene")}
             </Button>
           ) : currentStep === steps.length - 1 ? (
             <Button
@@ -1028,7 +998,7 @@ export function ItemWizardForm({
               disabled={isSubmitting || invalidSteps.size > 0}
               onClick={handleSubmit}
             >
-              Sačuvaj predmet
+              {submitLabel ?? "Sačuvaj predmet"}
             </Button>
           ) : null}
         </div>
@@ -1044,10 +1014,16 @@ export function ItemWizardForm({
           </DialogHeader>
           <PreferredContactForm
             preferredContactTypes={preferredContactTypes}
+            phoneNumber={phoneNumber}
+            onCancel={() => setContactModalOpen(false)}
             compact
             embedded
             initialExpanded
-            onSave={() => setContactModalOpen(false)}
+            onSave={() => {
+              setContactModalOpen(false);
+              setFormError(null);
+              onContactSaved?.();
+            }}
           />
         </DialogContent>
       </Dialog>

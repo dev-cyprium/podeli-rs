@@ -4,6 +4,7 @@ import { SignIn } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
 import { useEffect, Suspense } from "react";
 import { toast } from "sonner";
+import { SignInStatus } from "@/components/SignInStatus";
 
 function SignInContent() {
   const searchParams = useSearchParams();
@@ -22,13 +23,18 @@ function SignInContent() {
     }
   }, [searchParams]);
 
-  return <SignIn />;
+  return (
+    <>
+      <SignInStatus />
+      <SignIn />
+    </>
+  );
 }
 
 export default function SignInPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-podeli-light">
-      <Suspense fallback={<div className="h-[400px] w-[400px]" />}>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-podeli-light">
+      <Suspense fallback={<p role="status">Učitavanje prijave…</p>}>
         <SignInContent />
       </Suspense>
     </div>

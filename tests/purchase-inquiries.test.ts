@@ -63,6 +63,8 @@ async function setup(type: "rent" | "sale" | "both" = "both", emails = false) {
     title: "Bušilica",
     description: "Očuvana",
     category: "Alati",
+    city: "Beograd",
+    municipality: "Zvezdara",
     listingType: type,
     salePrice: type === "rent" ? undefined : 5000,
     pricePerDay: type === "sale" ? 0 : 1000,

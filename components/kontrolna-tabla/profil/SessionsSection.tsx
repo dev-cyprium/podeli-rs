@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useUser, useSession } from "@clerk/nextjs";
-import type { SessionWithActivitiesResource } from "@clerk/types";
+import type { SessionWithActivitiesResource } from "@clerk/nextjs/types";
 import { Monitor, Smartphone, Tablet, LogOut, Loader2, MapPin, Clock } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

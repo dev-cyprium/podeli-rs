@@ -52,6 +52,8 @@ async function setup(planSlug = "free", negotiated = false) {
     title: "Mašina za čišćenje",
     description: "Oprema sa uputstvom",
     category: "Alati",
+    city: "Beograd",
+    municipality: "Zvezdara",
     pricePerDay: negotiated ? 0 : 1200,
     priceByAgreement: negotiated,
     images: [image],
@@ -69,6 +71,72 @@ const request = (
 ) => ({ itemId, startDate, endDate, deliveryMethod: "licno" });
 
 describe("free supplier posting", () => {
+  it("keeps each photo's focus through cover changes and removes replaced photo settings", async () => {
+    const { t, owner, input, itemId } = await setup();
+    const second = await t.run((ctx) =>
+      ctx.storage.store(new Blob(["second"], { type: "image/png" })),
+    );
+    const first = input.images[0];
+    const points = { [first]: { x: 20, y: 80 }, [second]: { x: 75, y: 25 } };
+    await owner.mutation(api.items.update, {
+      ...input,
+      id: itemId,
+      images: [first, second],
+      imageFocalPoints: points,
+      imageFocalPoint: points[first],
+    });
+    await owner.mutation(api.items.update, {
+      ...input,
+      id: itemId,
+      images: [second, first],
+      imageFocalPoints: points,
+      imageFocalPoint: points[second],
+    });
+    const reordered = await t.run((ctx) => ctx.db.get(itemId));
+    expect(reordered?.images).toEqual([second, first]);
+    expect(reordered?.imageFocalPoints).toEqual(points);
+    expect(reordered?.imageFocalPoint).toEqual(points[second]);
+    await owner.mutation(api.items.update, {
+      ...input,
+      id: itemId,
+      images: [second],
+      imageFocalPoints: { [second]: points[second] },
+      imageFocalPoint: points[second],
+    });
+    expect(
+      (await t.run((ctx) => ctx.db.get(itemId)))?.imageFocalPoints,
+    ).toEqual({ [second]: points[second] });
+    expect(await t.run((ctx) => ctx.storage.getUrl(second))).not.toBeNull();
+  });
+
+  it("rejects out-of-range focus and focus for a photo outside the listing", async () => {
+    const { t, owner, input, itemId } = await setup();
+    const outside = await t.run((ctx) =>
+      ctx.storage.store(new Blob(["outside"], { type: "image/png" })),
+    );
+    await expect(
+      owner.mutation(api.items.update, {
+        ...input,
+        id: itemId,
+        imageFocalPoints: { [input.images[0]]: { x: 101, y: 50 } },
+      }),
+    ).rejects.toThrow("između 0 i 100");
+    await expect(
+      owner.mutation(api.items.update, {
+        ...input,
+        id: itemId,
+        imageFocalPoints: { [outside]: { x: 50, y: 50 } },
+      }),
+    ).rejects.toThrow("ovog oglasa");
+    vi.advanceTimersByTime(10_001);
+    await expect(
+      owner.mutation(api.items.create, {
+        ...input,
+        imageFocalPoints: { [input.images[0]]: { x: 50, y: -1 } },
+      }),
+    ).rejects.toThrow("između 0 i 100");
+  });
+
   it("preserves all ten stored photos during a listing edit and rejects an eleventh", async () => {
     const { t, owner, input, itemId } = await setup();
     const images = [...input.images];
@@ -222,8 +290,12 @@ describe("booking requests and approval", () => {
       owner.mutation(api.bookings.approveBooking, { id: first }),
       owner.mutation(api.bookings.approveBooking, { id: second }),
     ]);
-    expect(approvals.filter((result) => result.status === "fulfilled")).toHaveLength(1);
-    expect(approvals.filter((result) => result.status === "rejected")).toHaveLength(1);
+    expect(
+      approvals.filter((result) => result.status === "fulfilled"),
+    ).toHaveLength(1);
+    expect(
+      approvals.filter((result) => result.status === "rejected"),
+    ).toHaveLength(1);
     await expect(
       renter.mutation(
         api.bookings.createBooking,
@@ -275,5 +347,96 @@ describe("booking requests and approval", () => {
     expect(
       await t.run((ctx) => ctx.db.query("notifications").collect()),
     ).toHaveLength(1);
+  });
+});
+
+describe("listing locations", () => {
+  it("normalizes saved locations, updates their keys, and rejects blank or oversized fields", async () => {
+    const { t, owner, input, itemId } = await setup();
+    await owner.mutation(api.items.update, {
+      ...input,
+      id: itemId,
+      city: "  Novi   Sad ",
+      municipality: " Petrovaradin ",
+    });
+    const item = await t.run((ctx) => ctx.db.get(itemId));
+    expect(item).toMatchObject({
+      city: "Novi Sad",
+      municipality: "Petrovaradin",
+      cityKey: "novi sad",
+      municipalityKey: "petrovaradin",
+    });
+    for (const fields of [
+      { city: " " },
+      { municipality: " " },
+      { city: "a".repeat(101) },
+    ]) {
+      await expect(
+        owner.mutation(api.items.update, { ...input, id: itemId, ...fields }),
+      ).rejects.toThrow();
+      vi.advanceTimersByTime(10001);
+      await expect(
+        owner.mutation(api.items.create, { ...input, ...fields }),
+      ).rejects.toThrow();
+    }
+  });
+
+  it("combines indexed location filters with category, text search and pagination while keeping legacy listings unfiltered", async () => {
+    const { t, input, itemId } = await setup();
+    const add = (city?: string, municipality?: string, category = "Alati") =>
+      t.run((ctx) =>
+        ctx.db.insert("items", {
+          ...input,
+          city,
+          municipality,
+          cityKey: city?.toLowerCase(),
+          municipalityKey: municipality?.toLowerCase(),
+          category,
+          searchText: "mašina oprema",
+          ownerId: "other",
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        }),
+      );
+    const second = await add("Beograd", "Zvezdara");
+    await add("Beograd", "Vračar");
+    await add("Novi Sad", "Petrovaradin");
+    await add("Beograd", "Zvezdara", "Sport");
+    const legacy = await add();
+    const search = (
+      filters: {
+        city?: string;
+        municipality?: string;
+        category?: string;
+        query?: string;
+      },
+      cursor: string | null = null,
+      numItems = 20,
+    ) =>
+      t.query(api.items.searchItems, {
+        ...filters,
+        paginationOpts: { cursor, numItems },
+      });
+    expect((await search({})).page.map((item) => item._id)).toContain(legacy);
+    expect((await search({ city: " BEOGRAD " })).page).toHaveLength(4);
+    expect((await search({ municipality: "petrovaradin" })).page).toHaveLength(
+      1,
+    );
+    for (const query of [undefined, "mašina"]) {
+      const filters = {
+        city: " BEOGRAD ",
+        municipality: " ZVEZDARA ",
+        category: "Alati",
+        query,
+      };
+      const first = await search(filters, null, 1);
+      expect(first.isDone).toBe(false);
+      const next = await search(filters, first.continueCursor, 1);
+      expect(next.isDone).toBe(true);
+      expect(
+        new Set([...first.page, ...next.page].map((item) => item._id)),
+      ).toEqual(new Set([itemId, second]));
+    }
+    expect((await search({ city: "Niš" })).page).toEqual([]);
   });
 });

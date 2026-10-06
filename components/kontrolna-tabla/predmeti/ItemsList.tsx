@@ -3,7 +3,7 @@ import { offersRent, offersSale } from "@/lib/listing-types";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { SignedIn, SignedOut } from "@clerk/nextjs";
+import { Show } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { api } from "@/convex/_generated/api";
@@ -48,16 +48,16 @@ function formatSlot(slot: { startDate: string; endDate: string }) {
 export function ItemsList() {
   return (
     <>
-      <SignedOut>
+      <Show when="signed-out">
         <Card>
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
             Prijavite se da biste upravljali predmetima.
           </CardContent>
         </Card>
-      </SignedOut>
-      <SignedIn>
+      </Show>
+      <Show when="signed-in">
         <ItemsListContent />
-      </SignedIn>
+      </Show>
     </>
   );
 }

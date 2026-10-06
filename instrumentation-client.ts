@@ -1,4 +1,5 @@
 import posthog from "posthog-js";
+import { posthogOptions } from "./lib/posthog-options";
 
 const isLocalhost =
   typeof window !== "undefined" &&
@@ -10,8 +11,5 @@ const hasConsent =
   localStorage.getItem("cookie-consent") === "all";
 
 if (!isLocalhost && hasConsent) {
-  posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
-    api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST!,
-    defaults: "2025-11-30",
-  });
+  posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, posthogOptions);
 }

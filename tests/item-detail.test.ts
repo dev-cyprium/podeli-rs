@@ -91,6 +91,16 @@ describe("reactive product details", () => {
     subscription.item = { ...initial, priceByAgreement: true };
     expect(render()).toContain("Po dogovoru");
   });
+  it("renders the saved public location and labels legacy listings without inventing a city", () => {
+    expect(render()).toContain("Lokacija nije navedena");
+    subscription.item = {
+      ...initial,
+      city: "Novi Sad",
+      municipality: "Petrovaradin",
+    };
+    expect(render()).toContain("Novi Sad, Petrovaradin");
+    expect(render()).not.toContain("Beograd");
+  });
   it("renders sale-only and combined prices and the appropriate forms", () => {
     subscription.item = {
       ...initial,

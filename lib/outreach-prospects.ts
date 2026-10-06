@@ -95,7 +95,9 @@ export const initialProspects = contacts.map(
     website,
     contactPerson,
     status: "new" as const,
-    nextAction: "Prvi kontakt: proveriti interesovanje za saradnju",
+    nextAction:
+      "Pripremiti predlog oglasa i dopuniti mejl za preuzimanje ponude",
+    nextStep: "prepare_offer" as const,
     followUpDate: "",
   }),
 );

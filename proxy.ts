@@ -3,20 +3,23 @@ import { NextResponse } from "next/server";
 
 const isProtectedRoute = createRouteMatcher(["/kontrolna-tabla(.*)"]);
 
-export default clerkMiddleware(async (auth, req) => {
-  const host = req.headers.get("host") || "";
+export default clerkMiddleware(
+  async (auth, req) => {
+    const host = req.headers.get("host") || "";
 
-  if (host === "join.podeli.rs") {
-    return NextResponse.redirect(
-      new URL(`https://discord.gg/69MBaCTEnz`, req.url),
-      307,
-    );
-  }
+    if (host === "join.podeli.rs") {
+      return NextResponse.redirect(
+        new URL(`https://discord.gg/69MBaCTEnz`, req.url),
+        307,
+      );
+    }
 
-  if (isProtectedRoute(req)) {
-    await auth.protect();
-  }
-});
+    if (isProtectedRoute(req)) {
+      await auth.protect();
+    }
+  },
+  { signInUrl: "/sign-in" },
+);
 
 export const config = {
   matcher: [
