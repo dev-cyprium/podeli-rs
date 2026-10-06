@@ -8,6 +8,8 @@ import { Preloaded, usePreloadedQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { MapPin, Truck, Calendar } from "lucide-react";
 import { ItemImageGallery } from "./ItemImageGallery";
+import { offersRent, offersSale } from "@/lib/listing-types";
+import { PurchaseForm } from "./PurchaseForm";
 import { BookingForm } from "./BookingForm";
 import { ReviewsList } from "./ReviewsList";
 import { FavoriteButton } from "./FavoriteButton";
@@ -76,19 +78,29 @@ export function ItemDetailContent({
               </div>
             </div>
             <div className="text-right">
-              {item.priceByAgreement ? (
-                <p className="text-2xl font-bold text-podeli-accent">
-                  Po dogovoru
-                </p>
-              ) : (
+              {offersRent(item) && (
                 <>
-                  <p className="text-2xl font-bold text-podeli-accent">
-                    {item.pricePerDay.toFixed(0)} RSD
-                  </p>
-                  <p className="text-sm text-muted-foreground">po danu</p>
+                  <p className="text-sm text-muted-foreground">Najam</p>
+                  {item.priceByAgreement ? (
+                    <p className="text-2xl font-bold text-podeli-accent">
+                      Po dogovoru
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold text-podeli-accent">
+                        {item.pricePerDay.toFixed(0)} RSD
+                      </p>
+                      <p className="text-sm text-muted-foreground">po danu</p>
+                    </>
+                  )}
                 </>
               )}
-              {item.deposit != null && item.deposit > 0 && (
+              {offersSale(item) && (
+                <p className="mt-2 font-bold text-podeli-blue">
+                  Prodaja: {item.salePrice?.toFixed(0)} RSD
+                </p>
+              )}
+              {offersRent(item) && item.deposit != null && item.deposit > 0 && (
                 <span className="mt-2 inline-block rounded-full bg-podeli-accent px-3 py-0.5 text-sm font-semibold text-white">
                   Depozit: {item.deposit.toFixed(0)} RSD
                 </span>
@@ -154,10 +166,21 @@ export function ItemDetailContent({
       </div>
 
       <div className="lg:sticky lg:top-24 lg:self-start">
-        <BookingForm
-          key={`${item._id}:${item.deliveryMethods.join(",")}`}
-          item={item}
-        />
+        {item.soldAt !== undefined ? (
+          <p className="rounded-xl bg-card p-6 font-semibold">
+            Predmet je prodat.
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {offersSale(item) && <PurchaseForm item={item} />}
+            {offersRent(item) && (
+              <BookingForm
+                key={`${item._id}:${item.deliveryMethods.join(",")}`}
+                item={item}
+              />
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

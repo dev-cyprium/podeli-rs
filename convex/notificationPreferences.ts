@@ -5,7 +5,11 @@ import { requireIdentity } from "@/lib/convex-auth";
 /** One-time backfill: enable all email preferences for every user with a profile. Super-admin only. */
 export const backfillEnableAll = mutation({
   args: {},
-  returns: v.object({ created: v.number(), updated: v.number(), total: v.number() }),
+  returns: v.object({
+    created: v.number(),
+    updated: v.number(),
+    total: v.number(),
+  }),
   handler: async (ctx) => {
     const identity = await requireIdentity(ctx);
 
@@ -34,14 +38,20 @@ export const backfillEnableAll = mutation({
           userId: profile.userId,
           emailOnBookingRequest: true,
           emailOnNewMessage: true,
+          emailOnInquiryResponse: true,
           createdAt: now,
           updatedAt: now,
         });
         created++;
-      } else if (!existing.emailOnBookingRequest || !existing.emailOnNewMessage) {
+      } else if (
+        !existing.emailOnBookingRequest ||
+        !existing.emailOnNewMessage ||
+        !existing.emailOnInquiryResponse
+      ) {
         await ctx.db.patch(existing._id, {
           emailOnBookingRequest: true,
           emailOnNewMessage: true,
+          emailOnInquiryResponse: true,
           updatedAt: now,
         });
         updated++;
@@ -58,8 +68,9 @@ export const getMyPreferences = query({
     v.object({
       emailOnBookingRequest: v.boolean(),
       emailOnNewMessage: v.boolean(),
+      emailOnInquiryResponse: v.boolean(),
     }),
-    v.null()
+    v.null(),
   ),
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -75,6 +86,8 @@ export const getMyPreferences = query({
     return {
       emailOnBookingRequest: preferences.emailOnBookingRequest,
       emailOnNewMessage: preferences.emailOnNewMessage,
+      emailOnInquiryResponse:
+        preferences.emailOnInquiryResponse ?? preferences.emailOnBookingRequest,
     };
   },
 });
@@ -83,6 +96,7 @@ export const updatePreferences = mutation({
   args: {
     emailOnBookingRequest: v.optional(v.boolean()),
     emailOnNewMessage: v.optional(v.boolean()),
+    emailOnInquiryResponse: v.optional(v.boolean()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -94,13 +108,18 @@ export const updatePreferences = mutation({
       .first();
 
     if (!preferences) {
-      throw new Error("Podešavanja obaveštenja nisu pronađena. Osvežite stranicu.");
+      throw new Error(
+        "Podešavanja obaveštenja nisu pronađena. Osvežite stranicu.",
+      );
     }
 
     const now = Date.now();
     await ctx.db.patch(preferences._id, {
       ...(args.emailOnBookingRequest !== undefined && {
         emailOnBookingRequest: args.emailOnBookingRequest,
+      }),
+      ...(args.emailOnInquiryResponse !== undefined && {
+        emailOnInquiryResponse: args.emailOnInquiryResponse,
       }),
       ...(args.emailOnNewMessage !== undefined && {
         emailOnNewMessage: args.emailOnNewMessage,
@@ -130,6 +149,7 @@ export const ensurePreferences = mutation({
       userId: identity.subject,
       emailOnBookingRequest: true,
       emailOnNewMessage: true,
+      emailOnInquiryResponse: true,
       createdAt: now,
       updatedAt: now,
     });

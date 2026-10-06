@@ -421,6 +421,8 @@ export const sendBookingRequestEmail = internalAction({
 export const sendNewMessageEmail = internalAction({
   args: {
     to: v.string(),
+    // Allow jobs queued before message idempotency was introduced to finish.
+    idempotencyKey: v.optional(v.string()),
     recipientName: v.string(),
     senderName: v.string(),
     itemTitle: v.string(),
@@ -439,20 +441,23 @@ export const sendNewMessageEmail = internalAction({
 
     const resend = new Resend(process.env.RESEND_API_KEY);
     try {
-      const { error } = await resend.emails.send({
-        from: "Podeli.rs <obavestenja@updates.podeli.rs>",
-        to: args.to,
-        subject: `Nova poruka od ${args.senderName}`,
-        react: (
-          <NewMessageEmail
-            recipientName={args.recipientName}
-            senderName={args.senderName}
-            itemTitle={args.itemTitle}
-            messagePreview={args.messagePreview}
-            actionUrl={args.actionUrl}
-          />
-        ),
-      });
+      const { error } = await resend.emails.send(
+        {
+          from: "Podeli.rs <obavestenja@updates.podeli.rs>",
+          to: args.to,
+          subject: `Nova poruka od ${args.senderName}`,
+          react: (
+            <NewMessageEmail
+              recipientName={args.recipientName}
+              senderName={args.senderName}
+              itemTitle={args.itemTitle}
+              messagePreview={args.messagePreview}
+              actionUrl={args.actionUrl}
+            />
+          ),
+        },
+        { idempotencyKey: args.idempotencyKey },
+      );
 
       if (error) {
         console.error("Failed to send new message email:", error);
@@ -464,5 +469,36 @@ export const sendNewMessageEmail = internalAction({
       console.error("Error sending new message email:", err);
       return false;
     }
+  },
+});
+
+export const sendInquiryEmail = internalAction({
+  args: {
+    to: v.string(),
+    message: v.string(),
+    actionUrl: v.string(),
+    idempotencyKey: v.string(),
+  },
+  returns: v.boolean(),
+  handler: async (_ctx, args) => {
+    if (process.env.DISABLE_EMAILS === "true") return true;
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const { error } = await resend.emails.send(
+      {
+        from: "podeli.rs <obavestenja@updates.podeli.rs>",
+        to: args.to,
+        subject: "Obaveštenje o upitu na podeli.rs",
+        react: (
+          <EmailWrapper preview={args.message}>
+            <Text>{args.message}</Text>
+            <Button href={args.actionUrl}>Pogledaj upit</Button>
+          </EmailWrapper>
+        ),
+      },
+      { idempotencyKey: args.idempotencyKey },
+    );
+    if (error)
+      throw new Error(`Slanje obaveštenja nije uspelo: ${error.message}`);
+    return true;
   },
 });

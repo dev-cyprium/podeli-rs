@@ -1,15 +1,36 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-import { prospectFields, outreachStatus, outreachChannel } from "./outreachModel";
+import {
+  prospectFields,
+  outreachStatus,
+  outreachChannel,
+} from "./outreachModel";
 
 export default defineSchema({
-  prospects: defineTable({ ...prospectFields, key: v.string(), createdAt: v.number(), updatedAt: v.number() }).index("by_key", ["key"]),
-  prospectActivities: defineTable({ prospectId: v.id("prospects"), authorId: v.string(), channel: v.optional(outreachChannel), outcome: outreachStatus, note: v.string(), createdAt: v.number() }).index("by_prospectId", ["prospectId"]),
+  prospects: defineTable({
+    ...prospectFields,
+    key: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_key", ["key"]),
+  prospectActivities: defineTable({
+    prospectId: v.id("prospects"),
+    authorId: v.string(),
+    channel: v.optional(outreachChannel),
+    outcome: outreachStatus,
+    note: v.string(),
+    createdAt: v.number(),
+  }).index("by_prospectId", ["prospectId"]),
   items: defineTable({
     ownerId: v.string(),
     title: v.string(),
     description: v.string(),
     category: v.string(),
+    listingType: v.optional(
+      v.union(v.literal("rent"), v.literal("sale"), v.literal("both")),
+    ),
+    salePrice: v.optional(v.number()),
+    soldAt: v.optional(v.number()),
     pricePerDay: v.number(),
     priceByAgreement: v.optional(v.boolean()),
     deposit: v.optional(v.number()),
@@ -32,9 +53,10 @@ export default defineSchema({
     .index("by_owner", ["ownerId"])
     .index("by_shortId", ["shortId"])
     .index("by_category", ["category"])
+    .index("by_soldAt", ["soldAt"])
     .searchIndex("search_items", {
       searchField: "searchText",
-      filterFields: ["category"],
+      filterFields: ["category", "soldAt"],
     }),
 
   plans: defineTable({
@@ -86,15 +108,13 @@ export default defineSchema({
     badgeLabel: v.optional(v.string()),
     preferredContactTypes: v.optional(
       v.array(
-        v.union(
-          v.literal("chat"),
-          v.literal("email"),
-          v.literal("phone")
-        )
-      )
+        v.union(v.literal("chat"), v.literal("email"), v.literal("phone")),
+      ),
     ),
     phoneNumber: v.optional(v.string()),
-    defaultDashboardMode: v.optional(v.union(v.literal("podeli"), v.literal("zakupi"))),
+    defaultDashboardMode: v.optional(
+      v.union(v.literal("podeli"), v.literal("zakupi")),
+    ),
     superAdmin: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -102,6 +122,28 @@ export default defineSchema({
     .index("by_userId", ["userId"])
     .index("by_planSlug", ["planSlug"])
     .index("by_hasBadge", ["hasBadge"]),
+
+  purchaseInquiries: defineTable({
+    itemId: v.id("items"),
+    ownerId: v.string(),
+    buyerId: v.string(),
+    salePrice: v.number(),
+    question: v.string(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("accepted"),
+      v.literal("rejected"),
+      v.literal("purchased"),
+      v.literal("not_purchased"),
+    ),
+    response: v.optional(v.string()),
+    respondedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_item", ["itemId"])
+    .index("by_owner", ["ownerId"])
+    .index("by_buyer", ["buyerId"]),
 
   bookings: defineTable({
     itemId: v.id("items"),
@@ -121,6 +163,13 @@ export default defineSchema({
       v.literal("isporucen"),
       v.literal("vracen"),
       v.literal("cancelled"),
+    ),
+    inquiryResponse: v.optional(
+      v.object({
+        decision: v.union(v.literal("accepted"), v.literal("rejected")),
+        text: v.string(),
+        respondedAt: v.number(),
+      }),
     ),
     // Agreement tracking
     renterAgreed: v.optional(v.boolean()),
@@ -168,6 +217,7 @@ export default defineSchema({
     content: v.string(),
     read: v.boolean(),
     type: v.optional(v.union(v.literal("user"), v.literal("system"))),
+    emailNotifiedAt: v.optional(v.number()),
     createdAt: v.number(),
   })
     .index("by_booking", ["bookingId"])
@@ -177,8 +227,7 @@ export default defineSchema({
     bookingId: v.id("bookings"),
     userId: v.string(),
     lastSeenAt: v.number(),
-  })
-    .index("by_booking_and_user", ["bookingId", "userId"]),
+  }).index("by_booking_and_user", ["bookingId", "userId"]),
 
   notifications: defineTable({
     userId: v.string(),
@@ -211,6 +260,7 @@ export default defineSchema({
     userId: v.string(),
     emailOnBookingRequest: v.boolean(),
     emailOnNewMessage: v.boolean(),
+    emailOnInquiryResponse: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_userId", ["userId"]),

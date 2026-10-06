@@ -11,6 +11,11 @@ export function SearchPageContent() {
   const router = useRouter();
 
   const query = searchParams.get("q") || "";
+  const typeParam = searchParams.get("vrsta");
+  const listingType =
+    typeParam === "rent" || typeParam === "sale" || typeParam === "both"
+      ? typeParam
+      : undefined;
   const category = searchParams.get("kategorija") || null;
 
   const updateUrl = useCallback(
@@ -19,27 +24,28 @@ export function SearchPageContent() {
       const q = newQuery !== undefined ? newQuery : query;
       const cat = newCategory !== undefined ? newCategory : category;
 
+      if (listingType) params.set("vrsta", listingType);
       if (q) params.set("q", q);
       if (cat) params.set("kategorija", cat);
 
       const newUrl = params.toString() ? `/pretraga?${params}` : "/pretraga";
       router.push(newUrl);
     },
-    [query, category, router]
+    [query, category, listingType, router],
   );
 
   const handleSearch = useCallback(
     (newQuery: string) => {
       updateUrl(newQuery, category);
     },
-    [updateUrl, category]
+    [updateUrl, category],
   );
 
   const handleCategoryChange = useCallback(
     (newCategory: string | null) => {
       updateUrl(query, newCategory);
     },
-    [updateUrl, query]
+    [updateUrl, query],
   );
 
   return (
@@ -69,6 +75,28 @@ export function SearchPageContent() {
       {/* Category filter */}
       <div className="border-b border-border bg-card py-4">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <label
+            htmlFor="listing-filter"
+            className="mb-3 flex items-center gap-3 text-sm"
+          >
+            Vrsta oglasa
+            <select
+              id="listing-filter"
+              className="rounded-md border border-border bg-card p-2"
+              value={listingType ?? ""}
+              onChange={(e) => {
+                const params = new URLSearchParams(searchParams.toString());
+                if (e.target.value) params.set("vrsta", e.target.value);
+                else params.delete("vrsta");
+                router.push(`/pretraga?${params}`);
+              }}
+            >
+              <option value="">Sve</option>
+              <option value="rent">Iznajmljivanje</option>
+              <option value="sale">Prodaja</option>
+              <option value="both">Oba</option>
+            </select>
+          </label>
           <CategoryFilter
             selectedCategory={category}
             onCategoryChange={handleCategoryChange}
@@ -79,7 +107,11 @@ export function SearchPageContent() {
       {/* Results */}
       <div className="py-8">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <SearchResults query={query || undefined} category={category || undefined} />
+          <SearchResults
+            listingType={listingType}
+            query={query || undefined}
+            category={category || undefined}
+          />
         </div>
       </div>
     </div>

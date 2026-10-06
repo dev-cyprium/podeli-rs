@@ -14,7 +14,12 @@ interface ToggleRowProps {
   onCheckedChange: (checked: boolean) => Promise<void>;
 }
 
-function ToggleRow({ label, description, checked, onCheckedChange }: ToggleRowProps) {
+function ToggleRow({
+  label,
+  description,
+  checked,
+  onCheckedChange,
+}: ToggleRowProps) {
   const [isUpdating, setIsUpdating] = useState(false);
 
   const handleChange = async (value: boolean) => {
@@ -33,7 +38,9 @@ function ToggleRow({ label, description, checked, onCheckedChange }: ToggleRowPr
         <p className="text-sm text-muted-foreground">{description}</p>
       </div>
       <div className="flex items-center gap-2">
-        {isUpdating && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+        {isUpdating && (
+          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+        )}
         <Switch
           checked={checked}
           onCheckedChange={handleChange}
@@ -46,7 +53,9 @@ function ToggleRow({ label, description, checked, onCheckedChange }: ToggleRowPr
 
 export function EmailNotificationsSection() {
   const preferences = useQuery(api.notificationPreferences.getMyPreferences);
-  const updatePreferences = useMutation(api.notificationPreferences.updatePreferences);
+  const updatePreferences = useMutation(
+    api.notificationPreferences.updatePreferences,
+  );
 
   if (preferences === undefined) {
     return (
@@ -69,7 +78,9 @@ export function EmailNotificationsSection() {
       <Card>
         <CardHeader>
           <CardTitle>Email obaveštenja</CardTitle>
-          <p className="text-sm text-muted-foreground">Učitavanje podešavanja...</p>
+          <p className="text-sm text-muted-foreground">
+            Učitavanje podešavanja...
+          </p>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
@@ -84,16 +95,26 @@ export function EmailNotificationsSection() {
     <Card>
       <CardHeader>
         <CardTitle>Email obaveštenja</CardTitle>
-        <p className="text-sm text-muted-foreground">Želim da primam email obaveštenja kada:</p>
+        <p className="text-sm text-muted-foreground">
+          Želim da primam email obaveštenja kada:
+        </p>
       </CardHeader>
       <CardContent>
         <div className="divide-y">
           <ToggleRow
-            label="Kada neko zahteva rezervaciju"
-            description="Primite email kada neko pošalje zahtev za vaš predmet"
+            label="Kada neko pošalje upit"
+            description="Primite email za novi zahtev za najam ili upit za kupovinu"
             checked={preferences.emailOnBookingRequest}
             onCheckedChange={async (checked) => {
               await updatePreferences({ emailOnBookingRequest: checked });
+            }}
+          />
+          <ToggleRow
+            label="Kada dobijem odgovor na upit"
+            description="Odgovori na upite za najam ili kupovinu i ishod kupovine"
+            checked={preferences.emailOnInquiryResponse}
+            onCheckedChange={async (checked) => {
+              await updatePreferences({ emailOnInquiryResponse: checked });
             }}
           />
           <ToggleRow
