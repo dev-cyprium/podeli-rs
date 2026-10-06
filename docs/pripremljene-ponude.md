@@ -29,3 +29,11 @@ Predlog može biti nepotpun i može uključivati najam, prodaju ili oba. Javna o
 Nacrti su u zasebnoj tabeli `listingOffers`, pa postojeći javni upiti i rezervacije ne mogu da ih uključe. Preuzimanje proverava potpisani identitet: `email` i `email_verified` u Clerk JWT šablonu `convex` moraju odgovarati potvrđenoj adresi ponuđača. To su standardne tvrdnje Clerk Convex šablona; nedostajuća ili nepotvrđena adresa ne dobija pravo preuzimanja.
 
 Potrebno je zajedno objaviti Convex i frontend kroz postojeći deployment postupak. Kreiranje linkova ne šalje automatske poruke niti kreira tuđe naloge. Privatni linkovi imaju `noindex` i `no-referrer`; tajna iz linka uklanja se iz URL-ova analitike.
+
+## Uređivanje pre prijave
+
+Primalac bira „Pregledaj i uredi ponudu”, popunjava postojeći obrazac i bira fotografije pre prijave. Podaci i fajlovi ostaju u memoriji otvorenog taba; osvežavanje ili zatvaranje taba ih briše. Fotografije se šalju tek nakon potvrde mejla.
+
+Na kraju obrasca primalac unosi mejl, prihvata uslove i dobija Clerk kod. Jedan tok podržava postojeće i nove naloge preko `signUpIfMissing`; novi nalog nastaje tek nakon potvrde mejla i ličnog prihvatanja uslova. Clerk mora imati omogućene mejl kodove i registraciju bez obavezne lozinke. Postojeći korisnici mogu i dalje koristiti već postavljene lozinke.
+
+Nakon potvrde kontakta, `claimAndPublish` u jednoj transakciji proverava važeći link, tačan potvrđen mejl i sva pravila objave. Neuspešna validacija ne preuzima ponudu, ne menja kontakt i ne objavljuje oglas. Novi profili mogu izabrati kontakt preko mejla i chata; postojeća podešavanja kontakta ostaju sačuvana. Nema unapred kreiranih naloga niti lozinki za klijente.

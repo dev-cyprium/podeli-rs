@@ -287,52 +287,54 @@ export const preview = query({
   },
 });
 
+async function claimOffer(ctx: MutationCtx, token: string) {
+  const identity = await requireIdentity(ctx);
+  const offer = await ctx.db
+    .query("listingOffers")
+    .withIndex("by_token", (q) => q.eq("token", token))
+    .unique();
+  if (!offer || !offer.expiresAt || offer.expiresAt <= Date.now())
+    throw new ConvexError("Link nije važeći. Zatražite novi od Podelija.");
+  if (
+    identity.emailVerified !== true ||
+    !identity.email ||
+    normalizeEmail(identity.email) !== offer.recipientEmail
+  )
+    throw new ConvexError(
+      "Preuzmite ponudu nalogom sa potvrđenom mejl adresom kojoj je ponuda poslata.",
+    );
+  if (offer.claimedBy && offer.claimedBy !== identity.subject)
+    throw new ConvexError("Ponuda je već preuzeta.");
+  if (offer.claimedBy === identity.subject) return offer._id;
+  const profile = await ctx.db
+    .query("profiles")
+    .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
+    .unique();
+  if (!profile)
+    throw new ConvexError(
+      "Profil se još priprema. Pokušajte ponovo za trenutak.",
+    );
+  await ctx.db.patch(offer._id, {
+    claimedBy: identity.subject,
+    status: "claimed",
+    updatedAt: Date.now(),
+  });
+  await record(
+    ctx,
+    offer,
+    identity.subject,
+    "offer_claimed",
+    "help_publish",
+    "Ponuđač je preuzeo ponudu svojim nalogom. Oglas još nije objavljen.",
+  );
+  await ctx.db.patch(offer.prospectId, { supplierProfileId: profile._id });
+  return offer._id;
+}
+
 export const claim = mutation({
   args: { token: v.string() },
   returns: v.id("listingOffers"),
-  handler: async (ctx, { token }) => {
-    const identity = await requireIdentity(ctx);
-    const offer = await ctx.db
-      .query("listingOffers")
-      .withIndex("by_token", (q) => q.eq("token", token))
-      .unique();
-    if (!offer || !offer.expiresAt || offer.expiresAt <= Date.now())
-      throw new ConvexError("Link nije važeći. Zatražite novi od Podelija.");
-    if (
-      identity.emailVerified !== true ||
-      !identity.email ||
-      normalizeEmail(identity.email) !== offer.recipientEmail
-    )
-      throw new ConvexError(
-        "Preuzmite ponudu nalogom sa potvrđenom mejl adresom kojoj je ponuda poslata.",
-      );
-    if (offer.claimedBy && offer.claimedBy !== identity.subject)
-      throw new ConvexError("Ponuda je već preuzeta.");
-    if (offer.claimedBy === identity.subject) return offer._id;
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
-      .unique();
-    if (!profile)
-      throw new ConvexError(
-        "Profil se još priprema. Pokušajte ponovo za trenutak.",
-      );
-    await ctx.db.patch(offer._id, {
-      claimedBy: identity.subject,
-      status: "claimed",
-      updatedAt: Date.now(),
-    });
-    await record(
-      ctx,
-      offer,
-      identity.subject,
-      "offer_claimed",
-      "help_publish",
-      "Ponuđač je preuzeo ponudu svojim nalogom. Oglas još nije objavljen.",
-    );
-    await ctx.db.patch(offer.prospectId, { supplierProfileId: profile._id });
-    return offer._id;
-  },
+  handler: (ctx, { token }) => claimOffer(ctx, token),
 });
 
 export const getMine = query({
@@ -359,30 +361,63 @@ export const listMine = query({
   },
 });
 
+async function publishOffer(
+  ctx: MutationCtx,
+  id: Doc<"listingOffers">["_id"],
+  data: Doc<"listingOffers">["data"],
+) {
+  const identity = await requireIdentity(ctx);
+  const offer = await ctx.db.get(id);
+  if (!offer || offer.claimedBy !== identity.subject)
+    throw new ConvexError("Nemate dozvolu za objavu ove ponude.");
+  if (offer.itemId) return offer.itemId;
+  const itemId = await createItem(ctx, data);
+  await ctx.db.patch(id, {
+    status: "published",
+    itemId,
+    data,
+    updatedAt: Date.now(),
+  });
+  await record(
+    ctx,
+    offer,
+    identity.subject,
+    "onboarded",
+    undefined,
+    "Ponuđač je potvrdio podatke i objavio oglas.",
+  );
+  return itemId;
+}
+
 export const publish = mutation({
   args: { id: v.id("listingOffers"), data: itemInput },
   returns: v.id("items"),
-  handler: async (ctx, { id, data }) => {
+  handler: (ctx, { id, data }) => publishOffer(ctx, id, data),
+});
+
+// Claim and publication share one transaction: invalid data never takes ownership.
+export const claimAndPublish = mutation({
+  args: {
+    token: v.string(),
+    data: itemInput,
+    confirmEmailContact: v.boolean(),
+  },
+  returns: v.id("items"),
+  handler: async (ctx, { token, data, confirmEmailContact }) => {
+    if (!confirmEmailContact)
+      throw new ConvexError("Potvrdite kontakt preko mejla i chata.");
+    const id = await claimOffer(ctx, token);
     const identity = await requireIdentity(ctx);
-    const offer = await ctx.db.get(id);
-    if (!offer || offer.claimedBy !== identity.subject)
-      throw new ConvexError("Nemate dozvolu za objavu ove ponude.");
-    if (offer.itemId) return offer.itemId;
-    const itemId = await createItem(ctx, data);
-    await ctx.db.patch(id, {
-      status: "published",
-      itemId,
-      data,
-      updatedAt: Date.now(),
-    });
-    await record(
-      ctx,
-      offer,
-      identity.subject,
-      "onboarded",
-      undefined,
-      "Ponuđač je potvrdio podatke i objavio oglas.",
-    );
-    return itemId;
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
+      .unique();
+    if (!profile) throw new ConvexError("Profil se još priprema.");
+    if (!profile.preferredContactTypes?.length)
+      await ctx.db.patch(profile._id, {
+        preferredContactTypes: ["email", "chat"],
+        updatedAt: Date.now(),
+      });
+    return publishOffer(ctx, id, data);
   },
 });

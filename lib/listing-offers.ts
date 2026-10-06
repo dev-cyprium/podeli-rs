@@ -19,7 +19,7 @@ export function createOfferToken() {
 export function offerEmail(company: string, title: string, url: string) {
   return {
     subject: `Predlog oglasa za ${company} na Podeliju`,
-    body: `Zdravo,\n\nPripremio sam predlog oglasa „${title}” za vašu ponudu na podeli.rs:\n${url}\n\nOglas još nije objavljen. Ako vam odgovara, preuzmite ga svojim nalogom, proverite podatke i dodajte termine. Objavljivanje je besplatno.\n\nPlatforma je nova i trenutno ne mogu da obećam broj upita.\n\nPozdrav,\nStefan\npodeli.rs`,
+    body: `Zdravo,\n\nPripremio sam predlog oglasa „${title}” za vašu ponudu na podeli.rs:\n${url}\n\nOglas još nije objavljen. Ako vam odgovara, otvorite link, uredite podatke, dodajte fotografije i termine, pa potvrdite mejl kodom i objavite oglas. Lozinka nije potrebna. Objavljivanje je besplatno.\n\nPlatforma je nova i trenutno ne mogu da obećam broj upita.\n\nPozdrav,\nStefan\npodeli.rs`,
   };
 }
 
