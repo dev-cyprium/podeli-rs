@@ -10,6 +10,10 @@ export default defineSchema({
     title: v.string(),
     description: v.string(),
     category: v.string(),
+    city: v.optional(v.string()),
+    municipality: v.optional(v.string()),
+    cityKey: v.optional(v.string()),
+    municipalityKey: v.optional(v.string()),
     pricePerDay: v.number(),
     priceByAgreement: v.optional(v.boolean()),
     deposit: v.optional(v.number()),
@@ -32,9 +36,11 @@ export default defineSchema({
     .index("by_owner", ["ownerId"])
     .index("by_shortId", ["shortId"])
     .index("by_category", ["category"])
+    .index("by_cityKey_and_municipalityKey", ["cityKey", "municipalityKey"])
+    .index("by_municipalityKey", ["municipalityKey"])
     .searchIndex("search_items", {
       searchField: "searchText",
-      filterFields: ["category"],
+      filterFields: ["category", "cityKey", "municipalityKey"],
     }),
 
   plans: defineTable({

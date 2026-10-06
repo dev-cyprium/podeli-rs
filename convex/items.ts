@@ -1,12 +1,15 @@
 import { v, ConvexError } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireIdentity } from "@/lib/convex-auth";
+import schema from "./schema";
 import { Id } from "./_generated/dataModel";
 import {
   availabilityError,
   getBelgradeDate,
   isRangeAvailable,
 } from "@/lib/rental-dates";
+
+import { locationError, normalizeLocation } from "@/lib/item-location";
 
 const deliveryMethodValues = ["licno", "glovo", "wolt", "cargo"] as const;
 
@@ -135,6 +138,8 @@ export const create = mutation({
     title: v.string(),
     description: v.string(),
     category: v.string(),
+    city: v.string(),
+    municipality: v.string(),
     pricePerDay: v.number(),
     priceByAgreement: v.optional(v.boolean()),
     deposit: v.optional(v.number()),
@@ -148,6 +153,7 @@ export const create = mutation({
     ),
     deliveryMethods: v.array(deliveryMethodValidator),
   },
+  returns: v.id("items"),
   handler: async (ctx, args) => {
     const identity = await requireIdentity(ctx);
 
@@ -179,6 +185,15 @@ export const create = mutation({
         "Sačekajte 10 sekundi između objavljivanja oglasa.",
       );
     }
+
+    const error = locationError(args.city, args.municipality);
+    if (error) throw new ConvexError(error);
+    const location = {
+      city: args.city.trim().replace(/\s+/g, " "),
+      municipality: args.municipality.trim().replace(/\s+/g, " "),
+      cityKey: normalizeLocation(args.city),
+      municipalityKey: normalizeLocation(args.municipality),
+    };
 
     // Validate title
     if (!args.title.trim()) {
@@ -238,6 +253,7 @@ export const create = mutation({
 
     const itemId = await ctx.db.insert("items", {
       ...args,
+      ...location,
       pricePerDay: args.priceByAgreement ? 0 : args.pricePerDay,
       availabilitySlots: validSlots,
       ownerId: identity.subject,
@@ -263,6 +279,8 @@ export const update = mutation({
     title: v.string(),
     description: v.string(),
     category: v.string(),
+    city: v.string(),
+    municipality: v.string(),
     pricePerDay: v.number(),
     priceByAgreement: v.optional(v.boolean()),
     deposit: v.optional(v.number()),
@@ -276,6 +294,7 @@ export const update = mutation({
     ),
     deliveryMethods: v.array(deliveryMethodValidator),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     const identity = await requireIdentity(ctx);
     const item = await ctx.db.get(args.id);
@@ -285,6 +304,15 @@ export const update = mutation({
     if (item.ownerId !== identity.subject) {
       throw new ConvexError("Nemate dozvolu da menjate ovaj predmet.");
     }
+
+    const error = locationError(args.city, args.municipality);
+    if (error) throw new ConvexError(error);
+    const location = {
+      city: args.city.trim().replace(/\s+/g, " "),
+      municipality: args.municipality.trim().replace(/\s+/g, " "),
+      cityKey: normalizeLocation(args.city),
+      municipalityKey: normalizeLocation(args.municipality),
+    };
 
     // Validate title
     if (!args.title.trim()) {
@@ -382,6 +410,7 @@ export const update = mutation({
     }
     await ctx.db.patch(id, {
       ...rest,
+      ...location,
       pricePerDay: args.priceByAgreement ? 0 : args.pricePerDay,
       availabilitySlots: validSlots,
       ...updates,
@@ -591,22 +620,41 @@ export const searchItems = query({
   args: {
     query: v.optional(v.string()),
     category: v.optional(v.string()),
+    city: v.optional(v.string()),
+    municipality: v.optional(v.string()),
     paginationOpts: v.object({
       numItems: v.number(),
       cursor: v.union(v.string(), v.null()),
     }),
   },
+  returns: v.object({
+    page: v.array(
+      v.object({
+        ...schema.tables.items.validator.fields,
+        _id: v.id("items"),
+        _creationTime: v.number(),
+      }),
+    ),
+    continueCursor: v.union(v.string(), v.null()),
+    isDone: v.boolean(),
+  }),
   handler: async (ctx, args) => {
     const { query: searchQuery, category, paginationOpts } = args;
+    const cityKey = args.city ? normalizeLocation(args.city) : undefined;
+    const municipalityKey = args.municipality
+      ? normalizeLocation(args.municipality)
+      : undefined;
     const today = getBelgradeDate();
 
     // Hide items with no current or future availability.
     function filterActive<
       T extends {
+        category: string;
         availabilitySlots: Array<{ startDate: string; endDate: string }>;
       },
     >(items: T[]): T[] {
       return items.filter((item) => {
+        if (category && item.category !== category) return false;
         // Filter out items with no availability slots
         if (item.availabilitySlots.length === 0) {
           return false;
@@ -624,10 +672,13 @@ export const searchItems = query({
       const searchBuilder = ctx.db
         .query("items")
         .withSearchIndex("search_items", (q) => {
-          const search = q.search("searchText", searchQuery);
+          let search = q.search("searchText", searchQuery);
           if (category) {
-            return search.eq("category", category);
+            search = search.eq("category", category);
           }
+          if (cityKey) search = search.eq("cityKey", cityKey);
+          if (municipalityKey)
+            search = search.eq("municipalityKey", municipalityKey);
           return search;
         });
 
@@ -654,13 +705,24 @@ export const searchItems = query({
     }
 
     // If no search query but category filter, use category index
-    if (category) {
+    if (category || cityKey || municipalityKey) {
+      const itemQuery = ctx.db.query("items");
+      const locationQuery = cityKey
+        ? itemQuery.withIndex("by_cityKey_and_municipalityKey", (q) => {
+            const city = q.eq("cityKey", cityKey);
+            return municipalityKey
+              ? city.eq("municipalityKey", municipalityKey)
+              : city;
+          })
+        : municipalityKey
+          ? itemQuery.withIndex("by_municipalityKey", (q) =>
+              q.eq("municipalityKey", municipalityKey),
+            )
+          : itemQuery.withIndex("by_category", (q) =>
+              q.eq("category", category!),
+            );
       const allResults = filterActive(
-        await ctx.db
-          .query("items")
-          .withIndex("by_category", (q) => q.eq("category", category))
-          .order("desc")
-          .collect(),
+        await locationQuery.order("desc").collect(),
       );
 
       const cursorIndex = paginationOpts.cursor

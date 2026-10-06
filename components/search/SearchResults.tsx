@@ -8,7 +8,12 @@ import { Loader2 } from "lucide-react";
 import { ItemCard } from "@/components/ItemCard";
 import { SearchResultsSkeleton } from "./SearchResultsSkeleton";
 
-function SearchResultsInner({ query, category }: SearchResultsInnerProps) {
+function SearchResultsInner({
+  query,
+  category,
+  city,
+  municipality,
+}: SearchResultsInnerProps) {
   const [cursor, setCursor] = useState<string | null>(null);
   const [accumulatedItems, setAccumulatedItems] = useState<Doc<"items">[]>([]);
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -27,6 +32,8 @@ function SearchResultsInner({ query, category }: SearchResultsInnerProps) {
   const searchResult = useQuery(api.items.searchItems, {
     query: query || undefined,
     category: category || undefined,
+    city: city || undefined,
+    municipality: municipality || undefined,
     paginationOpts: {
       numItems: 12,
       cursor,
@@ -149,16 +156,33 @@ function SearchResultsInner({ query, category }: SearchResultsInnerProps) {
 interface SearchResultsInnerProps {
   query?: string;
   category?: string;
+  city?: string;
+  municipality?: string;
 }
 
 interface SearchResultsProps {
   query?: string;
   category?: string;
+  city?: string;
+  municipality?: string;
 }
 
 // Wrapper component that uses key to reset state when query/category changes
-export function SearchResults({ query, category }: SearchResultsProps) {
+export function SearchResults({
+  query,
+  category,
+  city,
+  municipality,
+}: SearchResultsProps) {
   // Using key to force remount when search params change, which resets all state
-  const key = `${query ?? ""}-${category ?? ""}`;
-  return <SearchResultsInner key={key} query={query} category={category} />;
+  const key = JSON.stringify([query, category, city, municipality]);
+  return (
+    <SearchResultsInner
+      key={key}
+      query={query}
+      category={category}
+      city={city}
+      municipality={municipality}
+    />
+  );
 }

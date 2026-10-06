@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { PreferredContactForm } from "./PreferredContactForm";
 import { CategoryCombobox } from "./CategoryCombobox";
+import { locationError } from "@/lib/item-location";
 import { availabilityError } from "@/lib/rental-dates";
 
 type AvailabilitySlot = {
@@ -45,6 +46,8 @@ export type ItemFormData = {
   title: string;
   description: string;
   category: string;
+  city: string;
+  municipality: string;
   pricePerDay: number;
   priceByAgreement?: boolean;
   deposit?: number;
@@ -75,6 +78,8 @@ export function ItemWizardForm({
   const generateUploadUrl = useMutation(api.items.generateUploadUrl);
   const categoryNames = useQuery(api.categories.listNames);
   const categories = useMemo(() => categoryNames ?? [], [categoryNames]);
+  const [city, setCity] = useState(item?.city ?? "");
+  const [municipality, setMunicipality] = useState(item?.municipality ?? "");
   const [title, setTitle] = useState(item?.title ?? "");
   const [description, setDescription] = useState(item?.description ?? "");
   const [category, setCategory] = useState(
@@ -281,6 +286,8 @@ export function ItemWizardForm({
       if (slotError) return slotError;
     }
     if (stepIndex === 3) {
+      const error = locationError(city, municipality);
+      if (error) return error;
       if (deliveryMethods.length === 0) {
         return "Odaberite bar jedan način dostave.";
       }
@@ -320,6 +327,8 @@ export function ItemWizardForm({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    city,
+    municipality,
     title,
     description,
     category,
@@ -451,6 +460,8 @@ export function ItemWizardForm({
         title: title.trim(),
         description: description.trim(),
         category,
+        city: city.trim(),
+        municipality: municipality.trim(),
         pricePerDay: numericPrice,
         priceByAgreement: priceByAgreement || undefined,
         deposit:
@@ -853,6 +864,32 @@ export function ItemWizardForm({
 
           {currentStep === 3 ? (
             <div className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="item-city">Grad</Label>
+                  <Input
+                    id="item-city"
+                    value={city}
+                    onChange={(event) => setCity(event.target.value)}
+                    maxLength={100}
+                    placeholder="npr. Beograd"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="item-municipality">Opština</Label>
+                  <Input
+                    id="item-municipality"
+                    value={municipality}
+                    onChange={(event) => setMunicipality(event.target.value)}
+                    maxLength={100}
+                    placeholder="npr. Zvezdara"
+                  />
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Unesite samo grad i opštinu. Tačnu adresu preuzimanja dogovarate
+                direktno sa korisnikom.
+              </p>
               {preferredContactTypes.length > 0 ? (
                 <div className="rounded-lg border border-podeli-blue/20 bg-podeli-blue/5 px-4 py-3">
                   <p className="text-sm font-medium text-podeli-dark">
