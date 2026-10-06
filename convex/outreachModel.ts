@@ -6,6 +6,16 @@ export const outreachStatus = v.union(
   v.literal("interested"),
   v.literal("not_interested"),
   v.literal("onboarded"),
+  v.literal("offer_ready"),
+  v.literal("offer_sent"),
+  v.literal("offer_claimed"),
+);
+export const outreachStep = v.union(
+  v.literal("prepare_offer"),
+  v.literal("send_offer"),
+  v.literal("await_reply"),
+  v.literal("follow_up"),
+  v.literal("help_publish"),
 );
 export const outreachChannel = v.union(
   v.literal("email"),
@@ -23,6 +33,7 @@ export const prospectFields = {
   contactPerson: v.string(),
   status: outreachStatus,
   nextAction: v.string(),
+  nextStep: v.optional(outreachStep),
   followUpDate: v.string(),
   supplierProfileId: v.optional(v.id("profiles")),
 };
@@ -32,6 +43,7 @@ export const prospectDocument = v.object({
   _id: v.id("prospects"),
   _creationTime: v.number(),
   key: v.string(),
+  importKey: v.optional(v.string()),
   createdAt: v.number(),
   updatedAt: v.number(),
 });

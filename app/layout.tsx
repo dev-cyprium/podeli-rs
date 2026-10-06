@@ -4,7 +4,7 @@ import "./globals.css";
 import { ConvexClientProvider } from "../components/ConvexClientProvider";
 import { ClerkProvider } from "@clerk/nextjs";
 import { srLocalization } from "@/lib/clerk-localization";
-import { Analytics } from "@vercel/analytics/next";
+import { SiteAnalytics } from "@/components/SiteAnalytics";
 import { Toaster } from "@/components/ui/sonner";
 import { SSOCallbackHashRedirect } from "@/components/SSOCallbackHashRedirect";
 import { CookieConsent } from "@/components/CookieConsent";
@@ -48,7 +48,7 @@ export default function RootLayout({
           <ConvexClientProvider>{children}</ConvexClientProvider>
           <Toaster />
           <CookieConsent />
-          <Analytics />
+          <SiteAnalytics />
         </body>
       </html>
     </ClerkProvider>

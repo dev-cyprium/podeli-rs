@@ -68,7 +68,10 @@ const CONTACT_LABELS: Record<string, string> = {
 };
 
 interface ItemWizardFormProps {
-  item: Doc<"items"> | null;
+  item: Partial<Pick<Doc<"items">, keyof ItemFormData>> | null;
+  mode?: "draft" | "publish";
+  submitLabel?: string;
+  initialStep?: number;
   onSave: (data: ItemFormData) => Promise<void>;
   onCancel?: () => void;
   preferredContactTypes?: string[];
@@ -82,6 +85,9 @@ export function ItemWizardForm({
   preferredContactTypes = [],
   phoneNumber,
   onContactSaved,
+  mode = "publish",
+  submitLabel,
+  initialStep = 0,
 }: ItemWizardFormProps) {
   const generateUploadUrl = useMutation(api.items.generateUploadUrl);
   const categoryNames = useQuery(api.categories.listNames);
@@ -115,7 +121,7 @@ export function ItemWizardForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isProcessingImages, setIsProcessingImages] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(initialStep);
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [invalidSteps, setInvalidSteps] = useState<Set<number>>(new Set());
   const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set()); // Don't mark any step as visited initially
@@ -154,7 +160,7 @@ export function ItemWizardForm({
       title: "Dostava",
       description: "Odaberite opcije preuzimanja.",
     },
-  ];
+  ].filter((step) => mode !== "draft" || step.id !== "availability");
 
   // Keep the legacy cover coordinates together with the per-photo settings.
   // A storage ID remains stable when the cover or the photo order changes.
@@ -288,7 +294,7 @@ export function ItemWizardForm({
   }
 
   function validateStep(stepIndex: number) {
-    if (stepIndex === 0) {
+    if (steps[stepIndex].id === "basic") {
       const numericPrice = Number(pricePerDay);
       if (!title.trim()) {
         return "Unesite naziv predmeta.";
@@ -310,19 +316,19 @@ export function ItemWizardForm({
         return "Cena po danu mora biti veća od nule.";
       }
     }
-    if (stepIndex === 1) {
-      if (images.length === 0) {
+    if (steps[stepIndex].id === "images") {
+      if (mode !== "draft" && images.length === 0) {
         return "Dodajte fotografiju predmeta.";
       }
     }
-    if (stepIndex === 2) {
+    if (steps[stepIndex].id === "availability") {
       const slotError = availabilityError(availabilitySlots);
       if (slotError) return slotError;
     }
-    if (stepIndex === 3) {
+    if (steps[stepIndex].id === "delivery") {
       const error = locationError(city, municipality);
-      if (error) return error;
-      if (deliveryMethods.length === 0) {
+      if (error && mode !== "draft") return error;
+      if (mode !== "draft" && deliveryMethods.length === 0) {
         return "Odaberite bar jedan način dostave.";
       }
     }
@@ -483,9 +489,9 @@ export function ItemWizardForm({
       return;
     }
 
-    if (preferredContactTypes.length === 0) {
+    if (mode !== "draft" && preferredContactTypes.length === 0) {
       setFormError(null);
-      setCurrentStep(3);
+      setCurrentStep(steps.findIndex((step) => step.id === "delivery"));
       setContactModalOpen(true);
       return;
     }
@@ -597,7 +603,7 @@ export function ItemWizardForm({
           transition={{ type: "spring", bounce: 0.35, duration: 0.4 }}
           className="space-y-4"
         >
-          {currentStep === 0 ? (
+          {steps[currentStep].id === "basic" ? (
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="item-title">Naziv predmeta</Label>
@@ -669,7 +675,7 @@ export function ItemWizardForm({
             </div>
           ) : null}
 
-          {currentStep === 1 ? (
+          {steps[currentStep].id === "images" ? (
             <ItemPhotoEditor
               images={images}
               urls={imageUrlsMap}
@@ -695,7 +701,7 @@ export function ItemWizardForm({
             />
           ) : null}
 
-          {currentStep === 2 ? (
+          {steps[currentStep].id === "availability" ? (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label>Dostupnost</Label>
@@ -784,7 +790,7 @@ export function ItemWizardForm({
             </div>
           ) : null}
 
-          {currentStep === 3 ? (
+          {steps[currentStep].id === "delivery" ? (
             <div className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
@@ -812,7 +818,7 @@ export function ItemWizardForm({
                 Unesite samo grad i opštinu. Tačnu adresu preuzimanja dogovarate
                 direktno sa korisnikom.
               </p>
-              {
+              {mode !== "draft" && (
                 <div className="rounded-lg border border-podeli-blue/20 bg-podeli-blue/5 px-4 py-3">
                   <p className="text-sm font-medium text-podeli-dark">
                     {preferredContactTypes.length > 0
@@ -835,7 +841,7 @@ export function ItemWizardForm({
                       : "Postavi način kontakta"}
                   </Button>
                 </div>
-              }
+              )}
               <div className="space-y-2">
                 <Label>Način dostave</Label>
                 <div className="grid gap-2">
@@ -918,7 +924,8 @@ export function ItemWizardForm({
               disabled={isSubmitting}
               onClick={handleSaveFromAnyStep}
             >
-              Sačuvaj izmene
+              {submitLabel ??
+                (mode === "draft" ? "Sačuvaj nacrt ponude" : "Sačuvaj izmene")}
             </Button>
           ) : currentStep === steps.length - 1 ? (
             <Button
@@ -927,7 +934,7 @@ export function ItemWizardForm({
               disabled={isSubmitting || invalidSteps.size > 0}
               onClick={handleSubmit}
             >
-              Sačuvaj predmet
+              {submitLabel ?? "Sačuvaj predmet"}
             </Button>
           ) : null}
         </div>
