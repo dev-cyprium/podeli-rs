@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { formatLocation } from "@/lib/item-location";
 import { Preloaded, usePreloadedQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { MapPin, Truck, Calendar } from "lucide-react";
@@ -72,7 +73,7 @@ export function ItemDetailContent({
               </div>
               <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
                 <MapPin className="h-4 w-4" />
-                <span>Beograd</span>
+                <span>{formatLocation(item)}</span>
               </div>
             </div>
             <div className="text-right">
