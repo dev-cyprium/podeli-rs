@@ -106,6 +106,76 @@ async function setup(email = "owner@example.com") {
 }
 
 describe("supplier offer ownership and publishing", () => {
+  it("atomically accepts and publishes edited data with verified ownership and explicit contact consent", async () => {
+    const { t, admin, owner, stranger, id, data, ownerProfile } = await setup();
+    await admin.mutation(api.listingOffers.createLink, { id, token });
+    await t.run((ctx) =>
+      ctx.db.patch(ownerProfile, { preferredContactTypes: [] }),
+    );
+    const edited = {
+      ...data,
+      title: "Potvrđen naziv",
+      availabilitySlots: [{ startDate: "2026-10-07", endDate: "2026-10-31" }],
+    };
+    const unverified = t.withIdentity({
+      subject: "owner",
+      email: "owner@example.com",
+      emailVerified: false,
+    });
+    for (const client of [t, stranger, unverified])
+      await expect(
+        client.mutation(api.listingOffers.claimAndPublish, {
+          token,
+          data: edited,
+          confirmEmailContact: true,
+        }),
+      ).rejects.toThrow();
+    await expect(
+      owner.mutation(api.listingOffers.claimAndPublish, {
+        token,
+        data: edited,
+        confirmEmailContact: false,
+      }),
+    ).rejects.toThrow();
+    await expect(
+      owner.mutation(api.listingOffers.claimAndPublish, {
+        token,
+        data: { ...edited, images: [] },
+        confirmEmailContact: true,
+      }),
+    ).rejects.toThrow();
+    expect(
+      (
+        await admin.query(api.listingOffers.getForProspect, {
+          prospectId: (await admin.query(api.outreach.list, {}))[0]._id,
+        })
+      )?.status,
+    ).toBe("ready");
+    expect(
+      (await owner.query(api.profiles.getMyProfile, {}))?.preferredContactTypes,
+    ).toEqual([]);
+    expect(await t.query(api.items.listAll, {})).toEqual([]);
+    const itemId = await owner.mutation(api.listingOffers.claimAndPublish, {
+      token,
+      data: edited,
+      confirmEmailContact: true,
+    });
+    expect(
+      await owner.mutation(api.listingOffers.claimAndPublish, {
+        token,
+        data: edited,
+        confirmEmailContact: true,
+      }),
+    ).toBe(itemId);
+    expect((await t.query(api.items.listAll, {}))[0]).toMatchObject({
+      title: edited.title,
+      ownerId: "owner",
+    });
+    expect(
+      (await owner.query(api.profiles.getMyProfile, {}))?.preferredContactTypes,
+    ).toEqual(["email", "chat"]);
+  });
+
   it("publishes a prepared sale without dates and preserves combined location/type filters", async () => {
     const { t, admin, owner, id, prospectId, data } = await setup();
     const sale = {

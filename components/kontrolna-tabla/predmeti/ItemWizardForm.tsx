@@ -85,6 +85,9 @@ interface ItemWizardFormProps {
   preferredContactTypes?: string[];
   phoneNumber?: string;
   onContactSaved?: () => void;
+  contactSettingsEditable?: boolean;
+  uploadPhoto?: (file: File) => Promise<Id<"_storage">>;
+  localImageUrls?: Record<string, string>;
 }
 
 export function ItemWizardForm({
@@ -96,6 +99,9 @@ export function ItemWizardForm({
   mode = "publish",
   submitLabel,
   initialStep = 0,
+  contactSettingsEditable = true,
+  uploadPhoto,
+  localImageUrls = {},
 }: ItemWizardFormProps) {
   const generateUploadUrl = useMutation(api.items.generateUploadUrl);
   const categoryNames = useQuery(api.categories.listNames);
@@ -147,10 +153,13 @@ export function ItemWizardForm({
   }, [categories, category, item?.category]);
 
   // Get URLs for all images
-  const imageUrlsMap = useQuery(
+  const remoteImages = images.filter((id) => !id.startsWith("local-"));
+  const remoteImageUrls = useQuery(
     api.items.getImageUrls,
-    images.length > 0 ? { storageIds: images } : "skip",
+    remoteImages.length > 0 ? { storageIds: remoteImages } : "skip",
   );
+
+  const imageUrlsMap = { ...remoteImageUrls, ...localImageUrls };
 
   const steps = [
     {
@@ -274,6 +283,17 @@ export function ItemWizardForm({
     try {
       let uploadedId: Id<"_storage"> | undefined;
       for (const file of selected) {
+        if (uploadPhoto) {
+          const storageId = await uploadPhoto(file);
+          uploadedId = storageId;
+          if (replaceId)
+            updatePhotos(
+              images.map((id) => (id === replaceId ? storageId : id)),
+              photoPoints,
+            );
+          else setImages((previous) => [...previous, storageId]);
+          continue;
+        }
         // Generate upload URL
         const uploadUrl = await generateUploadUrl();
         // Upload file to Convex
@@ -894,16 +914,18 @@ export function ItemWizardForm({
                       <li key={t}>{CONTACT_LABELS[t] ?? t}</li>
                     ))}
                   </ul>
-                  <Button
-                    variant="link"
-                    type="button"
-                    onClick={() => setContactModalOpen(true)}
-                    className="mt-2 inline-block text-sm font-medium text-podeli-blue hover:text-podeli-blue/90 hover:underline"
-                  >
-                    {preferredContactTypes.length > 0
-                      ? "Izmeni način kontakta"
-                      : "Postavi način kontakta"}
-                  </Button>
+                  {contactSettingsEditable && (
+                    <Button
+                      variant="link"
+                      type="button"
+                      onClick={() => setContactModalOpen(true)}
+                      className="mt-2 inline-block text-sm font-medium text-podeli-blue hover:text-podeli-blue/90 hover:underline"
+                    >
+                      {preferredContactTypes.length > 0
+                        ? "Izmeni način kontakta"
+                        : "Postavi način kontakta"}
+                    </Button>
+                  )}
                 </div>
               )}
               <div className="space-y-2">

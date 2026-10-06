@@ -1,50 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { SignInButton, SignUpButton, SignOutButton } from "@clerk/nextjs";
-import { useConvexAuth, useMutation, useQuery } from "convex/react";
-import { ConvexError } from "convex/values";
+import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatLocation } from "@/lib/item-location";
-import { offerPath } from "@/lib/listing-offers";
 import Link from "next/link";
+import { OfferAcceptanceEditor } from "./OfferAcceptanceEditor";
+import type { ItemFormData } from "@/components/kontrolna-tabla/predmeti/ItemWizardForm";
 import { offersRent, offersSale } from "@/lib/listing-types";
 
 export function ListingOfferPreview({ token }: { token: string }) {
-  const router = useRouter();
-  const { isAuthenticated, isLoading } = useConvexAuth();
+  const { isLoading } = useConvexAuth();
   const offer = useQuery(api.listingOffers.preview, { token });
-  const profile = useQuery(
-    api.profiles.getMyProfile,
-    isAuthenticated ? {} : "skip",
-  );
   const imageUrls = useQuery(
     api.items.getImageUrls,
     offer?.data.images.length ? { storageIds: offer.data.images } : "skip",
   );
-  const claim = useMutation(api.listingOffers.claim);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const path = offerPath(token);
-  async function takeOffer() {
-    setBusy(true);
-    setError("");
-    try {
-      const id = await claim({ token });
-      router.push(`/kontrolna-tabla/ponude/${id}`);
-    } catch (err) {
-      setError(
-        err instanceof ConvexError && typeof err.data === "string"
-          ? err.data
-          : "Preuzimanje nije uspelo. Pokušajte ponovo.",
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
+  const [editing, setEditing] = useState(false);
   return (
     <main className="ph-no-capture mx-auto max-w-3xl space-y-6 px-4 py-8 sm:py-12">
       <Link href="/" className="text-lg font-semibold text-podeli-accent">
@@ -72,7 +46,7 @@ export function ListingOfferPreview({ token }: { token: string }) {
             <p className="mt-2 text-muted-foreground">
               {offer.published
                 ? "Oglas je objavljen. Možete nastaviti da ga uređujete sa svog naloga."
-                : "Oglas još nije objavljen. Pregledajte predlog, a nakon preuzimanja proverite podatke i dodajte dostupnost."}
+                : "Oglas još nije objavljen. Pregledajte i uredite podatke i dodajte dostupnost, pa potvrdite mejl i objavu."}
             </p>
           </div>
           {offer.data.images.length > 0 && (
@@ -125,7 +99,21 @@ export function ListingOfferPreview({ token }: { token: string }) {
                 <strong>{offer.recipientHint}</strong>. Objavljivanje je
                 besplatno.
               </p>
-              {isLoading ? (
+              {editing && !offer.mine ? (
+                <OfferAcceptanceEditor
+                  token={token}
+                  data={
+                    {
+                      ...offer.data,
+                      deliveryMethods: offer.data.deliveryMethods.filter(
+                        (method) => method === "licno",
+                      ),
+                    } as ItemFormData
+                  }
+                  recipientHint={offer.recipientHint}
+                  canClaim={offer.canClaim}
+                />
+              ) : isLoading ? (
                 <p role="status">Učitavanje prijave…</p>
               ) : offer.mine ? (
                 <Button asChild>
@@ -133,50 +121,14 @@ export function ListingOfferPreview({ token }: { token: string }) {
                     Nastavi uređivanje ponude
                   </Link>
                 </Button>
-              ) : !isAuthenticated ? (
-                <div className="flex flex-wrap gap-2">
-                  <SignUpButton
-                    mode="modal"
-                    forceRedirectUrl={path}
-                    signInForceRedirectUrl={path}
-                  >
-                    <Button>Preuzmi ponudu — napravi nalog</Button>
-                  </SignUpButton>
-                  <SignInButton
-                    mode="modal"
-                    forceRedirectUrl={path}
-                    signUpForceRedirectUrl={path}
-                  >
-                    <Button variant="outline">Već imam nalog</Button>
-                  </SignInButton>
-                </div>
-              ) : offer.canClaim ? (
-                <Button disabled={busy || !profile} onClick={takeOffer}>
-                  {busy
-                    ? "Preuzimanje…"
-                    : !profile
-                      ? "Priprema naloga…"
-                      : "Preuzmi i uredi ponudu"}
-                </Button>
               ) : (
-                <div className="space-y-3">
-                  <p role="alert" className="text-sm">
-                    Ovaj nalog nema potvrđenu mejl adresu kojoj je ponuda
-                    namenjena. Prijavite se odgovarajućim nalogom.
-                  </p>
-                  <SignOutButton redirectUrl={path}>
-                    <Button variant="outline">Promeni nalog</Button>
-                  </SignOutButton>
-                </div>
-              )}
-              {error && (
-                <p role="alert" className="text-sm text-destructive">
-                  {error}
-                </p>
+                <Button onClick={() => setEditing(true)}>
+                  Pregledaj i uredi ponudu
+                </Button>
               )}
               <p className="text-xs text-muted-foreground">
-                Preuzimanje čuva predlog na vašem nalogu. Oglas postaje javan
-                tek kada potvrdite podatke i izaberete „Potvrdi i objavi oglas”.
+                Oglas postaje javan tek kada potvrdite podatke i izaberete
+                „Potvrdi i objavi oglas”.
               </p>
             </CardContent>
           </Card>
