@@ -21,6 +21,7 @@ interface PreferredContactFormProps {
   preferredContactTypes: string[];
   phoneNumber?: string;
   onSave?: () => void;
+  onCancel?: () => void;
   compact?: boolean;
   /** When true, render without outer Card (for use inside ContactPreferencesPanel) */
   embedded?: boolean;
@@ -32,6 +33,7 @@ export function PreferredContactForm({
   preferredContactTypes,
   phoneNumber: initialPhoneNumber,
   onSave,
+  onCancel,
   compact = false,
   embedded = false,
   initialExpanded,
@@ -39,15 +41,13 @@ export function PreferredContactForm({
   const updatePrefs = useMutation(api.profiles.updatePreferredContactTypes);
   const [selected, setSelected] = useState<ContactType[]>(
     preferredContactTypes.filter((t): t is ContactType =>
-      ["chat", "email", "phone"].includes(t)
-    )
+      ["chat", "email", "phone"].includes(t),
+    ),
   );
   const [phoneNumber, setPhoneNumber] = useState(initialPhoneNumber ?? "");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(
-    initialExpanded ?? !compact
-  );
+  const [isExpanded, setIsExpanded] = useState(initialExpanded ?? !compact);
 
   const hasExistingPrefs = preferredContactTypes.length > 0;
   const isLastOption = (value: ContactType) =>
@@ -59,9 +59,7 @@ export function PreferredContactForm({
     if (cannotToggleOff(value)) return;
 
     setSelected((prev) =>
-      prev.includes(value)
-        ? prev.filter((t) => t !== value)
-        : [...prev, value]
+      prev.includes(value) ? prev.filter((t) => t !== value) : [...prev, value],
     );
     setError(null);
   }
@@ -82,7 +80,9 @@ export function PreferredContactForm({
     try {
       await updatePrefs({
         preferredContactTypes: selected,
-        phoneNumber: selected.includes("phone") ? phoneNumber.trim() : undefined,
+        phoneNumber: selected.includes("phone")
+          ? phoneNumber.trim()
+          : undefined,
       });
       if (compact) {
         setIsExpanded(false);
@@ -90,7 +90,9 @@ export function PreferredContactForm({
       onSave?.();
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Čuvanje nije uspelo. Pokušajte ponovo."
+        err instanceof Error
+          ? err.message
+          : "Čuvanje nije uspelo. Pokušajte ponovo.",
       );
     } finally {
       setIsSubmitting(false);
@@ -99,7 +101,7 @@ export function PreferredContactForm({
 
   if (compact && !isExpanded) {
     const labels = CONTACT_OPTIONS.filter((o) =>
-      selected.includes(o.value)
+      selected.includes(o.value),
     ).map((o) => o.label);
 
     return (
@@ -129,9 +131,7 @@ export function PreferredContactForm({
     <div className="space-y-4">
       {!embedded && (
         <div>
-          <h3 className="font-semibold text-podeli-dark">
-            Način kontakta
-          </h3>
+          <h3 className="font-semibold text-podeli-dark">Način kontakta</h3>
           <p className="mt-1 text-sm text-muted-foreground">
             Kako želite da vas ljudi kontaktiraju?
           </p>
@@ -177,15 +177,15 @@ export function PreferredContactForm({
                 </div>
               )}
             </div>
-            );
-          })}
-        </div>
+          );
+        })}
+      </div>
 
-        {error && (
-          <div className="rounded-lg border border-podeli-red/30 bg-podeli-red/10 px-3 py-2 text-sm text-podeli-red">
-            {error}
-          </div>
-        )}
+      {error && (
+        <div className="rounded-lg border border-podeli-red/30 bg-podeli-red/10 px-3 py-2 text-sm text-podeli-red">
+          {error}
+        </div>
+      )}
 
       <div className="flex gap-3">
         <Button
@@ -200,7 +200,10 @@ export function PreferredContactForm({
           <Button
             type="button"
             variant="outline"
-            onClick={() => setIsExpanded(false)}
+            onClick={() => {
+              setIsExpanded(false);
+              onCancel?.();
+            }}
           >
             Otkaži
           </Button>
@@ -215,9 +218,7 @@ export function PreferredContactForm({
 
   return (
     <Card>
-      <CardContent className="pt-6">
-        {formContent}
-      </CardContent>
+      <CardContent className="pt-6">{formContent}</CardContent>
     </Card>
   );
 }

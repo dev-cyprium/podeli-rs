@@ -43,6 +43,7 @@ export function ItemCard({
           images={item.images}
           title={item.title}
           focalPoint={item.imageFocalPoint}
+          imageFocalPoints={item.imageFocalPoints}
         />
 
         {/* Heart — top-right */}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyWebhook } from "@clerk/backend/webhooks";
+import { verifyWebhook } from "@clerk/nextjs/webhooks";
 import { Resend } from "resend";
 import { NewUserEmail } from "@/components/emails/NewUserEmail";
 import { WelcomeEmail } from "@/components/emails/WelcomeEmail";

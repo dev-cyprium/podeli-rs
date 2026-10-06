@@ -1,3 +1,4 @@
+import { imageFocalPointValidator, imageFocalPointsValidator } from "./imageModel";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { prospectFields, outreachStatus, outreachChannel } from "./outreachModel";
@@ -28,7 +29,8 @@ export default defineSchema({
     shortId: v.optional(v.string()),
     slug: v.optional(v.string()),
     searchText: v.optional(v.string()),
-    imageFocalPoint: v.optional(v.object({ x: v.number(), y: v.number() })),
+    imageFocalPoint: v.optional(imageFocalPointValidator),
+    imageFocalPoints: v.optional(imageFocalPointsValidator),
     singleListingExpiresAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),

@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useUser } from "@clerk/nextjs";
-import type { EmailAddressResource } from "@clerk/types";
+import type { EmailAddressResource } from "@clerk/nextjs/types";
 import { Mail, Plus, Star, Trash2, Loader2, Check, X } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

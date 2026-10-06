@@ -1,5 +1,6 @@
 "use client";
 
+import { getImageFocalPoint, ImageFocalPoints } from "@/lib/item-photos";
 import { useState, useCallback } from "react";
 import Image from "next/image";
 import { useQuery } from "convex/react";
@@ -13,12 +14,14 @@ interface ItemCardCarouselProps {
   images: Id<"_storage">[];
   title: string;
   focalPoint?: { x: number; y: number };
+  imageFocalPoints?: ImageFocalPoints;
 }
 
 export function ItemCardCarousel({
   images,
   title,
   focalPoint,
+  imageFocalPoints,
 }: ItemCardCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0);
@@ -96,11 +99,13 @@ export function ItemCardCarousel({
 
   const currentStorageId = images[currentIndex];
   const currentUrl = imageUrls?.[currentStorageId] ?? null;
-  // Apply focal point only to first image
-  const objectPosition =
-    currentIndex === 0 && focalPoint
-      ? `${focalPoint.x}% ${focalPoint.y}%`
-      : undefined;
+  const point = getImageFocalPoint(
+    currentStorageId,
+    currentIndex,
+    imageFocalPoints,
+    focalPoint,
+  );
+  const objectPosition = `${point.x}% ${point.y}%`;
 
   // Single image — no controls
   if (!hasMultiple) {
@@ -200,9 +205,7 @@ export function ItemCardCarousel({
           <span
             key={i}
             className={`h-1.5 w-1.5 rounded-full transition-colors ${
-              i === currentIndex
-                ? "bg-white"
-                : "bg-white/50"
+              i === currentIndex ? "bg-white" : "bg-white/50"
             }`}
           />
         ))}

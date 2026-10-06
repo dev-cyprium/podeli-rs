@@ -1,10 +1,13 @@
 "use client";
 
-import { SignIn } from "@clerk/nextjs";
+import { ClerkLoaded, SignIn } from "@clerk/nextjs";
+import Link from "next/link";
+import { SignInStatus } from "./SignInStatus";
 import {
   Dialog,
   DialogContent,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -17,14 +20,27 @@ export function SignInButton() {
           Prijavi se
         </Button>
       </DialogTrigger>
-      <DialogContent
-        showCloseButton={false}
-        className="max-w-[440px] border-0 bg-transparent p-0 shadow-none"
-      >
+      <DialogContent className="max-w-[440px] border-0 bg-card p-6 shadow-lg">
         <DialogTitle className="sr-only">Prijavi se</DialogTitle>
+        <DialogDescription className="sr-only">
+          Prijavite se putem Google naloga ili email adrese.
+        </DialogDescription>
+        <SignInStatus />
         <div className="flex justify-center">
-          <SignIn routing="hash" forceRedirectUrl="/" signUpForceRedirectUrl="/" />
+          <ClerkLoaded>
+            <SignIn
+              routing="hash"
+              forceRedirectUrl="/"
+              signUpForceRedirectUrl="/"
+            />
+          </ClerkLoaded>
         </div>
+        <Link
+          href="/sign-in"
+          className="text-center text-sm text-podeli-blue underline"
+        >
+          Otvori prijavu na posebnoj stranici
+        </Link>
       </DialogContent>
     </Dialog>
   );
