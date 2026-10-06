@@ -157,7 +157,6 @@ export const create = mutation({
     ),
     deliveryMethods: v.array(deliveryMethodValidator),
   },
-  returns: v.id("items"),
   handler: async (ctx, args) => {
     const identity = await requireIdentity(ctx);
 
@@ -303,7 +302,6 @@ export const update = mutation({
     ),
     deliveryMethods: v.array(deliveryMethodValidator),
   },
-  returns: v.null(),
   handler: async (ctx, args) => {
     const identity = await requireIdentity(ctx);
     const item = await ctx.db.get(args.id);
