@@ -85,6 +85,7 @@ interface ItemWizardFormProps {
   preferredContactTypes?: string[];
   phoneNumber?: string;
   onContactSaved?: () => void;
+  contactSettingsEditable?: boolean;
   uploadPhoto?: (file: File) => Promise<Id<"_storage">>;
   localImageUrls?: Record<string, string>;
 }
@@ -98,6 +99,7 @@ export function ItemWizardForm({
   mode = "publish",
   submitLabel,
   initialStep = 0,
+  contactSettingsEditable = true,
   uploadPhoto,
   localImageUrls = {},
 }: ItemWizardFormProps) {
@@ -912,16 +914,18 @@ export function ItemWizardForm({
                       <li key={t}>{CONTACT_LABELS[t] ?? t}</li>
                     ))}
                   </ul>
-                  <Button
-                    variant="link"
-                    type="button"
-                    onClick={() => setContactModalOpen(true)}
-                    className="mt-2 inline-block text-sm font-medium text-podeli-blue hover:text-podeli-blue/90 hover:underline"
-                  >
-                    {preferredContactTypes.length > 0
-                      ? "Izmeni način kontakta"
-                      : "Postavi način kontakta"}
-                  </Button>
+                  {contactSettingsEditable && (
+                    <Button
+                      variant="link"
+                      type="button"
+                      onClick={() => setContactModalOpen(true)}
+                      className="mt-2 inline-block text-sm font-medium text-podeli-blue hover:text-podeli-blue/90 hover:underline"
+                    >
+                      {preferredContactTypes.length > 0
+                        ? "Izmeni način kontakta"
+                        : "Postavi način kontakta"}
+                    </Button>
+                  )}
                 </div>
               )}
               <div className="space-y-2">

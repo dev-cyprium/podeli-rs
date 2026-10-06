@@ -123,7 +123,12 @@ export function OfferAcceptanceEditor({
         item={data}
         uploadPhoto={stage}
         localImageUrls={urls}
-        preferredContactTypes={["email", "chat"]}
+        contactSettingsEditable={false}
+        preferredContactTypes={
+          profile?.preferredContactTypes?.length
+            ? profile.preferredContactTypes
+            : ["email", "chat"]
+        }
         submitLabel="Nastavi na potvrdu i objavu"
         onSave={async (value) => {
           setPending(value);
@@ -167,9 +172,9 @@ export function OfferAcceptanceEditor({
                   onChange={(e) => setContact(e.target.checked)}
                 />
                 <span>
-                  Želim da me zainteresovani korisnici kontaktiraju preko mejla
-                  i chata. Postojeća podešavanja kontakta na nalogu ostaju
-                  sačuvana.
+                  {profile?.preferredContactTypes?.length
+                    ? "Potvrđujem objavu sa postojećim podešavanjima kontakta na mom nalogu."
+                    : "Želim da me zainteresovani korisnici kontaktiraju preko mejla i chata."}
                 </span>
               </label>
               <Button
