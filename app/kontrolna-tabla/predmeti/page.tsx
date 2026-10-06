@@ -1,3 +1,4 @@
+import { PurchaseInquiries } from "@/components/kontrolna-tabla/PurchaseInquiries";
 import { DashboardShell } from "@/components/kontrolna-tabla/DashboardShell";
 import { ItemsList } from "@/components/kontrolna-tabla/predmeti/ItemsList";
 import { IncomingBookings } from "@/components/kontrolna-tabla/predmeti/IncomingBookings";
@@ -14,6 +15,7 @@ export default function PredmetiPage() {
         <PlanUsageWidget />
         <ItemsList />
         <IncomingBookings />
+        <PurchaseInquiries role="owner" />
       </div>
     </DashboardShell>
   );

@@ -22,7 +22,7 @@ Otvorite **Super-admin → Saradnja** (`/super-admin/saradnja`). Početni prikaz
 4. Dodajte termine dostupnosti, proverite cenu, fotografije, grad/opštinu i preuzimanje. Pre objave izaberite kako zainteresovani korisnici mogu da vas kontaktiraju.
 5. **Potvrdi i objavi oglas** pravi javni oglas. Dalje ga menjate kroz **Moji predmeti**, kao i ostale oglase.
 
-Predlog može biti nepotpun. Javna objava zahteva iste podatke i validaciju kao redovno dodavanje predmeta, uključujući fotografiju, dostupnost, lokaciju i kontakt. Ponovljena potvrda ne pravi dupli oglas.
+Predlog može biti nepotpun i može uključivati najam, prodaju ili oba. Javna objava zahteva iste podatke i validaciju kao redovno dodavanje predmeta, uključujući fotografiju, lokaciju i kontakt. Najam zahteva dostupnost; prodaja zahteva prodajnu cenu i ne zahteva termine. Ponovljena potvrda ne pravi dupli oglas.
 
 ## Napomena za razvoj i objavu
 

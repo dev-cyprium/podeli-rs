@@ -8,6 +8,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
+import { InquirySupport } from "@/components/booking/InquirySupport";
 import { BookingStatusBadge } from "@/components/booking/BookingStatusBadge";
 import { AgreementStatus } from "@/components/booking/AgreementStatus";
 import { ChatMessageList } from "./ChatMessageList";
@@ -69,6 +70,7 @@ export function ChatPanel({ bookingId, context }: ChatPanelProps) {
   const [blockReason, setBlockReason] = useState("");
   const [declineDialogOpen, setDeclineDialogOpen] = useState(false);
   const [nudgeSent, setNudgeSent] = useState(false);
+  const [nudgeError, setNudgeError] = useState<string | null>(null);
   const [nudgeSending, setNudgeSending] = useState(false);
 
   const backUrl =
@@ -110,7 +112,9 @@ export function ChatPanel({ bookingId, context }: ChatPanelProps) {
 
   if (chatData === undefined || messages === undefined) {
     return (
-      <div className={`flex ${chatHeight} items-center justify-center rounded-xl bg-[#f0f0f0]`}>
+      <div
+        className={`flex ${chatHeight} items-center justify-center rounded-xl bg-[#f0f0f0]`}
+      >
         <p className="text-sm text-muted-foreground">Učitavanje...</p>
       </div>
     );
@@ -118,7 +122,9 @@ export function ChatPanel({ bookingId, context }: ChatPanelProps) {
 
   if (chatData === null) {
     return (
-      <div className={`flex ${chatHeight} flex-col items-center justify-center gap-4 rounded-xl bg-[#f0f0f0]`}>
+      <div
+        className={`flex ${chatHeight} flex-col items-center justify-center gap-4 rounded-xl bg-[#f0f0f0]`}
+      >
         <MessageSquare className="h-12 w-12 text-muted-foreground/50" />
         <p className="text-sm text-muted-foreground">
           Razgovor nije pronađen ili nemate pristup.
@@ -175,10 +181,19 @@ export function ChatPanel({ bookingId, context }: ChatPanelProps) {
   const handleEmailNudge = async () => {
     setNudgeSending(true);
     try {
-      await sendEmailNudge({ bookingId });
-      setNudgeSent(true);
+      setNudgeError(null);
+      const scheduled = await sendEmailNudge({ bookingId });
+      if (scheduled) setNudgeSent(true);
+      else
+        setNudgeError(
+          "Obaveštenje je već poslato ili korisnik ne prima email obaveštenja.",
+        );
     } catch (error) {
-      console.error("Failed to send email nudge:", error);
+      setNudgeError(
+        error instanceof Error
+          ? error.message
+          : "Slanje obaveštenja nije uspelo.",
+      );
     } finally {
       setNudgeSending(false);
     }
@@ -197,7 +212,9 @@ export function ChatPanel({ bookingId, context }: ChatPanelProps) {
   const inputDisabled = isBlocked || !canChat;
 
   return (
-    <div className={`flex ${chatHeight} flex-col overflow-hidden rounded-xl border border-border bg-[#f0f0f0]`}>
+    <div
+      className={`flex ${chatHeight} flex-col overflow-hidden rounded-xl border border-border bg-[#f0f0f0]`}
+    >
       {/* Header */}
       <div className="flex items-center gap-3 border-b border-border bg-card p-3">
         <Button variant="ghost" size="icon" asChild className="shrink-0">
@@ -242,14 +259,18 @@ export function ChatPanel({ bookingId, context }: ChatPanelProps) {
             <div className="mt-1 flex flex-wrap items-center gap-2">
               <div className="inline-flex items-center gap-1.5 rounded-md bg-podeli-accent/10 px-2 py-1 text-xs">
                 <Calendar className="h-3.5 w-3.5 text-podeli-accent" />
-                <span className="font-semibold text-podeli-dark">Preuzimanje:</span>
+                <span className="font-semibold text-podeli-dark">
+                  Preuzimanje:
+                </span>
                 <span className="font-bold text-podeli-accent">
                   <DateDisplay value={booking.startDate} format="short" />
                 </span>
               </div>
               <div className="inline-flex items-center gap-1.5 rounded-md bg-podeli-blue/10 px-2 py-1 text-xs">
                 <Calendar className="h-3.5 w-3.5 text-podeli-blue" />
-                <span className="font-semibold text-podeli-dark">Vraćanje:</span>
+                <span className="font-semibold text-podeli-dark">
+                  Vraćanje:
+                </span>
                 <span className="font-bold text-podeli-blue">
                   <DateDisplay value={booking.endDate} format="short" />
                 </span>
@@ -258,7 +279,18 @@ export function ChatPanel({ bookingId, context }: ChatPanelProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            <BookingStatusBadge status={booking.status as "pending" | "confirmed" | "nije_isporucen" | "isporucen" | "vracen" | "cancelled"} />
+            <BookingStatusBadge
+              inquiryDecision={booking.inquiryResponse?.decision}
+              status={
+                booking.status as
+                  | "pending"
+                  | "confirmed"
+                  | "nije_isporucen"
+                  | "isporucen"
+                  | "vracen"
+                  | "cancelled"
+              }
+            />
 
             {/* 3-dot menu */}
             <DropdownMenu>
@@ -289,7 +321,7 @@ export function ChatPanel({ bookingId, context }: ChatPanelProps) {
                     className="text-destructive focus:text-destructive"
                   >
                     <XCircle className="mr-2 h-4 w-4" />
-                    Odbij rezervaciju
+                    Otkaži rezervaciju
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
@@ -298,12 +330,24 @@ export function ChatPanel({ bookingId, context }: ChatPanelProps) {
         </div>
       </div>
 
+      {booking.inquiryResponse && (
+        <p className="border-b border-border bg-card px-4 py-2 text-sm whitespace-pre-wrap">
+          <strong>Odgovor vlasnika:</strong> {booking.inquiryResponse.text}
+        </p>
+      )}
+      {!isOwner && (
+        <div className="bg-card px-4 pb-2">
+          <InquirySupport reference={bookingId} />
+        </div>
+      )}
       {/* Block banner */}
       {isBlocked && (
         <div className="border-b border-border bg-red-50 px-4 py-2">
           {blockedByMe ? (
             <div className="flex items-center justify-between">
-              <p className="text-sm text-red-700">Blokirali ste ovog korisnika.</p>
+              <p className="text-sm text-red-700">
+                Blokirali ste ovog korisnika.
+              </p>
               <Button
                 variant="outline"
                 size="sm"
@@ -315,7 +359,9 @@ export function ChatPanel({ bookingId, context }: ChatPanelProps) {
               </Button>
             </div>
           ) : blockedByOther ? (
-            <p className="text-sm text-red-700">Ovaj korisnik vas je blokirao.</p>
+            <p className="text-sm text-red-700">
+              Ovaj korisnik vas je blokirao.
+            </p>
           ) : null}
         </div>
       )}
@@ -397,10 +443,15 @@ export function ChatPanel({ bookingId, context }: ChatPanelProps) {
           </Button>
         </div>
       )}
+      {nudgeError && (
+        <p role="alert" className="px-4 py-2 text-sm text-podeli-red">
+          {nudgeError}
+        </p>
+      )}
       {nudgeSent && (
         <div className="border-t border-border bg-green-50 px-4 py-2 text-center">
           <p className="text-xs text-green-700">
-            Email obaveštenje je poslato.
+            Email obaveštenje je zakazano za slanje.
           </p>
         </div>
       )}
@@ -426,7 +477,8 @@ export function ChatPanel({ bookingId, context }: ChatPanelProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Blokiraj korisnika</AlertDialogTitle>
             <AlertDialogDescription>
-              Da li ste sigurni da želite da blokirate ovog korisnika? Neće moći da vam šalje poruke u ovom razgovoru.
+              Da li ste sigurni da želite da blokirate ovog korisnika? Neće moći
+              da vam šalje poruke u ovom razgovoru.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Textarea
@@ -453,9 +505,10 @@ export function ChatPanel({ bookingId, context }: ChatPanelProps) {
       <AlertDialog open={declineDialogOpen} onOpenChange={setDeclineDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Odbij rezervaciju</AlertDialogTitle>
+            <AlertDialogTitle>Otkaži rezervaciju</AlertDialogTitle>
             <AlertDialogDescription>
-              Da li ste sigurni da želite da odbijete ovu rezervaciju? Ova akcija se ne može poništiti.
+              Da li ste sigurni da želite da otkažete ovu rezervaciju? Ova
+              akcija se ne može poništiti.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -477,7 +530,7 @@ export function ChatPanel({ bookingId, context }: ChatPanelProps) {
 function ItemThumbnail({ images }: { images: Id<"_storage">[] }) {
   const imageUrl = useQuery(
     api.items.getImageUrl,
-    images[0] ? { storageId: images[0] } : "skip"
+    images[0] ? { storageId: images[0] } : "skip",
   );
 
   return (

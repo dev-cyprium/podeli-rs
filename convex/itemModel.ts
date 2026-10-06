@@ -8,6 +8,10 @@ export const itemInput = v.object({
   title: v.string(),
   description: v.string(),
   category: v.string(),
+  listingType: v.optional(
+    v.union(v.literal("rent"), v.literal("sale"), v.literal("both")),
+  ),
+  salePrice: v.optional(v.number()),
   city: v.string(),
   municipality: v.string(),
   pricePerDay: v.number(),

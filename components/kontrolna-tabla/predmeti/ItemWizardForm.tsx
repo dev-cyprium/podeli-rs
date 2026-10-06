@@ -27,6 +27,12 @@ import {
 import { PreferredContactForm } from "./PreferredContactForm";
 import { CategoryCombobox } from "./CategoryCombobox";
 import { locationError } from "@/lib/item-location";
+import {
+  offersRent,
+  offersSale,
+  listingLabels,
+  type ListingType,
+} from "@/lib/listing-types";
 import { availabilityError } from "@/lib/rental-dates";
 
 type AvailabilitySlot = {
@@ -51,6 +57,8 @@ export type ItemFormData = {
   category: string;
   city: string;
   municipality: string;
+  listingType?: ListingType;
+  salePrice?: number;
   pricePerDay: number;
   priceByAgreement?: boolean;
   deposit?: number;
@@ -99,6 +107,11 @@ export function ItemWizardForm({
   const [category, setCategory] = useState(
     item?.category ?? categories[0] ?? "",
   );
+  const [listingType, setListingType] = useState<ListingType>(
+    item?.listingType ?? "rent",
+  );
+  const [salePrice, setSalePrice] = useState(item?.salePrice?.toString() ?? "");
+  const listing = { listingType };
   const [pricePerDay, setPricePerDay] = useState(
     item?.pricePerDay?.toString() ?? "",
   );
@@ -295,6 +308,11 @@ export function ItemWizardForm({
 
   function validateStep(stepIndex: number) {
     if (steps[stepIndex].id === "basic") {
+      if (
+        offersSale(listing) &&
+        (!Number.isFinite(Number(salePrice)) || Number(salePrice) <= 0)
+      )
+        return "Prodajna cena mora biti veća od nule.";
       const numericPrice = Number(pricePerDay);
       if (!title.trim()) {
         return "Unesite naziv predmeta.";
@@ -310,6 +328,7 @@ export function ItemWizardForm({
         return "Depozit mora biti pozitivan broj ili nula.";
       }
       if (
+        offersRent(listing) &&
         !priceByAgreement &&
         (!Number.isFinite(numericPrice) || numericPrice <= 0)
       ) {
@@ -322,7 +341,9 @@ export function ItemWizardForm({
       }
     }
     if (steps[stepIndex].id === "availability") {
-      const slotError = availabilityError(availabilitySlots);
+      const slotError = offersRent(listing)
+        ? availabilityError(availabilitySlots)
+        : null;
       if (slotError) return slotError;
     }
     if (steps[stepIndex].id === "delivery") {
@@ -374,6 +395,8 @@ export function ItemWizardForm({
     category,
     deposit,
     pricePerDay,
+    listingType,
+    salePrice,
     priceByAgreement,
     images.length,
     availabilitySlots,
@@ -509,7 +532,9 @@ export function ItemWizardForm({
         category,
         city: city.trim(),
         municipality: municipality.trim(),
-        pricePerDay: numericPrice,
+        listingType,
+        salePrice: offersSale(listing) ? Number(salePrice) : undefined,
+        pricePerDay: offersRent(listing) ? numericPrice : 0,
         priceByAgreement: priceByAgreement || undefined,
         deposit:
           numericDeposit !== undefined && numericDeposit >= 0
@@ -518,7 +543,7 @@ export function ItemWizardForm({
         images,
         imageFocalPoint: photoPoints[images[0]],
         imageFocalPoints: photoPoints,
-        availabilitySlots: cleanedSlots,
+        availabilitySlots: offersRent(listing) ? cleanedSlots : [],
         deliveryMethods,
       });
       setFormError(null);
@@ -606,6 +631,36 @@ export function ItemWizardForm({
           {steps[currentStep].id === "basic" ? (
             <div className="space-y-4">
               <div className="space-y-2">
+                <Label htmlFor="listing-type">Vrsta oglasa</Label>
+                <select
+                  id="listing-type"
+                  value={listingType}
+                  onChange={(e) =>
+                    setListingType(e.target.value as ListingType)
+                  }
+                  className="h-10 w-full rounded-md border border-border bg-card px-3"
+                >
+                  {Object.entries(listingLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {offersSale(listing) && (
+                <div className="space-y-2">
+                  <Label htmlFor="sale-price">Prodajna cena (RSD)</Label>
+                  <Input
+                    id="sale-price"
+                    type="number"
+                    min="1"
+                    value={salePrice}
+                    onChange={(e) => setSalePrice(e.target.value)}
+                  />
+                </div>
+              )}
+
+              <div className="space-y-2">
                 <Label htmlFor="item-title">Naziv predmeta</Label>
                 <Input
                   id="item-title"
@@ -630,48 +685,52 @@ export function ItemWizardForm({
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <Checkbox
-                    checked={priceByAgreement}
-                    onChange={(e) => setPriceByAgreement(e.target.checked)}
-                  />
-                  <span className="text-sm font-medium text-podeli-dark">
-                    Cena po dogovoru
-                  </span>
-                </label>
-              </div>
+              {offersRent(listing) && (
+                <>
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <Checkbox
+                        checked={priceByAgreement}
+                        onChange={(e) => setPriceByAgreement(e.target.checked)}
+                      />
+                      <span className="text-sm font-medium text-podeli-dark">
+                        Cena po dogovoru
+                      </span>
+                    </label>
+                  </div>
 
-              {!priceByAgreement && (
-                <div className="space-y-2">
-                  <Label htmlFor="item-price">Cena po danu (RSD)</Label>
-                  <Input
-                    id="item-price"
-                    type="number"
-                    min="0"
-                    value={pricePerDay}
-                    onChange={(event) => setPricePerDay(event.target.value)}
-                    placeholder="1500"
-                  />
-                </div>
+                  {!priceByAgreement && (
+                    <div className="space-y-2">
+                      <Label htmlFor="item-price">Cena po danu (RSD)</Label>
+                      <Input
+                        id="item-price"
+                        type="number"
+                        min="0"
+                        value={pricePerDay}
+                        onChange={(event) => setPricePerDay(event.target.value)}
+                        placeholder="1500"
+                      />
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <Label htmlFor="item-deposit">
+                      Sigurnosni depozit (opciono)
+                    </Label>
+                    <Input
+                      id="item-deposit"
+                      type="number"
+                      min="0"
+                      value={deposit}
+                      onChange={(event) => setDeposit(event.target.value)}
+                      placeholder="npr. 5000"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Iznos u RSD koji se vraća nakon vraćanja predmeta
+                    </p>
+                  </div>
+                </>
               )}
-
-              <div className="space-y-2">
-                <Label htmlFor="item-deposit">
-                  Sigurnosni depozit (opciono)
-                </Label>
-                <Input
-                  id="item-deposit"
-                  type="number"
-                  min="0"
-                  value={deposit}
-                  onChange={(event) => setDeposit(event.target.value)}
-                  placeholder="npr. 5000"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Iznos u RSD koji se vraća nakon vraćanja predmeta
-                </p>
-              </div>
             </div>
           ) : null}
 
@@ -701,7 +760,12 @@ export function ItemWizardForm({
             />
           ) : null}
 
-          {steps[currentStep].id === "availability" ? (
+          {steps[currentStep].id === "availability" && !offersRent(listing) && (
+            <p className="text-sm text-muted-foreground">
+              Prodaja ne zahteva izbor datuma.
+            </p>
+          )}
+          {steps[currentStep].id === "availability" && offersRent(listing) ? (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label>Dostupnost</Label>

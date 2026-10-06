@@ -1,6 +1,8 @@
 import { v, ConvexError } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { notifyInquiry } from "./inquiryNotifications";
+import { offersRent } from "@/lib/listing-types";
 import { requireIdentity } from "@/lib/convex-auth";
 import {
   rentalDays,
@@ -28,6 +30,9 @@ export const createBooking = mutation({
       throw new ConvexError("Predmet nije pronađen.");
     }
 
+    if (!offersRent(item) || item.soldAt !== undefined)
+      throw new ConvexError("Predmet nije dostupan za iznajmljivanje.");
+
     if (item.ownerId === renterId) {
       throw new ConvexError("Ne možete rezervisati sopstveni predmet.");
     }
@@ -50,6 +55,17 @@ export const createBooking = mutation({
       .withIndex("by_item", (q) => q.eq("itemId", args.itemId))
       .collect();
 
+    if (
+      existingBookings.some(
+        (booking) =>
+          booking.renterId === renterId &&
+          booking.status === "pending" &&
+          booking.startDate === args.startDate &&
+          booking.endDate === args.endDate,
+      )
+    ) {
+      throw new ConvexError("Već imate otvoren zahtev za ovaj period.");
+    }
     const conflictingBooking = existingBookings.find(
       (booking) =>
         ACTIVE_STATUSES.includes(
@@ -319,6 +335,7 @@ export const getItemBookedDates = query({
 export const approveBooking = mutation({
   args: {
     id: v.id("bookings"),
+    response: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -339,6 +356,8 @@ export const approveBooking = mutation({
 
     const item = await ctx.db.get(booking.itemId);
     if (!item) throw new ConvexError("Predmet nije pronađen.");
+    if (!offersRent(item) || item.soldAt !== undefined)
+      throw new ConvexError("Predmet nije dostupan za iznajmljivanje.");
     const dateError = rentalRangeError(booking, item.availabilitySlots);
     if (dateError) throw new ConvexError(dateError);
 
@@ -363,21 +382,31 @@ export const approveBooking = mutation({
       );
     }
 
+    const response =
+      args.response === undefined
+        ? "Upit za najam je prihvaćen. Kontaktirajte vlasnika radi dogovora."
+        : args.response.trim();
+    if (!response || response.length > 2000)
+      throw new ConvexError("Odgovor mora imati od 1 do 2000 karaktera.");
     const now = Date.now();
 
     await ctx.db.patch(args.id, {
       status: "confirmed",
+      inquiryResponse: {
+        decision: "accepted",
+        text: response,
+        respondedAt: now,
+      },
       updatedAt: now,
     });
 
     // Notify renter about approval - mention chat is now available
-    await ctx.db.insert("notifications", {
+    await notifyInquiry(ctx, {
       userId: booking.renterId,
-      message: `Vaša rezervacija za "${item?.title ?? "predmet"}" je odobrena! Sada možete razgovarati sa vlasnikom.`,
+      message: `Upit za najam „${item?.title ?? "predmet"}“ je prihvaćen: ${response}`,
+      link: "/kontrolna-tabla/zakupi",
+      request: false,
       type: "booking_approved",
-      link: `/kontrolna-tabla/zakupi/poruke/${args.id}`,
-      createdAt: now,
-      updatedAt: now,
     });
 
     return null;
@@ -387,6 +416,7 @@ export const approveBooking = mutation({
 export const rejectBooking = mutation({
   args: {
     id: v.id("bookings"),
+    response: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -405,22 +435,32 @@ export const rejectBooking = mutation({
       throw new ConvexError("Samo rezervacije na čekanju mogu biti odbijene.");
     }
 
+    const response =
+      args.response === undefined
+        ? "Upit za najam je odbijen."
+        : args.response.trim();
+    if (!response || response.length > 2000)
+      throw new ConvexError("Odgovor mora imati od 1 do 2000 karaktera.");
     const now = Date.now();
 
     await ctx.db.patch(args.id, {
       status: "cancelled",
+      inquiryResponse: {
+        decision: "rejected",
+        text: response,
+        respondedAt: now,
+      },
       updatedAt: now,
     });
 
     // Notify renter about rejection
     const item = await ctx.db.get(booking.itemId);
-    await ctx.db.insert("notifications", {
+    await notifyInquiry(ctx, {
       userId: booking.renterId,
-      message: `Vaša rezervacija za "${item?.title ?? "predmet"}" je odbijena.`,
-      type: "booking_rejected",
+      message: `Upit za najam „${item?.title ?? "predmet"}“ je odbijen: ${response}`,
       link: "/kontrolna-tabla/zakupi",
-      createdAt: now,
-      updatedAt: now,
+      request: false,
+      type: "booking_rejected",
     });
 
     return null;

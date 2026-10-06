@@ -8,6 +8,7 @@ import { Doc } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { DomacinBadge } from "@/components/DomacinBadge";
 import { ItemCardCarousel } from "@/components/ItemCardCarousel";
+import { offersRent, offersSale } from "@/lib/listing-types";
 import { getItemUrl } from "@/lib/utils";
 import { Heart, MapPin } from "lucide-react";
 
@@ -70,7 +71,7 @@ export function ItemCard({
         )}
 
         {/* Deposit — bottom-left */}
-        {item.deposit != null && item.deposit > 0 && (
+        {offersRent(item) && item.deposit != null && item.deposit > 0 && (
           <span className="absolute bottom-2 left-2 z-10 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-podeli-dark shadow-sm">
             Depozit {item.deposit.toFixed(0)} RSD
           </span>
@@ -95,19 +96,29 @@ export function ItemCard({
           <span className="mx-0.5">&middot;</span>
           <span>{item.category}</span>
         </p>
-        <p className="mt-1 text-sm font-semibold text-podeli-accent">
-          {item.priceByAgreement ? (
-            "Po dogovoru"
-          ) : (
-            <>
-              {item.pricePerDay.toFixed(0)} RSD
-              <span className="text-xs font-normal text-muted-foreground">
-                {" "}
-                /dan
-              </span>
-            </>
-          )}
-        </p>
+        {item.soldAt !== undefined && (
+          <p className="text-sm font-semibold">Prodato</p>
+        )}
+        {offersRent(item) && (
+          <p className="mt-1 text-sm font-semibold text-podeli-accent">
+            {item.priceByAgreement ? (
+              "Po dogovoru"
+            ) : (
+              <>
+                {item.pricePerDay.toFixed(0)} RSD
+                <span className="text-xs font-normal text-muted-foreground">
+                  {" "}
+                  /dan
+                </span>
+              </>
+            )}
+          </p>
+        )}
+        {offersSale(item) && (
+          <p className="mt-1 text-sm font-semibold text-podeli-blue">
+            Prodaja: {item.salePrice?.toFixed(0)} RSD
+          </p>
+        )}
       </div>
     </Link>
   );

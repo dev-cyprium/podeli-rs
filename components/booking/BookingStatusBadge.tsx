@@ -31,21 +31,25 @@ const statusColors: Record<BookingStatus, string> = {
 interface BookingStatusBadgeProps {
   status: BookingStatus;
   className?: string;
+  inquiryDecision?: "accepted" | "rejected";
 }
 
 export function BookingStatusBadge({
   status,
   className,
+  inquiryDecision,
 }: BookingStatusBadgeProps) {
   return (
     <span
       className={cn(
         "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium",
         statusColors[status],
-        className
+        className,
       )}
     >
-      {statusLabels[status]}
+      {status === "cancelled" && inquiryDecision === "rejected"
+        ? "Odbijeno"
+        : statusLabels[status]}
     </span>
   );
 }

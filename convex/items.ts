@@ -14,6 +14,7 @@ import { v, ConvexError } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireIdentity } from "@/lib/convex-auth";
 import schema from "./schema";
+import { offersRent, offersSale } from "@/lib/listing-types";
 import {
   availabilityError,
   getBelgradeDate,
@@ -37,8 +38,11 @@ export const listAll = query({
   },
   handler: async (ctx, args) => {
     const limit = args.limit ?? 20;
-    const items = await ctx.db.query("items").order("desc").take(limit);
-    return items;
+    return await ctx.db
+      .query("items")
+      .withIndex("by_soldAt", (q) => q.eq("soldAt", undefined))
+      .order("desc")
+      .take(limit);
   },
 });
 
@@ -130,6 +134,10 @@ export const update = mutation({
     category: v.string(),
     city: v.string(),
     municipality: v.string(),
+    listingType: v.optional(
+      v.union(v.literal("rent"), v.literal("sale"), v.literal("both")),
+    ),
+    salePrice: v.optional(v.number()),
     pricePerDay: v.number(),
     priceByAgreement: v.optional(v.boolean()),
     deposit: v.optional(v.number()),
@@ -180,6 +188,7 @@ export const update = mutation({
 
     // Validate price (skip if price is by agreement)
     if (
+      offersRent(args) &&
       !args.priceByAgreement &&
       (!Number.isFinite(args.pricePerDay) || args.pricePerDay <= 0)
     ) {
@@ -214,8 +223,14 @@ export const update = mutation({
     );
     if (focalError) throw new ConvexError(focalError);
 
+    if (
+      offersSale(args) &&
+      (!Number.isFinite(args.salePrice) || (args.salePrice ?? 0) <= 0)
+    ) {
+      throw new ConvexError("Prodajna cena mora biti veća od nule.");
+    }
     const validSlots = args.availabilitySlots;
-    const slotError = availabilityError(validSlots);
+    const slotError = offersRent(args) ? availabilityError(validSlots) : null;
     if (slotError) throw new ConvexError(slotError);
 
     // Validate delivery methods
@@ -233,7 +248,8 @@ export const update = mutation({
         (booking) =>
           ACTIVE_BOOKING_STATUSES.includes(
             booking.status as (typeof ACTIVE_BOOKING_STATUSES)[number],
-          ) && !isRangeAvailable(booking, validSlots),
+          ) &&
+          (!offersRent(args) || !isRangeAvailable(booking, validSlots)),
       )
     ) {
       throw new ConvexError(
@@ -266,7 +282,10 @@ export const update = mutation({
     await ctx.db.patch(id, {
       ...rest,
       ...location,
-      pricePerDay: args.priceByAgreement ? 0 : args.pricePerDay,
+      listingType: args.listingType ?? "rent",
+      salePrice: offersSale(args) ? args.salePrice : undefined,
+      pricePerDay:
+        !offersRent(args) || args.priceByAgreement ? 0 : args.pricePerDay,
       availabilitySlots: validSlots,
       ...updates,
     });
@@ -312,6 +331,15 @@ export const remove = mutation({
         "Ne možete obrisati predmet dok postoje aktivne rezervacije. Sačekajte da se sve rezervacije završe.",
       );
     }
+
+    const inquiries = await ctx.db
+      .query("purchaseInquiries")
+      .withIndex("by_item", (q) => q.eq("itemId", args.id))
+      .collect();
+    if (inquiries.length > 0)
+      throw new ConvexError(
+        "Predmet sa upitima za kupovinu ne može biti obrisan. Sačuvajte istoriju upita.",
+      );
 
     // Delete non-active bookings (pending, cancelled, vracen)
     for (const booking of bookings) {
@@ -454,17 +482,19 @@ export const searchAutocomplete = query({
     const results = await ctx.db
       .query("items")
       .withSearchIndex("search_items", (q) =>
-        q.search("searchText", args.query),
+        q.search("searchText", args.query).eq("soldAt", undefined),
       )
       .take(5);
 
-    return results.map((item) => ({
-      _id: item._id,
-      title: item.title,
-      category: item.category,
-      shortId: item.shortId ?? extractShortId(item._id),
-      slug: item.slug ?? generateSlug(item.title),
-    }));
+    return results
+      .filter((item) => item.soldAt === undefined)
+      .map((item) => ({
+        _id: item._id,
+        title: item.title,
+        category: item.category,
+        shortId: item.shortId ?? extractShortId(item._id),
+        slug: item.slug ?? generateSlug(item.title),
+      }));
   },
 });
 
@@ -477,6 +507,9 @@ export const searchItems = query({
     category: v.optional(v.string()),
     city: v.optional(v.string()),
     municipality: v.optional(v.string()),
+    listingType: v.optional(
+      v.union(v.literal("rent"), v.literal("sale"), v.literal("both")),
+    ),
     paginationOpts: v.object({
       numItems: v.number(),
       cursor: v.union(v.string(), v.null()),
@@ -506,10 +539,18 @@ export const searchItems = query({
       T extends {
         category: string;
         availabilitySlots: Array<{ startDate: string; endDate: string }>;
+        listingType?: "rent" | "sale" | "both";
+        soldAt?: number;
       },
     >(items: T[]): T[] {
       return items.filter((item) => {
         if (category && item.category !== category) return false;
+        if (item.soldAt !== undefined) return false;
+        if (args.listingType === "rent" && !offersRent(item)) return false;
+        if (args.listingType === "sale" && !offersSale(item)) return false;
+        if (args.listingType === "both" && item.listingType !== "both")
+          return false;
+        if (offersSale(item) && args.listingType !== "rent") return true;
         // Filter out items with no availability slots
         if (item.availabilitySlots.length === 0) {
           return false;
@@ -527,7 +568,9 @@ export const searchItems = query({
       const searchBuilder = ctx.db
         .query("items")
         .withSearchIndex("search_items", (q) => {
-          let search = q.search("searchText", searchQuery);
+          let search = q
+            .search("searchText", searchQuery)
+            .eq("soldAt", undefined);
           if (category) {
             search = search.eq("category", category);
           }

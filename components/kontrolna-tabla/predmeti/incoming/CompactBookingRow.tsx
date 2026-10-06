@@ -108,7 +108,10 @@ export function CompactBookingRow({ booking }: CompactBookingRowProps) {
 
       {/* Status badge row */}
       <div className="mt-2 flex items-center gap-2">
-        <BookingStatusBadge status={status} />
+        <BookingStatusBadge
+          status={status}
+          inquiryDecision={booking.inquiryResponse?.decision}
+        />
         {(booking.renterCompletedRentals ?? 0) > 0 && (
           <span className="hidden text-xs text-muted-foreground sm:inline">
             {booking.renterCompletedRentals} završen

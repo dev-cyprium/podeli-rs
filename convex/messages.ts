@@ -36,7 +36,11 @@ export const sendMessage = mutation({
     }
 
     // Check booking status allows chat
-    if (!CHAT_ALLOWED_STATUSES.includes(booking.status as typeof CHAT_ALLOWED_STATUSES[number])) {
+    if (
+      !CHAT_ALLOWED_STATUSES.includes(
+        booking.status as (typeof CHAT_ALLOWED_STATUSES)[number],
+      )
+    ) {
       throw new ConvexError("Poruke nisu dozvoljene za ovu rezervaciju.");
     }
 
@@ -55,7 +59,9 @@ export const sendMessage = mutation({
     }
 
     if (content.length > 2000) {
-      throw new ConvexError("Poruka je predugačka (maksimalno 2000 karaktera).");
+      throw new ConvexError(
+        "Poruka je predugačka (maksimalno 2000 karaktera).",
+      );
     }
 
     const now = Date.now();
@@ -75,14 +81,15 @@ export const sendMessage = mutation({
     const recipientPresence = await ctx.db
       .query("chatPresence")
       .withIndex("by_booking_and_user", (q) =>
-        q.eq("bookingId", args.bookingId).eq("userId", recipientId)
+        q.eq("bookingId", args.bookingId).eq("userId", recipientId),
       )
       .first();
 
     // Only send notification if recipient hasn't viewed chat in the last 60 seconds
     const PRESENCE_THRESHOLD = 60 * 1000; // 60 seconds
     const isRecipientViewing =
-      recipientPresence && now - recipientPresence.lastSeenAt < PRESENCE_THRESHOLD;
+      recipientPresence &&
+      now - recipientPresence.lastSeenAt < PRESENCE_THRESHOLD;
 
     if (!isRecipientViewing) {
       const item = await ctx.db.get(booking.itemId);
@@ -108,7 +115,38 @@ export const sendMessage = mutation({
         createdAt: now,
         updatedAt: now,
       });
-
+      const preferences = await ctx.db
+        .query("notificationPreferences")
+        .withIndex("by_userId", (q) => q.eq("userId", recipientId))
+        .first();
+      const recipientProfile = await ctx.db
+        .query("profiles")
+        .withIndex("by_userId", (q) => q.eq("userId", recipientId))
+        .first();
+      const unreadMessages = await ctx.db
+        .query("messages")
+        .withIndex("by_booking", (q) => q.eq("bookingId", args.bookingId))
+        .collect();
+      const alreadyNotified = unreadMessages.some(
+        (m) =>
+          m.senderId === userId && !m.read && m.emailNotifiedAt !== undefined,
+      );
+      if (
+        preferences?.emailOnNewMessage &&
+        recipientProfile?.email &&
+        !alreadyNotified
+      ) {
+        await ctx.scheduler.runAfter(0, internal.emails.sendNewMessageEmail, {
+          idempotencyKey: `message-${messageId}`,
+          to: recipientProfile.email,
+          recipientName: recipientProfile.firstName ?? "Korisniče",
+          senderName,
+          itemTitle: item?.title ?? "predmet",
+          messagePreview: content,
+          actionUrl: `https://podeli.rs${chatLink}`,
+        });
+        await ctx.db.patch(messageId, { emailNotifiedAt: now });
+      }
     }
 
     return messageId;
@@ -198,6 +236,7 @@ export const getMessagesForBooking = query({
       senderId: v.string(),
       content: v.string(),
       read: v.boolean(),
+      emailNotifiedAt: v.optional(v.number()),
       type: v.optional(v.union(v.literal("user"), v.literal("system"))),
       createdAt: v.number(),
       senderProfile: v.union(
@@ -206,9 +245,9 @@ export const getMessagesForBooking = query({
           lastName: v.optional(v.string()),
           imageUrl: v.optional(v.string()),
         }),
-        v.null()
+        v.null(),
       ),
-    })
+    }),
   ),
   handler: async (ctx, args) => {
     const identity = await requireIdentity(ctx);
@@ -226,7 +265,9 @@ export const getMessagesForBooking = query({
 
     const messages = await ctx.db
       .query("messages")
-      .withIndex("by_booking_and_created", (q) => q.eq("bookingId", args.bookingId))
+      .withIndex("by_booking_and_created", (q) =>
+        q.eq("bookingId", args.bookingId),
+      )
       .collect();
 
     // Fetch sender profiles
@@ -258,7 +299,7 @@ export const getMessagesForBooking = query({
               }
             : null,
         };
-      })
+      }),
     );
 
     return messagesWithProfiles;
@@ -293,7 +334,7 @@ export const markMessagesAsRead = mutation({
     const existingPresence = await ctx.db
       .query("chatPresence")
       .withIndex("by_booking_and_user", (q) =>
-        q.eq("bookingId", args.bookingId).eq("userId", userId)
+        q.eq("bookingId", args.bookingId).eq("userId", userId),
       )
       .first();
 
@@ -307,7 +348,8 @@ export const markMessagesAsRead = mutation({
       });
     }
 
-    const otherPartyId = booking.renterId === userId ? booking.ownerId : booking.renterId;
+    const otherPartyId =
+      booking.renterId === userId ? booking.ownerId : booking.renterId;
 
     const messages = await ctx.db
       .query("messages")
@@ -315,11 +357,11 @@ export const markMessagesAsRead = mutation({
       .collect();
 
     const unreadMessages = messages.filter(
-      (m) => m.senderId === otherPartyId && !m.read
+      (m) => m.senderId === otherPartyId && !m.read,
     );
 
     await Promise.all(
-      unreadMessages.map((m) => ctx.db.patch(m._id, { read: true }))
+      unreadMessages.map((m) => ctx.db.patch(m._id, { read: true })),
     );
 
     return unreadMessages.length;
@@ -347,7 +389,7 @@ export const getConversations = query({
           title: v.string(),
           images: v.array(v.id("_storage")),
         }),
-        v.null()
+        v.null(),
       ),
       otherParty: v.union(
         v.object({
@@ -355,7 +397,7 @@ export const getConversations = query({
           lastName: v.optional(v.string()),
           imageUrl: v.optional(v.string()),
         }),
-        v.null()
+        v.null(),
       ),
       lastMessage: v.union(
         v.object({
@@ -364,12 +406,12 @@ export const getConversations = query({
           senderId: v.string(),
           isSystem: v.boolean(),
         }),
-        v.null()
+        v.null(),
       ),
       unreadCount: v.number(),
       isOwner: v.boolean(),
       isBlocked: v.boolean(),
-    })
+    }),
   ),
   handler: async (ctx) => {
     const identity = await requireIdentity(ctx);
@@ -391,9 +433,11 @@ export const getConversations = query({
     // Filter to only bookings with messages or chat-eligible status
     const conversations = await Promise.all(
       allBookings
-        .filter((b) =>
-          CHAT_ALLOWED_STATUSES.includes(b.status as typeof CHAT_ALLOWED_STATUSES[number]) ||
-          b.status === "vracen" // Allow viewing old conversations
+        .filter(
+          (b) =>
+            CHAT_ALLOWED_STATUSES.includes(
+              b.status as (typeof CHAT_ALLOWED_STATUSES)[number],
+            ) || b.status === "vracen", // Allow viewing old conversations
         )
         .map(async (booking) => {
           const isOwner = booking.ownerId === userId;
@@ -402,12 +446,15 @@ export const getConversations = query({
           // Get messages for this booking
           const messages = await ctx.db
             .query("messages")
-            .withIndex("by_booking_and_created", (q) => q.eq("bookingId", booking._id))
+            .withIndex("by_booking_and_created", (q) =>
+              q.eq("bookingId", booking._id),
+            )
             .collect();
 
-          const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
+          const lastMessage =
+            messages.length > 0 ? messages[messages.length - 1] : null;
           const unreadCount = messages.filter(
-            (m) => m.senderId === otherPartyId && !m.read
+            (m) => m.senderId === otherPartyId && !m.read,
           ).length;
 
           // Check block status
@@ -448,24 +495,29 @@ export const getConversations = query({
                   imageUrl: otherProfile.imageUrl,
                 }
               : null,
-            lastMessage: lastMessage != null
-              ? {
-                  content: lastMessage.content,
-                  createdAt: lastMessage.createdAt,
-                  senderId: lastMessage.senderId,
-                  isSystem: lastMessage.type === "system" || lastMessage.senderId === "SYSTEM",
-                }
-              : null,
+            lastMessage:
+              lastMessage != null
+                ? {
+                    content: lastMessage.content,
+                    createdAt: lastMessage.createdAt,
+                    senderId: lastMessage.senderId,
+                    isSystem:
+                      lastMessage.type === "system" ||
+                      lastMessage.senderId === "SYSTEM",
+                  }
+                : null,
             unreadCount,
             isOwner,
             isBlocked: block !== null,
           };
-        })
+        }),
     );
 
     // Sort by last message time (conversations with no messages sort to end)
-    return conversations
-      .sort((a, b) => (b.lastMessage?.createdAt ?? 0) - (a.lastMessage?.createdAt ?? 0));
+    return conversations.sort(
+      (a, b) =>
+        (b.lastMessage?.createdAt ?? 0) - (a.lastMessage?.createdAt ?? 0),
+    );
   },
 });
 
@@ -498,7 +550,8 @@ export const getUnreadCount = query({
     let totalUnread = 0;
 
     for (const booking of allBookings) {
-      const otherPartyId = booking.ownerId === userId ? booking.renterId : booking.ownerId;
+      const otherPartyId =
+        booking.ownerId === userId ? booking.renterId : booking.ownerId;
 
       const messages = await ctx.db
         .query("messages")
@@ -506,7 +559,7 @@ export const getUnreadCount = query({
         .collect();
 
       totalUnread += messages.filter(
-        (m) => m.senderId === otherPartyId && !m.read
+        (m) => m.senderId === otherPartyId && !m.read,
       ).length;
     }
 
@@ -578,6 +631,13 @@ export const getBookingForChat = query({
         startDate: v.string(),
         endDate: v.string(),
         totalPrice: v.number(),
+        inquiryResponse: v.optional(
+          v.object({
+            decision: v.union(v.literal("accepted"), v.literal("rejected")),
+            text: v.string(),
+            respondedAt: v.number(),
+          }),
+        ),
         renterAgreed: v.optional(v.boolean()),
         ownerAgreed: v.optional(v.boolean()),
       }),
@@ -589,7 +649,7 @@ export const getBookingForChat = query({
           shortId: v.optional(v.string()),
           slug: v.optional(v.string()),
         }),
-        v.null()
+        v.null(),
       ),
       otherParty: v.union(
         v.object({
@@ -597,7 +657,7 @@ export const getBookingForChat = query({
           lastName: v.optional(v.string()),
           imageUrl: v.optional(v.string()),
         }),
-        v.null()
+        v.null(),
       ),
       isOwner: v.boolean(),
       canChat: v.boolean(),
@@ -607,10 +667,10 @@ export const getBookingForChat = query({
           phoneNumber: v.optional(v.string()),
           chat: v.boolean(),
         }),
-        v.null()
+        v.null(),
       ),
     }),
-    v.null()
+    v.null(),
   ),
   handler: async (ctx, args) => {
     const identity = await requireIdentity(ctx);
@@ -640,12 +700,21 @@ export const getBookingForChat = query({
       .first();
 
     const canChat = CHAT_ALLOWED_STATUSES.includes(
-      booking.status as typeof CHAT_ALLOWED_STATUSES[number]
+      booking.status as (typeof CHAT_ALLOWED_STATUSES)[number],
     );
 
     // Expose owner contact info to renter for confirmed+ bookings
-    const CONTACT_ELIGIBLE_STATUSES = ["confirmed", "nije_isporucen", "isporucen", "vracen"];
-    let ownerContact: { email?: string; phoneNumber?: string; chat: boolean } | null = null;
+    const CONTACT_ELIGIBLE_STATUSES = [
+      "confirmed",
+      "nije_isporucen",
+      "isporucen",
+      "vracen",
+    ];
+    let ownerContact: {
+      email?: string;
+      phoneNumber?: string;
+      chat: boolean;
+    } | null = null;
     if (isRenter && CONTACT_ELIGIBLE_STATUSES.includes(booking.status)) {
       const ownerProfile = await ctx.db
         .query("profiles")
@@ -656,7 +725,9 @@ export const getBookingForChat = query({
         const prefs = ownerProfile.preferredContactTypes ?? [];
         ownerContact = {
           email: prefs.includes("email") ? ownerProfile.email : undefined,
-          phoneNumber: prefs.includes("phone") ? ownerProfile.phoneNumber : undefined,
+          phoneNumber: prefs.includes("phone")
+            ? ownerProfile.phoneNumber
+            : undefined,
           chat: prefs.includes("chat"),
         };
       }
@@ -669,6 +740,7 @@ export const getBookingForChat = query({
         startDate: booking.startDate,
         endDate: booking.endDate,
         totalPrice: booking.totalPrice,
+        inquiryResponse: booking.inquiryResponse,
         renterAgreed: booking.renterAgreed,
         ownerAgreed: booking.ownerAgreed,
       },
@@ -707,7 +779,7 @@ export const getOtherPartyPresence = query({
       isOnline: v.boolean(),
       lastSeenAt: v.number(),
     }),
-    v.null()
+    v.null(),
   ),
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -726,7 +798,7 @@ export const getOtherPartyPresence = query({
     const presence = await ctx.db
       .query("chatPresence")
       .withIndex("by_booking_and_user", (q) =>
-        q.eq("bookingId", args.bookingId).eq("userId", otherPartyId)
+        q.eq("bookingId", args.bookingId).eq("userId", otherPartyId),
       )
       .first();
 
@@ -765,20 +837,38 @@ export const sendEmailNudge = mutation({
       throw new ConvexError("Nemate pristup ovoj rezervaciji.");
     }
 
+    if (
+      !CHAT_ALLOWED_STATUSES.includes(
+        booking.status as (typeof CHAT_ALLOWED_STATUSES)[number],
+      )
+    )
+      throw new ConvexError("Poruke nisu dozvoljene za ovu rezervaciju.");
+    const block = await ctx.db
+      .query("chatBlocks")
+      .withIndex("by_bookingId", (q) => q.eq("bookingId", args.bookingId))
+      .first();
+    if (block) throw new ConvexError("Razgovor je blokiran.");
     const recipientId = isRenter ? booking.ownerId : booking.renterId;
+    const preferences = await ctx.db
+      .query("notificationPreferences")
+      .withIndex("by_userId", (q) => q.eq("userId", recipientId))
+      .first();
+    if (!preferences?.emailOnNewMessage) return false;
     const now = Date.now();
 
     // Check recipient hasn't been online in the past hour
     const recipientPresence = await ctx.db
       .query("chatPresence")
       .withIndex("by_booking_and_user", (q) =>
-        q.eq("bookingId", args.bookingId).eq("userId", recipientId)
+        q.eq("bookingId", args.bookingId).eq("userId", recipientId),
       )
       .first();
 
     const ONE_HOUR = 60 * 60 * 1000;
     if (recipientPresence && now - recipientPresence.lastSeenAt < ONE_HOUR) {
-      throw new ConvexError("Korisnik je bio aktivan u poslednjih sat vremena.");
+      throw new ConvexError(
+        "Korisnik je bio aktivan u poslednjih sat vremena.",
+      );
     }
 
     // Get sender and recipient profiles
@@ -806,15 +896,27 @@ export const sendEmailNudge = mutation({
     // Get the last few messages as preview
     const messages = await ctx.db
       .query("messages")
-      .withIndex("by_booking_and_created", (q) => q.eq("bookingId", args.bookingId))
+      .withIndex("by_booking_and_created", (q) =>
+        q.eq("bookingId", args.bookingId),
+      )
       .order("desc")
       .collect();
 
     const lastUserMessage = messages.find(
-      (m) => m.senderId === userId && m.type !== "system"
+      (m) => m.senderId === userId && m.type !== "system",
     );
 
+    if (!lastUserMessage || lastUserMessage.read) return false;
+    if (
+      messages.some(
+        (m) =>
+          m.senderId === userId && !m.read && m.emailNotifiedAt !== undefined,
+      )
+    )
+      return false;
+    await ctx.db.patch(lastUserMessage._id, { emailNotifiedAt: now });
     await ctx.scheduler.runAfter(0, internal.emails.sendNewMessageEmail, {
+      idempotencyKey: `message-${lastUserMessage._id}`,
       to: recipientProfile.email,
       recipientName: recipientProfile.firstName ?? "Korisniče",
       senderName,

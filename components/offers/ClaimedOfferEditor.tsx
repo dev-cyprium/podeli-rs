@@ -12,6 +12,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { offersRent } from "@/lib/listing-types";
 
 export function ClaimedOfferEditor({ id }: { id: Id<"listingOffers"> }) {
   const router = useRouter();
@@ -60,7 +61,7 @@ export function ClaimedOfferEditor({ id }: { id: Id<"listingOffers"> }) {
           ) : (
             <ItemWizardForm
               item={offer.data}
-              initialStep={2}
+              initialStep={offersRent(offer.data) ? 2 : 3}
               submitLabel="Potvrdi i objavi oglas"
               onSave={save}
               preferredContactTypes={profile.preferredContactTypes ?? []}

@@ -28,6 +28,7 @@ import {
 import { formatLocation } from "@/lib/item-location";
 import { extractShortId, generateSlug } from "@/lib/item-url";
 import { getItemUrl } from "@/lib/utils";
+import { offersRent, offersSale } from "@/lib/listing-types";
 import { toast } from "sonner";
 
 export function ListingOfferDialog({
@@ -143,9 +144,12 @@ export function ListingOfferDialog({
                   {offer.data.description}
                 </p>
                 <p className="mt-2 text-sm">
-                  {offer.data.priceByAgreement
-                    ? "Cena po dogovoru"
-                    : `${offer.data.pricePerDay.toLocaleString("sr-Latn-RS")} RSD / dan`}{" "}
+                  {offersRent(offer.data) &&
+                    (offer.data.priceByAgreement
+                      ? "Najam: cena po dogovoru"
+                      : `Najam: ${offer.data.pricePerDay.toLocaleString("sr-Latn-RS")} RSD / dan`)}{" "}
+                  {offersSale(offer.data) &&
+                    `Prodaja: ${offer.data.salePrice?.toLocaleString("sr-Latn-RS")} RSD`}{" "}
                   · {offer.data.images.length} fotografija
                 </p>
               </div>

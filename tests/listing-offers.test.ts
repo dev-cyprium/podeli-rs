@@ -106,6 +106,47 @@ async function setup(email = "owner@example.com") {
 }
 
 describe("supplier offer ownership and publishing", () => {
+  it("publishes a prepared sale without dates and preserves combined location/type filters", async () => {
+    const { t, admin, owner, id, prospectId, data } = await setup();
+    const sale = {
+      ...data,
+      listingType: "sale" as const,
+      salePrice: 35_000,
+      pricePerDay: 0,
+    };
+    await admin.mutation(api.listingOffers.saveDraft, {
+      prospectId,
+      data: sale,
+    });
+    await admin.mutation(api.listingOffers.createLink, { id, token });
+    await owner.mutation(api.listingOffers.claim, { token });
+    await owner.mutation(api.listingOffers.publish, { id, data: sale });
+    const search = {
+      listingType: "sale" as const,
+      paginationOpts: { cursor: null, numItems: 20 },
+    };
+    expect(
+      (await t.query(api.items.searchItems, { ...search, city: "Beograd" }))
+        .page,
+    ).toHaveLength(1);
+    expect(
+      (await t.query(api.items.searchItems, { ...search, city: "Novi Sad" }))
+        .page,
+    ).toHaveLength(0);
+    expect(
+      (
+        await t.query(api.items.searchItems, {
+          ...search,
+          query: "PlayStation",
+          city: "Beograd",
+        })
+      ).page,
+    ).toHaveLength(1);
+    expect(
+      (await t.query(api.items.searchItems, { ...search, listingType: "rent" }))
+        .page,
+    ).toHaveLength(0);
+  });
   it("keeps drafts out of public listings and publishes once after authenticated approval", async () => {
     const { t, admin, owner, id, prospectId, data, ownerProfile } =
       await setup();

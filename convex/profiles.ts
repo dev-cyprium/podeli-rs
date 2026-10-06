@@ -317,6 +317,7 @@ export const ensureProfile = mutation({
         userId: identity.subject,
         emailOnBookingRequest: true,
         emailOnNewMessage: true,
+        emailOnInquiryResponse: true,
         createdAt: now,
         updatedAt: now,
       });

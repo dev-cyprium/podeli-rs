@@ -42,6 +42,11 @@ export default defineSchema({
     municipality: v.optional(v.string()),
     cityKey: v.optional(v.string()),
     municipalityKey: v.optional(v.string()),
+    listingType: v.optional(
+      v.union(v.literal("rent"), v.literal("sale"), v.literal("both")),
+    ),
+    salePrice: v.optional(v.number()),
+    soldAt: v.optional(v.number()),
     pricePerDay: v.number(),
     priceByAgreement: v.optional(v.boolean()),
     deposit: v.optional(v.number()),
@@ -67,9 +72,10 @@ export default defineSchema({
     .index("by_category", ["category"])
     .index("by_cityKey_and_municipalityKey", ["cityKey", "municipalityKey"])
     .index("by_municipalityKey", ["municipalityKey"])
+    .index("by_soldAt", ["soldAt"])
     .searchIndex("search_items", {
       searchField: "searchText",
-      filterFields: ["category", "cityKey", "municipalityKey"],
+      filterFields: ["category", "cityKey", "municipalityKey", "soldAt"],
     }),
 
   plans: defineTable({
@@ -136,6 +142,28 @@ export default defineSchema({
     .index("by_planSlug", ["planSlug"])
     .index("by_hasBadge", ["hasBadge"]),
 
+  purchaseInquiries: defineTable({
+    itemId: v.id("items"),
+    ownerId: v.string(),
+    buyerId: v.string(),
+    salePrice: v.number(),
+    question: v.string(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("accepted"),
+      v.literal("rejected"),
+      v.literal("purchased"),
+      v.literal("not_purchased"),
+    ),
+    response: v.optional(v.string()),
+    respondedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_item", ["itemId"])
+    .index("by_owner", ["ownerId"])
+    .index("by_buyer", ["buyerId"]),
+
   bookings: defineTable({
     itemId: v.id("items"),
     renterId: v.string(),
@@ -154,6 +182,13 @@ export default defineSchema({
       v.literal("isporucen"),
       v.literal("vracen"),
       v.literal("cancelled"),
+    ),
+    inquiryResponse: v.optional(
+      v.object({
+        decision: v.union(v.literal("accepted"), v.literal("rejected")),
+        text: v.string(),
+        respondedAt: v.number(),
+      }),
     ),
     // Agreement tracking
     renterAgreed: v.optional(v.boolean()),
@@ -201,6 +236,7 @@ export default defineSchema({
     content: v.string(),
     read: v.boolean(),
     type: v.optional(v.union(v.literal("user"), v.literal("system"))),
+    emailNotifiedAt: v.optional(v.number()),
     createdAt: v.number(),
   })
     .index("by_booking", ["bookingId"])
@@ -243,6 +279,7 @@ export default defineSchema({
     userId: v.string(),
     emailOnBookingRequest: v.boolean(),
     emailOnNewMessage: v.boolean(),
+    emailOnInquiryResponse: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_userId", ["userId"]),

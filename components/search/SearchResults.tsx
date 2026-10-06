@@ -13,6 +13,7 @@ function SearchResultsInner({
   category,
   city,
   municipality,
+  listingType,
 }: SearchResultsInnerProps) {
   const [cursor, setCursor] = useState<string | null>(null);
   const [accumulatedItems, setAccumulatedItems] = useState<Doc<"items">[]>([]);
@@ -34,6 +35,7 @@ function SearchResultsInner({
     category: category || undefined,
     city: city || undefined,
     municipality: municipality || undefined,
+    listingType,
     paginationOpts: {
       numItems: 12,
       cursor,
@@ -158,6 +160,7 @@ interface SearchResultsInnerProps {
   category?: string;
   city?: string;
   municipality?: string;
+  listingType?: "rent" | "sale" | "both";
 }
 
 interface SearchResultsProps {
@@ -165,6 +168,7 @@ interface SearchResultsProps {
   category?: string;
   city?: string;
   municipality?: string;
+  listingType?: "rent" | "sale" | "both";
 }
 
 // Wrapper component that uses key to reset state when query/category changes
@@ -173,9 +177,15 @@ export function SearchResults({
   category,
   city,
   municipality,
+  listingType,
 }: SearchResultsProps) {
-  // Using key to force remount when search params change, which resets all state
-  const key = JSON.stringify([query, category, city, municipality]);
+  const key = JSON.stringify([
+    query,
+    category,
+    city,
+    municipality,
+    listingType,
+  ]);
   return (
     <SearchResultsInner
       key={key}
@@ -183,6 +193,7 @@ export function SearchResults({
       category={category}
       city={city}
       municipality={municipality}
+      listingType={listingType}
     />
   );
 }

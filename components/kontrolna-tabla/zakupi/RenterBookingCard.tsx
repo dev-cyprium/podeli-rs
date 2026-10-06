@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { BookingStatusBadge } from "@/components/booking/BookingStatusBadge";
+import { InquirySupport } from "@/components/booking/InquirySupport";
 import { AgreementStatus } from "@/components/booking/AgreementStatus";
 import {
   Calendar,
@@ -160,6 +161,7 @@ export function RenterBookingCard({ booking }: RenterBookingCardProps) {
               </div>
             </div>
             <BookingStatusBadge
+              inquiryDecision={booking.inquiryResponse?.decision}
               status={
                 booking.status as
                   | "pending"
@@ -184,6 +186,13 @@ export function RenterBookingCard({ booking }: RenterBookingCardProps) {
               {booking.totalDays} dan{booking.totalDays > 1 && "a"}
             </span>
           </div>
+
+          {booking.inquiryResponse && (
+            <p className="mt-2 whitespace-pre-wrap text-sm">
+              <strong>Odgovor vlasnika:</strong> {booking.inquiryResponse.text}
+            </p>
+          )}
+          <InquirySupport reference={booking._id} />
 
           {/* Agreement status for confirmed bookings */}
           {booking.status === "confirmed" && !isBlocked && ownerAllowsChat && (

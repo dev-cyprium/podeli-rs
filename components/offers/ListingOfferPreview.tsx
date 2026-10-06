@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatLocation } from "@/lib/item-location";
 import { offerPath } from "@/lib/listing-offers";
 import Link from "next/link";
+import { offersRent, offersSale } from "@/lib/listing-types";
 
 export function ListingOfferPreview({ token }: { token: string }) {
   const router = useRouter();
@@ -97,12 +98,20 @@ export function ListingOfferPreview({ token }: { token: string }) {
                 {offer.data.category} · {formatLocation(offer.data)}
               </p>
               <p className="whitespace-pre-wrap">{offer.data.description}</p>
-              <p className="font-semibold">
-                {offer.data.priceByAgreement
-                  ? "Cena po dogovoru"
-                  : `${offer.data.pricePerDay.toLocaleString("sr-Latn-RS")} RSD / dan`}
-              </p>
-              {offer.data.deposit !== undefined && (
+              {offersRent(offer.data) && (
+                <p className="font-semibold">
+                  {offer.data.priceByAgreement
+                    ? "Cena po dogovoru"
+                    : `${offer.data.pricePerDay.toLocaleString("sr-Latn-RS")} RSD / dan`}
+                </p>
+              )}
+              {offersSale(offer.data) && (
+                <p className="font-semibold">
+                  Prodaja: {offer.data.salePrice?.toLocaleString("sr-Latn-RS")}{" "}
+                  RSD
+                </p>
+              )}
+              {offersRent(offer.data) && offer.data.deposit !== undefined && (
                 <p className="text-sm">
                   Depozit: {offer.data.deposit.toLocaleString("sr-Latn-RS")} RSD
                 </p>

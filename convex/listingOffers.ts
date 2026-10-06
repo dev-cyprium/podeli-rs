@@ -9,6 +9,7 @@ import { createItem } from "./itemCreation";
 import { imageFocalPointsError } from "../lib/item-photos";
 import { offerDocument } from "./listingOfferModel";
 import { validFollowUp } from "../lib/outreach";
+import { offersRent, offersSale } from "../lib/listing-types";
 
 async function record(
   ctx: MutationCtx,
@@ -58,9 +59,14 @@ function validateDraft(data: Doc<"listingOffers">["data"]) {
     throw new ConvexError("Podaci ponude su predugački.");
   if (
     !Number.isFinite(data.pricePerDay) ||
-    (!data.priceByAgreement && data.pricePerDay <= 0)
+    (offersRent(data) && !data.priceByAgreement && data.pricePerDay <= 0)
   )
     throw new ConvexError("Unesite cenu ili izaberite cenu po dogovoru.");
+  if (
+    offersSale(data) &&
+    (!Number.isFinite(data.salePrice) || (data.salePrice ?? 0) <= 0)
+  )
+    throw new ConvexError("Prodajna cena mora biti veća od nule.");
   if (
     data.deposit !== undefined &&
     (!Number.isFinite(data.deposit) || data.deposit < 0)

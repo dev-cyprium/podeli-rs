@@ -10,6 +10,7 @@ import { requireIdentity } from "../lib/convex-auth";
 import { locationError, normalizeLocation } from "../lib/item-location";
 import { availabilityError } from "../lib/rental-dates";
 import { imageFocalPointsError } from "../lib/item-photos";
+import { offersRent, offersSale } from "../lib/listing-types";
 
 export async function createItem(ctx: MutationCtx, args: ItemInput) {
   const identity = await requireIdentity(ctx);
@@ -67,6 +68,7 @@ export async function createItem(ctx: MutationCtx, args: ItemInput) {
 
   // Validate price (skip if price is by agreement)
   if (
+    offersRent(args) &&
     !args.priceByAgreement &&
     (!Number.isFinite(args.pricePerDay) || args.pricePerDay <= 0)
   ) {
@@ -98,8 +100,15 @@ export async function createItem(ctx: MutationCtx, args: ItemInput) {
   const focalError = imageFocalPointsError(args.images, args.imageFocalPoints);
   if (focalError) throw new ConvexError(focalError);
 
+  if (
+    offersSale(args) &&
+    (!Number.isFinite(args.salePrice) || (args.salePrice ?? 0) <= 0)
+  ) {
+    throw new ConvexError("Prodajna cena mora biti veća od nule.");
+  }
+
   const validSlots = args.availabilitySlots;
-  const slotError = availabilityError(validSlots);
+  const slotError = offersRent(args) ? availabilityError(validSlots) : null;
   if (slotError) throw new ConvexError(slotError);
 
   // Validate delivery methods
@@ -112,7 +121,10 @@ export async function createItem(ctx: MutationCtx, args: ItemInput) {
   const itemId = await ctx.db.insert("items", {
     ...args,
     ...location,
-    pricePerDay: args.priceByAgreement ? 0 : args.pricePerDay,
+    listingType: args.listingType ?? "rent",
+    salePrice: offersSale(args) ? args.salePrice : undefined,
+    pricePerDay:
+      !offersRent(args) || args.priceByAgreement ? 0 : args.pricePerDay,
     availabilitySlots: validSlots,
     ownerId: identity.subject,
     createdAt: now,
