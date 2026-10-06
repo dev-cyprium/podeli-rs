@@ -17,6 +17,9 @@ import type * as clerk from "../clerk.js";
 import type * as cronHandlers from "../cronHandlers.js";
 import type * as crons from "../crons.js";
 import type * as debug from "../debug.js";
+import type * as devSeed from "../devSeed.js";
+import type * as devSeedData from "../devSeedData.js";
+import type * as devSeedHelpers from "../devSeedHelpers.js";
 import type * as emails from "../emails.js";
 import type * as favorites from "../favorites.js";
 import type * as inquiryNotifications from "../inquiryNotifications.js";
@@ -31,7 +34,6 @@ import type * as profiles from "../profiles.js";
 import type * as promotionalCodes from "../promotionalCodes.js";
 import type * as purchases from "../purchases.js";
 import type * as reviews from "../reviews.js";
-import type * as seed from "../seed.js";
 
 import type {
   ApiFromModules,
@@ -49,6 +51,9 @@ declare const fullApi: ApiFromModules<{
   cronHandlers: typeof cronHandlers;
   crons: typeof crons;
   debug: typeof debug;
+  devSeed: typeof devSeed;
+  devSeedData: typeof devSeedData;
+  devSeedHelpers: typeof devSeedHelpers;
   emails: typeof emails;
   favorites: typeof favorites;
   inquiryNotifications: typeof inquiryNotifications;
@@ -63,7 +68,6 @@ declare const fullApi: ApiFromModules<{
   promotionalCodes: typeof promotionalCodes;
   purchases: typeof purchases;
   reviews: typeof reviews;
-  seed: typeof seed;
 }>;
 
 /**
