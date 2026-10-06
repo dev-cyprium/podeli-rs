@@ -22,6 +22,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { AgreementStatus } from "@/components/booking/AgreementStatus";
 import {
@@ -44,6 +45,7 @@ interface BookingActionsProps {
 }
 
 export function BookingActions({ booking }: BookingActionsProps) {
+  const [response, setResponse] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showRatingDialog, setShowRatingDialog] = useState(false);
@@ -55,7 +57,7 @@ export function BookingActions({ booking }: BookingActionsProps) {
   const rejectBooking = useMutation(api.bookings.rejectBooking);
   const agreeToBooking = useMutation(api.bookings.agreeToBooking);
   const confirmOffPlatformDeal = useMutation(
-    api.bookings.confirmOffPlatformDeal
+    api.bookings.confirmOffPlatformDeal,
   );
   const markAsDelivered = useMutation(api.bookings.markAsDelivered);
   const markAsReturned = useMutation(api.bookings.markAsReturned);
@@ -71,7 +73,7 @@ export function BookingActions({ booking }: BookingActionsProps) {
 
   const existingRenterReview = useQuery(
     api.reviews.getRenterReviewByBooking,
-    booking.status === "vracen" ? { bookingId: booking._id } : "skip"
+    booking.status === "vracen" ? { bookingId: booking._id } : "skip",
   );
 
   const blockStatus = useQuery(api.chatBlocks.getBlockStatus, {
@@ -121,7 +123,7 @@ export function BookingActions({ booking }: BookingActionsProps) {
 
   const handleAction = async (
     action: () => Promise<unknown>,
-    errorMsg: string
+    errorMsg: string,
   ) => {
     setError(null);
     setIsUpdating(true);
@@ -145,9 +147,7 @@ export function BookingActions({ booking }: BookingActionsProps) {
       setShowRatingDialog(false);
       setSelectedRating(0);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Greška pri ocenjivanju"
-      );
+      setError(err instanceof Error ? err.message : "Greška pri ocenjivanju");
     } finally {
       setIsSubmittingRating(false);
     }
@@ -198,6 +198,28 @@ export function BookingActions({ booking }: BookingActionsProps) {
         </div>
       )}
 
+      {booking.inquiryResponse && (
+        <p className="mt-2 whitespace-pre-wrap text-sm">
+          <strong>Vaš odgovor:</strong> {booking.inquiryResponse.text}
+        </p>
+      )}
+      {isPending && (
+        <div className="mt-2 space-y-1">
+          <label
+            htmlFor={`rental-response-${booking._id}`}
+            className="text-xs font-medium"
+          >
+            Odgovor zakupcu (opciono)
+          </label>
+          <Textarea
+            id={`rental-response-${booking._id}`}
+            value={response}
+            onChange={(e) => setResponse(e.target.value)}
+            maxLength={2000}
+            placeholder="Uslovi najma ili razlog odbijanja"
+          />
+        </div>
+      )}
       {/* Action buttons */}
       <div className="mt-2 flex flex-wrap gap-1.5">
         {/* Pending: approve + reject */}
@@ -208,8 +230,12 @@ export function BookingActions({ booking }: BookingActionsProps) {
               variant="outline"
               onClick={() =>
                 handleAction(
-                  () => approveBooking({ id: booking._id }),
-                  "Greška pri odobravanju."
+                  () =>
+                    approveBooking({
+                      id: booking._id,
+                      response: response.trim() || undefined,
+                    }),
+                  "Greška pri odobravanju.",
                 )
               }
               disabled={isUpdating}
@@ -242,8 +268,12 @@ export function BookingActions({ booking }: BookingActionsProps) {
                   <AlertDialogAction
                     onClick={() =>
                       handleAction(
-                        () => rejectBooking({ id: booking._id }),
-                        "Greška pri odbijanju."
+                        () =>
+                          rejectBooking({
+                            id: booking._id,
+                            response: response.trim() || undefined,
+                          }),
+                        "Greška pri odbijanju.",
                       )
                     }
                     className="bg-[#dd1c1a] text-white hover:bg-[#dd1c1a]/90"
@@ -275,10 +305,7 @@ export function BookingActions({ booking }: BookingActionsProps) {
             size="xs"
             variant="outline"
             onClick={() =>
-              handleAction(
-                () => agreeToBooking({ id: booking._id }),
-                "Greška"
-              )
+              handleAction(() => agreeToBooking({ id: booking._id }), "Greška")
             }
             disabled={isUpdating}
             className="text-green-600 hover:bg-green-50"
@@ -318,7 +345,7 @@ export function BookingActions({ booking }: BookingActionsProps) {
                   onClick={() =>
                     handleAction(
                       () => confirmOffPlatformDeal({ id: booking._id }),
-                      "Greška"
+                      "Greška",
                     )
                   }
                   className="bg-green-600 text-white hover:bg-green-700"
@@ -335,10 +362,7 @@ export function BookingActions({ booking }: BookingActionsProps) {
             size="xs"
             variant="outline"
             onClick={() =>
-              handleAction(
-                () => markAsDelivered({ id: booking._id }),
-                "Greška"
-              )
+              handleAction(() => markAsDelivered({ id: booking._id }), "Greška")
             }
             disabled={isUpdating}
             className="text-purple-600 hover:bg-purple-50"
@@ -353,10 +377,7 @@ export function BookingActions({ booking }: BookingActionsProps) {
             size="xs"
             variant="outline"
             onClick={() =>
-              handleAction(
-                () => markAsReturned({ id: booking._id }),
-                "Greška"
-              )
+              handleAction(() => markAsReturned({ id: booking._id }), "Greška")
             }
             disabled={isUpdating}
             className="text-green-600 hover:bg-green-50"
@@ -399,7 +420,7 @@ export function BookingActions({ booking }: BookingActionsProps) {
                   onClick={() =>
                     handleAction(
                       () => cancelBooking({ id: booking._id }),
-                      "Greška"
+                      "Greška",
                     )
                   }
                   className="bg-[#dd1c1a] text-white hover:bg-[#dd1c1a]/90"
@@ -428,9 +449,7 @@ export function BookingActions({ booking }: BookingActionsProps) {
             <span>Ocenili ste:</span>
             <div className="flex items-center gap-0.5 text-amber-500">
               <Star className="h-3 w-3 fill-current" />
-              <span className="font-medium">
-                {existingRenterReview.rating}
-              </span>
+              <span className="font-medium">{existingRenterReview.rating}</span>
             </div>
           </div>
         )}
@@ -442,7 +461,7 @@ export function BookingActions({ booking }: BookingActionsProps) {
             onClick={() =>
               handleAction(
                 () => resetReminderFlag({ bookingId: booking._id }),
-                "Greška"
+                "Greška",
               )
             }
             disabled={isUpdating}

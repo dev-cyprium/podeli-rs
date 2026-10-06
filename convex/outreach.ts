@@ -1,6 +1,7 @@
 import { v, ConvexError } from "convex/values";
-import { query, mutation, QueryCtx, MutationCtx } from "./_generated/server";
-import { requireIdentity } from "../lib/convex-auth";
+import { query, mutation } from "./_generated/server";
+import { requireAdmin } from "./adminAuth";
+import { offerSummary } from "./listingOfferModel";
 import { prospectKey, validFollowUp } from "../lib/outreach";
 import {
   prospectInput,
@@ -9,16 +10,6 @@ import {
   outreachStatus,
   outreachChannel,
 } from "./outreachModel";
-async function requireAdmin(ctx: QueryCtx | MutationCtx) {
-  const identity = await requireIdentity(ctx);
-  const profile = await ctx.db
-    .query("profiles")
-    .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
-    .first();
-  if (!profile?.superAdmin)
-    throw new ConvexError("Samo super-admin može pristupiti.");
-  return identity;
-}
 function validate(p: {
   name: string;
   category: string;
@@ -70,20 +61,34 @@ export const list = query({
     v.object({
       ...prospectDocument.fields,
       latestActivity: v.union(activityDocument, v.null()),
+      offer: v.union(offerSummary, v.null()),
     }),
   ),
   handler: async (ctx) => {
     await requireAdmin(ctx);
     const prospects = await ctx.db.query("prospects").collect();
     return await Promise.all(
-      prospects.map(async (prospect) => ({
-        ...prospect,
-        latestActivity: await ctx.db
-          .query("prospectActivities")
+      prospects.map(async (prospect) => {
+        const offer = await ctx.db
+          .query("listingOffers")
           .withIndex("by_prospectId", (q) => q.eq("prospectId", prospect._id))
-          .order("desc")
-          .first(),
-      })),
+          .unique();
+        return {
+          ...prospect,
+          offer: offer
+            ? {
+                id: offer._id,
+                status: offer.status,
+                expiresAt: offer.expiresAt,
+              }
+            : null,
+          latestActivity: await ctx.db
+            .query("prospectActivities")
+            .withIndex("by_prospectId", (q) => q.eq("prospectId", prospect._id))
+            .order("desc")
+            .first(),
+        };
+      }),
     );
   },
 });
@@ -127,10 +132,16 @@ export const importProspects = mutation({
       if (row.supplierProfileId && !(await ctx.db.get(row.supplierProfileId)))
         throw new ConvexError("Profil nije pronađen.");
       const key = prospectKey(row.name, row.phone);
-      const existing = await ctx.db
+      const importedBefore = await ctx.db
         .query("prospects")
-        .withIndex("by_key", (q) => q.eq("key", key))
+        .withIndex("by_importKey", (q) => q.eq("importKey", key))
         .first();
+      const existing =
+        importedBefore ??
+        (await ctx.db
+          .query("prospects")
+          .withIndex("by_key", (q) => q.eq("key", key))
+          .first());
       if (existing) {
         skipped++;
         continue;
@@ -141,6 +152,7 @@ export const importProspects = mutation({
         name: row.name.trim(),
         category: row.category.trim(),
         key,
+        importKey: key,
         createdAt: now,
         updatedAt: now,
       });
@@ -185,11 +197,41 @@ export const save = mutation({
       name: prospect.name.trim(),
       category: prospect.category.trim(),
       key,
+      // Retain the initial identity when editing an imported phone/name.
+      importKey: previous?.importKey ?? previous?.key,
+      nextStep: prospect.nextStep,
       updatedAt: now,
     };
     const savedId =
       id ?? (await ctx.db.insert("prospects", { ...data, createdAt: now }));
     if (id) await ctx.db.patch(id, data);
+    if (
+      id &&
+      previous &&
+      (previous.email ?? "").trim().toLowerCase() !==
+        (prospect.email ?? "").trim().toLowerCase()
+    ) {
+      const offer = await ctx.db
+        .query("listingOffers")
+        .withIndex("by_prospectId", (q) => q.eq("prospectId", id))
+        .unique();
+      if (offer?.token && !offer.claimedBy) {
+        await ctx.db.patch(offer._id, {
+          token: undefined,
+          recipientEmail: undefined,
+          expiresAt: undefined,
+          status: "draft",
+          updatedAt: now,
+        });
+        await ctx.db.insert("prospectActivities", {
+          prospectId: id,
+          authorId: identity.subject,
+          outcome: prospect.status,
+          note: "Mejl firme je promenjen. Prethodni link ponude je povučen; napravite novi za novu adresu.",
+          createdAt: now,
+        });
+      }
+    }
     if (
       note.trim() ||
       outcome ||

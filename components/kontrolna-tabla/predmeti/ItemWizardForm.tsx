@@ -27,6 +27,12 @@ import {
 import { PreferredContactForm } from "./PreferredContactForm";
 import { CategoryCombobox } from "./CategoryCombobox";
 import { locationError } from "@/lib/item-location";
+import {
+  offersRent,
+  offersSale,
+  listingLabels,
+  type ListingType,
+} from "@/lib/listing-types";
 import { availabilityError } from "@/lib/rental-dates";
 
 type AvailabilitySlot = {
@@ -51,6 +57,8 @@ export type ItemFormData = {
   category: string;
   city: string;
   municipality: string;
+  listingType?: ListingType;
+  salePrice?: number;
   pricePerDay: number;
   priceByAgreement?: boolean;
   deposit?: number;
@@ -68,7 +76,10 @@ const CONTACT_LABELS: Record<string, string> = {
 };
 
 interface ItemWizardFormProps {
-  item: Doc<"items"> | null;
+  item: Partial<Pick<Doc<"items">, keyof ItemFormData>> | null;
+  mode?: "draft" | "publish";
+  submitLabel?: string;
+  initialStep?: number;
   onSave: (data: ItemFormData) => Promise<void>;
   onCancel?: () => void;
   preferredContactTypes?: string[];
@@ -82,6 +93,9 @@ export function ItemWizardForm({
   preferredContactTypes = [],
   phoneNumber,
   onContactSaved,
+  mode = "publish",
+  submitLabel,
+  initialStep = 0,
 }: ItemWizardFormProps) {
   const generateUploadUrl = useMutation(api.items.generateUploadUrl);
   const categoryNames = useQuery(api.categories.listNames);
@@ -93,6 +107,11 @@ export function ItemWizardForm({
   const [category, setCategory] = useState(
     item?.category ?? categories[0] ?? "",
   );
+  const [listingType, setListingType] = useState<ListingType>(
+    item?.listingType ?? "rent",
+  );
+  const [salePrice, setSalePrice] = useState(item?.salePrice?.toString() ?? "");
+  const listing = { listingType };
   const [pricePerDay, setPricePerDay] = useState(
     item?.pricePerDay?.toString() ?? "",
   );
@@ -115,7 +134,7 @@ export function ItemWizardForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isProcessingImages, setIsProcessingImages] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(initialStep);
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [invalidSteps, setInvalidSteps] = useState<Set<number>>(new Set());
   const [visitedSteps, setVisitedSteps] = useState<Set<number>>(new Set()); // Don't mark any step as visited initially
@@ -154,7 +173,7 @@ export function ItemWizardForm({
       title: "Dostava",
       description: "Odaberite opcije preuzimanja.",
     },
-  ];
+  ].filter((step) => mode !== "draft" || step.id !== "availability");
 
   // Keep the legacy cover coordinates together with the per-photo settings.
   // A storage ID remains stable when the cover or the photo order changes.
@@ -288,7 +307,12 @@ export function ItemWizardForm({
   }
 
   function validateStep(stepIndex: number) {
-    if (stepIndex === 0) {
+    if (steps[stepIndex].id === "basic") {
+      if (
+        offersSale(listing) &&
+        (!Number.isFinite(Number(salePrice)) || Number(salePrice) <= 0)
+      )
+        return "Prodajna cena mora biti veća od nule.";
       const numericPrice = Number(pricePerDay);
       if (!title.trim()) {
         return "Unesite naziv predmeta.";
@@ -304,25 +328,28 @@ export function ItemWizardForm({
         return "Depozit mora biti pozitivan broj ili nula.";
       }
       if (
+        offersRent(listing) &&
         !priceByAgreement &&
         (!Number.isFinite(numericPrice) || numericPrice <= 0)
       ) {
         return "Cena po danu mora biti veća od nule.";
       }
     }
-    if (stepIndex === 1) {
-      if (images.length === 0) {
+    if (steps[stepIndex].id === "images") {
+      if (mode !== "draft" && images.length === 0) {
         return "Dodajte fotografiju predmeta.";
       }
     }
-    if (stepIndex === 2) {
-      const slotError = availabilityError(availabilitySlots);
+    if (steps[stepIndex].id === "availability") {
+      const slotError = offersRent(listing)
+        ? availabilityError(availabilitySlots)
+        : null;
       if (slotError) return slotError;
     }
-    if (stepIndex === 3) {
+    if (steps[stepIndex].id === "delivery") {
       const error = locationError(city, municipality);
-      if (error) return error;
-      if (deliveryMethods.length === 0) {
+      if (error && mode !== "draft") return error;
+      if (mode !== "draft" && deliveryMethods.length === 0) {
         return "Odaberite bar jedan način dostave.";
       }
     }
@@ -368,6 +395,8 @@ export function ItemWizardForm({
     category,
     deposit,
     pricePerDay,
+    listingType,
+    salePrice,
     priceByAgreement,
     images.length,
     availabilitySlots,
@@ -483,9 +512,9 @@ export function ItemWizardForm({
       return;
     }
 
-    if (preferredContactTypes.length === 0) {
+    if (mode !== "draft" && preferredContactTypes.length === 0) {
       setFormError(null);
-      setCurrentStep(3);
+      setCurrentStep(steps.findIndex((step) => step.id === "delivery"));
       setContactModalOpen(true);
       return;
     }
@@ -503,7 +532,9 @@ export function ItemWizardForm({
         category,
         city: city.trim(),
         municipality: municipality.trim(),
-        pricePerDay: numericPrice,
+        listingType,
+        salePrice: offersSale(listing) ? Number(salePrice) : undefined,
+        pricePerDay: offersRent(listing) ? numericPrice : 0,
         priceByAgreement: priceByAgreement || undefined,
         deposit:
           numericDeposit !== undefined && numericDeposit >= 0
@@ -512,7 +543,7 @@ export function ItemWizardForm({
         images,
         imageFocalPoint: photoPoints[images[0]],
         imageFocalPoints: photoPoints,
-        availabilitySlots: cleanedSlots,
+        availabilitySlots: offersRent(listing) ? cleanedSlots : [],
         deliveryMethods,
       });
       setFormError(null);
@@ -597,8 +628,38 @@ export function ItemWizardForm({
           transition={{ type: "spring", bounce: 0.35, duration: 0.4 }}
           className="space-y-4"
         >
-          {currentStep === 0 ? (
+          {steps[currentStep].id === "basic" ? (
             <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="listing-type">Vrsta oglasa</Label>
+                <select
+                  id="listing-type"
+                  value={listingType}
+                  onChange={(e) =>
+                    setListingType(e.target.value as ListingType)
+                  }
+                  className="h-10 w-full rounded-md border border-border bg-card px-3"
+                >
+                  {Object.entries(listingLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {offersSale(listing) && (
+                <div className="space-y-2">
+                  <Label htmlFor="sale-price">Prodajna cena (RSD)</Label>
+                  <Input
+                    id="sale-price"
+                    type="number"
+                    min="1"
+                    value={salePrice}
+                    onChange={(e) => setSalePrice(e.target.value)}
+                  />
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="item-title">Naziv predmeta</Label>
                 <Input
@@ -624,52 +685,56 @@ export function ItemWizardForm({
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <Checkbox
-                    checked={priceByAgreement}
-                    onChange={(e) => setPriceByAgreement(e.target.checked)}
-                  />
-                  <span className="text-sm font-medium text-podeli-dark">
-                    Cena po dogovoru
-                  </span>
-                </label>
-              </div>
+              {offersRent(listing) && (
+                <>
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <Checkbox
+                        checked={priceByAgreement}
+                        onChange={(e) => setPriceByAgreement(e.target.checked)}
+                      />
+                      <span className="text-sm font-medium text-podeli-dark">
+                        Cena po dogovoru
+                      </span>
+                    </label>
+                  </div>
 
-              {!priceByAgreement && (
-                <div className="space-y-2">
-                  <Label htmlFor="item-price">Cena po danu (RSD)</Label>
-                  <Input
-                    id="item-price"
-                    type="number"
-                    min="0"
-                    value={pricePerDay}
-                    onChange={(event) => setPricePerDay(event.target.value)}
-                    placeholder="1500"
-                  />
-                </div>
+                  {!priceByAgreement && (
+                    <div className="space-y-2">
+                      <Label htmlFor="item-price">Cena po danu (RSD)</Label>
+                      <Input
+                        id="item-price"
+                        type="number"
+                        min="0"
+                        value={pricePerDay}
+                        onChange={(event) => setPricePerDay(event.target.value)}
+                        placeholder="1500"
+                      />
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <Label htmlFor="item-deposit">
+                      Sigurnosni depozit (opciono)
+                    </Label>
+                    <Input
+                      id="item-deposit"
+                      type="number"
+                      min="0"
+                      value={deposit}
+                      onChange={(event) => setDeposit(event.target.value)}
+                      placeholder="npr. 5000"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Iznos u RSD koji se vraća nakon vraćanja predmeta
+                    </p>
+                  </div>
+                </>
               )}
-
-              <div className="space-y-2">
-                <Label htmlFor="item-deposit">
-                  Sigurnosni depozit (opciono)
-                </Label>
-                <Input
-                  id="item-deposit"
-                  type="number"
-                  min="0"
-                  value={deposit}
-                  onChange={(event) => setDeposit(event.target.value)}
-                  placeholder="npr. 5000"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Iznos u RSD koji se vraća nakon vraćanja predmeta
-                </p>
-              </div>
             </div>
           ) : null}
 
-          {currentStep === 1 ? (
+          {steps[currentStep].id === "images" ? (
             <ItemPhotoEditor
               images={images}
               urls={imageUrlsMap}
@@ -695,7 +760,12 @@ export function ItemWizardForm({
             />
           ) : null}
 
-          {currentStep === 2 ? (
+          {steps[currentStep].id === "availability" && !offersRent(listing) && (
+            <p className="text-sm text-muted-foreground">
+              Prodaja ne zahteva izbor datuma.
+            </p>
+          )}
+          {steps[currentStep].id === "availability" && offersRent(listing) ? (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label>Dostupnost</Label>
@@ -784,7 +854,7 @@ export function ItemWizardForm({
             </div>
           ) : null}
 
-          {currentStep === 3 ? (
+          {steps[currentStep].id === "delivery" ? (
             <div className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
@@ -812,7 +882,7 @@ export function ItemWizardForm({
                 Unesite samo grad i opštinu. Tačnu adresu preuzimanja dogovarate
                 direktno sa korisnikom.
               </p>
-              {
+              {mode !== "draft" && (
                 <div className="rounded-lg border border-podeli-blue/20 bg-podeli-blue/5 px-4 py-3">
                   <p className="text-sm font-medium text-podeli-dark">
                     {preferredContactTypes.length > 0
@@ -835,7 +905,7 @@ export function ItemWizardForm({
                       : "Postavi način kontakta"}
                   </Button>
                 </div>
-              }
+              )}
               <div className="space-y-2">
                 <Label>Način dostave</Label>
                 <div className="grid gap-2">
@@ -918,7 +988,8 @@ export function ItemWizardForm({
               disabled={isSubmitting}
               onClick={handleSaveFromAnyStep}
             >
-              Sačuvaj izmene
+              {submitLabel ??
+                (mode === "draft" ? "Sačuvaj nacrt ponude" : "Sačuvaj izmene")}
             </Button>
           ) : currentStep === steps.length - 1 ? (
             <Button
@@ -927,7 +998,7 @@ export function ItemWizardForm({
               disabled={isSubmitting || invalidSteps.size > 0}
               onClick={handleSubmit}
             >
-              Sačuvaj predmet
+              {submitLabel ?? "Sačuvaj predmet"}
             </Button>
           ) : null}
         </div>

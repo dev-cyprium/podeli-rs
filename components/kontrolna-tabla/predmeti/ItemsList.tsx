@@ -1,4 +1,5 @@
 "use client";
+import { offersRent, offersSale } from "@/lib/listing-types";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -211,14 +212,22 @@ function ItemCard({
 
           {/* Info pills with icons */}
           <div className="mt-3 flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:flex-wrap sm:gap-3">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1">
-              <Coins className="h-3 w-3 shrink-0" />
-              <span>
-                {item.priceByAgreement
-                  ? "Cena po dogovoru"
-                  : `${item.pricePerDay.toFixed(0)} RSD / dan`}
+            {offersRent(item) && (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1">
+                <Coins className="h-3 w-3 shrink-0" />
+                <span>
+                  {item.priceByAgreement
+                    ? "Cena po dogovoru"
+                    : `${item.pricePerDay.toFixed(0)} RSD / dan`}
+                </span>
               </span>
-            </span>
+            )}
+            {offersSale(item) && (
+              <span>
+                Prodaja: {item.salePrice?.toFixed(0)} RSD{" "}
+                {item.soldAt !== undefined ? "· Prodato" : ""}
+              </span>
+            )}
             <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1">
               <Calendar className="h-3 w-3 shrink-0" />
               <span className="truncate">{availabilitySummary}</span>

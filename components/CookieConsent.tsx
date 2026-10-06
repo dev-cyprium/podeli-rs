@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Cookie } from "lucide-react";
+import { posthogOptions } from "@/lib/posthog-options";
 
 const CONSENT_KEY = "cookie-consent";
 
@@ -37,10 +38,7 @@ export function CookieConsent() {
           process.env.NEXT_PUBLIC_POSTHOG_KEY &&
           process.env.NEXT_PUBLIC_POSTHOG_HOST
         ) {
-          posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
-            api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
-            defaults: "2025-11-30",
-          });
+          posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY, posthogOptions);
         }
       });
     }

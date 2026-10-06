@@ -9,6 +9,7 @@
  */
 
 import type * as admin from "../admin.js";
+import type * as adminAuth from "../adminAuth.js";
 import type * as adminChat from "../adminChat.js";
 import type * as bookings from "../bookings.js";
 import type * as categories from "../categories.js";
@@ -17,10 +18,18 @@ import type * as clerk from "../clerk.js";
 import type * as cronHandlers from "../cronHandlers.js";
 import type * as crons from "../crons.js";
 import type * as debug from "../debug.js";
+import type * as devSeed from "../devSeed.js";
+import type * as devSeedData from "../devSeedData.js";
+import type * as devSeedHelpers from "../devSeedHelpers.js";
 import type * as emails from "../emails.js";
 import type * as favorites from "../favorites.js";
 import type * as imageModel from "../imageModel.js";
+import type * as inquiryNotifications from "../inquiryNotifications.js";
+import type * as itemCreation from "../itemCreation.js";
+import type * as itemModel from "../itemModel.js";
 import type * as items from "../items.js";
+import type * as listingOfferModel from "../listingOfferModel.js";
+import type * as listingOffers from "../listingOffers.js";
 import type * as messages from "../messages.js";
 import type * as notificationPreferences from "../notificationPreferences.js";
 import type * as notifications from "../notifications.js";
@@ -29,8 +38,8 @@ import type * as outreachModel from "../outreachModel.js";
 import type * as plans from "../plans.js";
 import type * as profiles from "../profiles.js";
 import type * as promotionalCodes from "../promotionalCodes.js";
+import type * as purchases from "../purchases.js";
 import type * as reviews from "../reviews.js";
-import type * as seed from "../seed.js";
 
 import type {
   ApiFromModules,
@@ -40,6 +49,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   admin: typeof admin;
+  adminAuth: typeof adminAuth;
   adminChat: typeof adminChat;
   bookings: typeof bookings;
   categories: typeof categories;
@@ -48,10 +58,18 @@ declare const fullApi: ApiFromModules<{
   cronHandlers: typeof cronHandlers;
   crons: typeof crons;
   debug: typeof debug;
+  devSeed: typeof devSeed;
+  devSeedData: typeof devSeedData;
+  devSeedHelpers: typeof devSeedHelpers;
   emails: typeof emails;
   favorites: typeof favorites;
   imageModel: typeof imageModel;
+  inquiryNotifications: typeof inquiryNotifications;
+  itemCreation: typeof itemCreation;
+  itemModel: typeof itemModel;
   items: typeof items;
+  listingOfferModel: typeof listingOfferModel;
+  listingOffers: typeof listingOffers;
   messages: typeof messages;
   notificationPreferences: typeof notificationPreferences;
   notifications: typeof notifications;
@@ -60,8 +78,8 @@ declare const fullApi: ApiFromModules<{
   plans: typeof plans;
   profiles: typeof profiles;
   promotionalCodes: typeof promotionalCodes;
+  purchases: typeof purchases;
   reviews: typeof reviews;
-  seed: typeof seed;
 }>;
 
 /**

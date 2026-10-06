@@ -216,6 +216,37 @@ it("shows overdue and new contacts today, excluding future and closed contacts",
 });
 
 describe("outreach contact channels", () => {
+  it("keeps the initial import identity after editing a phone number or company name", async () => {
+    const { admin } = await setup();
+    await admin.mutation(api.outreach.importProspects, {
+      rows: initialProspects,
+    });
+    const first = (await admin.query(api.outreach.list, {}))[0];
+    await admin.mutation(api.outreach.save, {
+      id: first._id,
+      prospect: {
+        ...initialProspects[0],
+        name: "Novo ime",
+        phone: "",
+        email: "owner@example.com",
+        nextStep: "send_offer",
+      },
+      note: "Dopunjen mejl za ponudu",
+    });
+    expect(
+      await admin.mutation(api.outreach.importProspects, {
+        rows: initialProspects,
+      }),
+    ).toEqual({ imported: 0, skipped: 18 });
+    const rows = await admin.query(api.outreach.list, {});
+    expect(rows).toHaveLength(18);
+    expect(rows.find((p) => p._id === first._id)).toMatchObject({
+      name: "Novo ime",
+      phone: "",
+      email: "owner@example.com",
+      nextStep: "send_offer",
+    });
+  });
   it("saves email-only and form-only prospects and keeps activity channels independent", async () => {
     const { admin } = await setup();
     const prospect = {

@@ -1,10 +1,20 @@
+import {
+  generateSlug,
+  extractShortId,
+  generateSearchText,
+} from "../lib/item-url";
+import { createItem } from "./itemCreation";
+import { itemInput } from "./itemModel";
 import { imageFocalPointsError } from "@/lib/item-photos";
-import { imageFocalPointValidator, imageFocalPointsValidator } from "./imageModel";
+import {
+  imageFocalPointValidator,
+  imageFocalPointsValidator,
+} from "./imageModel";
 import { v, ConvexError } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireIdentity } from "@/lib/convex-auth";
 import schema from "./schema";
-import { Id } from "./_generated/dataModel";
+import { offersRent, offersSale } from "@/lib/listing-types";
 import {
   availabilityError,
   getBelgradeDate,
@@ -14,35 +24,6 @@ import {
 import { locationError, normalizeLocation } from "@/lib/item-location";
 
 const deliveryMethodValues = ["licno", "glovo", "wolt", "cargo"] as const;
-
-/**
- * Generate a slug from a title: lowercase, ASCII-only, dash-separated
- */
-function generateSlug(title: string): string {
-  return title
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
-    .replace(/[^a-z0-9\s-]/g, "") // Remove non-ASCII characters except spaces and dashes
-    .trim()
-    .replace(/\s+/g, "-") // Replace spaces with dashes
-    .replace(/-+/g, "-") // Replace multiple dashes with single dash
-    .replace(/^-|-$/g, ""); // Remove leading/trailing dashes
-}
-
-/**
- * Extract the first 8 characters of a Convex ID as shortId
- */
-function extractShortId(id: Id<"items">): string {
-  return id.slice(0, 8);
-}
-
-/**
- * Generate searchText by combining title and description (lowercase)
- */
-function generateSearchText(title: string, description: string): string {
-  return `${title} ${description}`.toLowerCase();
-}
 
 const deliveryMethodValidator = v.union(
   v.literal(deliveryMethodValues[0]),
@@ -57,8 +38,11 @@ export const listAll = query({
   },
   handler: async (ctx, args) => {
     const limit = args.limit ?? 20;
-    const items = await ctx.db.query("items").order("desc").take(limit);
-    return items;
+    return await ctx.db
+      .query("items")
+      .withIndex("by_soldAt", (q) => q.eq("soldAt", undefined))
+      .order("desc")
+      .take(limit);
   },
 });
 
@@ -137,146 +121,8 @@ export const getByShortId = query({
 
 export const create = mutation({
   returns: v.id("items"),
-  args: {
-    title: v.string(),
-    description: v.string(),
-    category: v.string(),
-    city: v.string(),
-    municipality: v.string(),
-    pricePerDay: v.number(),
-    priceByAgreement: v.optional(v.boolean()),
-    deposit: v.optional(v.number()),
-    images: v.array(v.id("_storage")),
-    imageFocalPoint: v.optional(imageFocalPointValidator),
-    imageFocalPoints: v.optional(imageFocalPointsValidator),
-    availabilitySlots: v.array(
-      v.object({
-        startDate: v.string(),
-        endDate: v.string(),
-      }),
-    ),
-    deliveryMethods: v.array(deliveryMethodValidator),
-  },
-  handler: async (ctx, args) => {
-    const identity = await requireIdentity(ctx);
-
-    // Publishing is free; a profile and contact preferences are still required.
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
-      .first();
-
-    if (!profile) {
-      throw new ConvexError(
-        "Profil nije pronađen. Osvežite stranicu i pokušajte ponovo.",
-      );
-    }
-
-    // Check preferred contact types
-    const prefs = profile.preferredContactTypes ?? [];
-    if (prefs.length === 0) {
-      throw new ConvexError("Postavite način kontakta pre objavljivanja.");
-    }
-
-    const latestItem = await ctx.db
-      .query("items")
-      .withIndex("by_owner", (q) => q.eq("ownerId", identity.subject))
-      .order("desc")
-      .first();
-    if (latestItem && Date.now() - latestItem.createdAt < 10_000) {
-      throw new ConvexError(
-        "Sačekajte 10 sekundi između objavljivanja oglasa.",
-      );
-    }
-
-    const error = locationError(args.city, args.municipality);
-    if (error) throw new ConvexError(error);
-    const location = {
-      city: args.city.trim().replace(/\s+/g, " "),
-      municipality: args.municipality.trim().replace(/\s+/g, " "),
-      cityKey: normalizeLocation(args.city),
-      municipalityKey: normalizeLocation(args.municipality),
-    };
-
-    // Validate title
-    if (!args.title.trim()) {
-      throw new ConvexError("Naziv predmeta je obavezan.");
-    }
-
-    // Validate description
-    if (!args.description.trim()) {
-      throw new ConvexError("Opis predmeta je obavezan.");
-    }
-
-    // Validate category
-    if (!args.category.trim()) {
-      throw new ConvexError("Kategorija je obavezna.");
-    }
-
-    // Validate price (skip if price is by agreement)
-    if (
-      !args.priceByAgreement &&
-      (!Number.isFinite(args.pricePerDay) || args.pricePerDay <= 0)
-    ) {
-      throw new ConvexError("Cena po danu mora biti veća od nule.");
-    }
-
-    if (
-      args.title.length > 200 ||
-      args.description.length > 10_000 ||
-      args.category.length > 100
-    ) {
-      throw new ConvexError("Naziv, opis ili kategorija su predugački.");
-    }
-    if (
-      args.deposit !== undefined &&
-      (!Number.isFinite(args.deposit) || args.deposit < 0)
-    ) {
-      throw new ConvexError("Depozit mora biti pozitivan broj ili nula.");
-    }
-
-    // Validate images
-    if (args.images.length === 0) {
-      throw new ConvexError("Dodajte bar jednu fotografiju.");
-    }
-    if (args.images.length > 10) {
-      throw new ConvexError("Maksimalno 10 fotografija po predmetu.");
-    }
-
-    const focalError = imageFocalPointsError(args.images, args.imageFocalPoints);
-    if (focalError) throw new ConvexError(focalError);
-
-    const validSlots = args.availabilitySlots;
-    const slotError = availabilityError(validSlots);
-    if (slotError) throw new ConvexError(slotError);
-
-    // Validate delivery methods
-    if (args.deliveryMethods.length === 0) {
-      throw new ConvexError("Odaberite bar jedan način dostave.");
-    }
-
-    const now = Date.now();
-
-    const itemId = await ctx.db.insert("items", {
-      ...args,
-      ...location,
-      pricePerDay: args.priceByAgreement ? 0 : args.pricePerDay,
-      availabilitySlots: validSlots,
-      ownerId: identity.subject,
-      createdAt: now,
-      updatedAt: now,
-    });
-    // Generate shortId, slug, and searchText after insert
-    const shortId = extractShortId(itemId);
-    const slug = generateSlug(args.title);
-    const searchText = generateSearchText(args.title, args.description);
-    await ctx.db.patch(itemId, {
-      shortId,
-      slug,
-      searchText,
-    });
-    return itemId;
-  },
+  args: itemInput.fields,
+  handler: createItem,
 });
 
 export const update = mutation({
@@ -288,6 +134,10 @@ export const update = mutation({
     category: v.string(),
     city: v.string(),
     municipality: v.string(),
+    listingType: v.optional(
+      v.union(v.literal("rent"), v.literal("sale"), v.literal("both")),
+    ),
+    salePrice: v.optional(v.number()),
     pricePerDay: v.number(),
     priceByAgreement: v.optional(v.boolean()),
     deposit: v.optional(v.number()),
@@ -338,6 +188,7 @@ export const update = mutation({
 
     // Validate price (skip if price is by agreement)
     if (
+      offersRent(args) &&
       !args.priceByAgreement &&
       (!Number.isFinite(args.pricePerDay) || args.pricePerDay <= 0)
     ) {
@@ -366,11 +217,20 @@ export const update = mutation({
       throw new ConvexError("Maksimalno 10 fotografija po predmetu.");
     }
 
-    const focalError = imageFocalPointsError(args.images, args.imageFocalPoints);
+    const focalError = imageFocalPointsError(
+      args.images,
+      args.imageFocalPoints,
+    );
     if (focalError) throw new ConvexError(focalError);
 
+    if (
+      offersSale(args) &&
+      (!Number.isFinite(args.salePrice) || (args.salePrice ?? 0) <= 0)
+    ) {
+      throw new ConvexError("Prodajna cena mora biti veća od nule.");
+    }
     const validSlots = args.availabilitySlots;
-    const slotError = availabilityError(validSlots);
+    const slotError = offersRent(args) ? availabilityError(validSlots) : null;
     if (slotError) throw new ConvexError(slotError);
 
     // Validate delivery methods
@@ -388,7 +248,8 @@ export const update = mutation({
         (booking) =>
           ACTIVE_BOOKING_STATUSES.includes(
             booking.status as (typeof ACTIVE_BOOKING_STATUSES)[number],
-          ) && !isRangeAvailable(booking, validSlots),
+          ) &&
+          (!offersRent(args) || !isRangeAvailable(booking, validSlots)),
       )
     ) {
       throw new ConvexError(
@@ -421,7 +282,10 @@ export const update = mutation({
     await ctx.db.patch(id, {
       ...rest,
       ...location,
-      pricePerDay: args.priceByAgreement ? 0 : args.pricePerDay,
+      listingType: args.listingType ?? "rent",
+      salePrice: offersSale(args) ? args.salePrice : undefined,
+      pricePerDay:
+        !offersRent(args) || args.priceByAgreement ? 0 : args.pricePerDay,
       availabilitySlots: validSlots,
       ...updates,
     });
@@ -467,6 +331,15 @@ export const remove = mutation({
         "Ne možete obrisati predmet dok postoje aktivne rezervacije. Sačekajte da se sve rezervacije završe.",
       );
     }
+
+    const inquiries = await ctx.db
+      .query("purchaseInquiries")
+      .withIndex("by_item", (q) => q.eq("itemId", args.id))
+      .collect();
+    if (inquiries.length > 0)
+      throw new ConvexError(
+        "Predmet sa upitima za kupovinu ne može biti obrisan. Sačuvajte istoriju upita.",
+      );
 
     // Delete non-active bookings (pending, cancelled, vracen)
     for (const booking of bookings) {
@@ -609,17 +482,19 @@ export const searchAutocomplete = query({
     const results = await ctx.db
       .query("items")
       .withSearchIndex("search_items", (q) =>
-        q.search("searchText", args.query),
+        q.search("searchText", args.query).eq("soldAt", undefined),
       )
       .take(5);
 
-    return results.map((item) => ({
-      _id: item._id,
-      title: item.title,
-      category: item.category,
-      shortId: item.shortId ?? extractShortId(item._id),
-      slug: item.slug ?? generateSlug(item.title),
-    }));
+    return results
+      .filter((item) => item.soldAt === undefined)
+      .map((item) => ({
+        _id: item._id,
+        title: item.title,
+        category: item.category,
+        shortId: item.shortId ?? extractShortId(item._id),
+        slug: item.slug ?? generateSlug(item.title),
+      }));
   },
 });
 
@@ -632,6 +507,9 @@ export const searchItems = query({
     category: v.optional(v.string()),
     city: v.optional(v.string()),
     municipality: v.optional(v.string()),
+    listingType: v.optional(
+      v.union(v.literal("rent"), v.literal("sale"), v.literal("both")),
+    ),
     paginationOpts: v.object({
       numItems: v.number(),
       cursor: v.union(v.string(), v.null()),
@@ -661,10 +539,18 @@ export const searchItems = query({
       T extends {
         category: string;
         availabilitySlots: Array<{ startDate: string; endDate: string }>;
+        listingType?: "rent" | "sale" | "both";
+        soldAt?: number;
       },
     >(items: T[]): T[] {
       return items.filter((item) => {
         if (category && item.category !== category) return false;
+        if (item.soldAt !== undefined) return false;
+        if (args.listingType === "rent" && !offersRent(item)) return false;
+        if (args.listingType === "sale" && !offersSale(item)) return false;
+        if (args.listingType === "both" && item.listingType !== "both")
+          return false;
+        if (offersSale(item) && args.listingType !== "rent") return true;
         // Filter out items with no availability slots
         if (item.availabilitySlots.length === 0) {
           return false;
@@ -682,7 +568,9 @@ export const searchItems = query({
       const searchBuilder = ctx.db
         .query("items")
         .withSearchIndex("search_items", (q) => {
-          let search = q.search("searchText", searchQuery);
+          let search = q
+            .search("searchText", searchQuery)
+            .eq("soldAt", undefined);
           if (category) {
             search = search.eq("category", category);
           }
