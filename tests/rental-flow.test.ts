@@ -69,6 +69,72 @@ const request = (
 ) => ({ itemId, startDate, endDate, deliveryMethod: "licno" });
 
 describe("free supplier posting", () => {
+  it("keeps each photo's focus through cover changes and removes replaced photo settings", async () => {
+    const { t, owner, input, itemId } = await setup();
+    const second = await t.run((ctx) =>
+      ctx.storage.store(new Blob(["second"], { type: "image/png" })),
+    );
+    const first = input.images[0];
+    const points = { [first]: { x: 20, y: 80 }, [second]: { x: 75, y: 25 } };
+    await owner.mutation(api.items.update, {
+      ...input,
+      id: itemId,
+      images: [first, second],
+      imageFocalPoints: points,
+      imageFocalPoint: points[first],
+    });
+    await owner.mutation(api.items.update, {
+      ...input,
+      id: itemId,
+      images: [second, first],
+      imageFocalPoints: points,
+      imageFocalPoint: points[second],
+    });
+    const reordered = await t.run((ctx) => ctx.db.get(itemId));
+    expect(reordered?.images).toEqual([second, first]);
+    expect(reordered?.imageFocalPoints).toEqual(points);
+    expect(reordered?.imageFocalPoint).toEqual(points[second]);
+    await owner.mutation(api.items.update, {
+      ...input,
+      id: itemId,
+      images: [second],
+      imageFocalPoints: { [second]: points[second] },
+      imageFocalPoint: points[second],
+    });
+    expect(
+      (await t.run((ctx) => ctx.db.get(itemId)))?.imageFocalPoints,
+    ).toEqual({ [second]: points[second] });
+    expect(await t.run((ctx) => ctx.storage.getUrl(second))).not.toBeNull();
+  });
+
+  it("rejects out-of-range focus and focus for a photo outside the listing", async () => {
+    const { t, owner, input, itemId } = await setup();
+    const outside = await t.run((ctx) =>
+      ctx.storage.store(new Blob(["outside"], { type: "image/png" })),
+    );
+    await expect(
+      owner.mutation(api.items.update, {
+        ...input,
+        id: itemId,
+        imageFocalPoints: { [input.images[0]]: { x: 101, y: 50 } },
+      }),
+    ).rejects.toThrow("između 0 i 100");
+    await expect(
+      owner.mutation(api.items.update, {
+        ...input,
+        id: itemId,
+        imageFocalPoints: { [outside]: { x: 50, y: 50 } },
+      }),
+    ).rejects.toThrow("ovog oglasa");
+    vi.advanceTimersByTime(10_001);
+    await expect(
+      owner.mutation(api.items.create, {
+        ...input,
+        imageFocalPoints: { [input.images[0]]: { x: 50, y: -1 } },
+      }),
+    ).rejects.toThrow("između 0 i 100");
+  });
+
   it("preserves all ten stored photos during a listing edit and rejects an eleventh", async () => {
     const { t, owner, input, itemId } = await setup();
     const images = [...input.images];
@@ -222,8 +288,12 @@ describe("booking requests and approval", () => {
       owner.mutation(api.bookings.approveBooking, { id: first }),
       owner.mutation(api.bookings.approveBooking, { id: second }),
     ]);
-    expect(approvals.filter((result) => result.status === "fulfilled")).toHaveLength(1);
-    expect(approvals.filter((result) => result.status === "rejected")).toHaveLength(1);
+    expect(
+      approvals.filter((result) => result.status === "fulfilled"),
+    ).toHaveLength(1);
+    expect(
+      approvals.filter((result) => result.status === "rejected"),
+    ).toHaveLength(1);
     await expect(
       renter.mutation(
         api.bookings.createBooking,

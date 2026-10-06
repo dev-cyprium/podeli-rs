@@ -1,4 +1,4 @@
-import type { LocalizationResource } from "@clerk/types";
+import type { LocalizationResource } from "@clerk/nextjs/types";
 
 export const srLocalization: LocalizationResource = {
   locale: "sr-RS",

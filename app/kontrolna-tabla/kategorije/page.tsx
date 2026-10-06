@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { useConvexAuth } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { SignedIn, SignedOut } from "@clerk/nextjs";
+import { Show } from "@clerk/nextjs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -124,14 +124,14 @@ export default function KategorijePage() {
       </div>
 
       {/* Suggest new category */}
-      <SignedOut>
+      <Show when="signed-out">
         <Card className="mb-8">
           <CardContent className="py-8 text-center text-sm text-muted-foreground">
             Prijavite se da biste predložili novu kategoriju.
           </CardContent>
         </Card>
-      </SignedOut>
-      <SignedIn>
+      </Show>
+      <Show when="signed-in">
         <Card className="mb-8">
           <CardContent className="p-5">
             <h2 className="text-sm font-semibold text-podeli-dark">
@@ -206,7 +206,7 @@ export default function KategorijePage() {
             </div>
           </div>
         )}
-      </SignedIn>
+      </Show>
 
       {/* Categories grid */}
       <h2 className="mb-4 text-sm font-semibold text-podeli-dark">

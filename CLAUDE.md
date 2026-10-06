@@ -67,6 +67,12 @@ Booking statuses flow: `pending` -> `confirmed` -> `active` -> `completed` (or `
 
 Convex functions enforce auth by calling a `requireIdentity()` helper which uses `ctx.auth.getUserIdentity()`. The user ID is `identity.subject` (Clerk user ID string).
 
+## Activity logs and Trello
+
+- Keep technical analysis, implementation notes, decisions, command results, and discussion history in `logs/YYYY-MM-DD.md`. Append to an existing daily log rather than overwriting it.
+- Trello cards must be understandable to non-programmers: a concrete task title, a short description, and a few observable completion criteria.
+- Keep ticket status concise and current. Do not append chat transcripts, old descriptions, code-level details, or test output to cards; preserve that history in the daily log.
+
 ## Path Alias
 
 `@/*` maps to the project root (configured in `tsconfig.json`).

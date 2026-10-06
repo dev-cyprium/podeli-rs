@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { SignedIn, SignedOut } from "@clerk/nextjs";
+import { Show } from "@clerk/nextjs";
 import { useQuery } from "convex/react";
 import { AnimatePresence, motion } from "framer-motion";
 import { api } from "@/convex/_generated/api";
@@ -13,16 +13,16 @@ import { RenterBookingCard } from "./RenterBookingCard";
 export function RenterBookingsList() {
   return (
     <>
-      <SignedOut>
+      <Show when="signed-out">
         <Card>
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
             Prijavite se da biste videli vaše rezervacije.
           </CardContent>
         </Card>
-      </SignedOut>
-      <SignedIn>
+      </Show>
+      <Show when="signed-in">
         <RenterBookingsContent />
-      </SignedIn>
+      </Show>
     </>
   );
 }

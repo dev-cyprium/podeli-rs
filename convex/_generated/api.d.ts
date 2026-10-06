@@ -19,6 +19,7 @@ import type * as crons from "../crons.js";
 import type * as debug from "../debug.js";
 import type * as emails from "../emails.js";
 import type * as favorites from "../favorites.js";
+import type * as imageModel from "../imageModel.js";
 import type * as items from "../items.js";
 import type * as messages from "../messages.js";
 import type * as notificationPreferences from "../notificationPreferences.js";
@@ -49,6 +50,7 @@ declare const fullApi: ApiFromModules<{
   debug: typeof debug;
   emails: typeof emails;
   favorites: typeof favorites;
+  imageModel: typeof imageModel;
   items: typeof items;
   messages: typeof messages;
   notificationPreferences: typeof notificationPreferences;

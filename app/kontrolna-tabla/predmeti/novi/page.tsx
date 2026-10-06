@@ -2,10 +2,9 @@
 
 import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { SignedIn, SignedOut } from "@clerk/nextjs";
+import { Show } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { ConvexError } from "convex/values";
 import { Id } from "@/convex/_generated/dataModel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DashboardShell } from "@/components/kontrolna-tabla/DashboardShell";
@@ -43,11 +42,8 @@ function NoviPredmetContent() {
       }
       router.push("/kontrolna-tabla/predmeti");
     } catch (error) {
-      const message =
-        error instanceof ConvexError && typeof error.data === "string"
-          ? error.data
-          : "Čuvanje nije uspelo. Pokušajte ponovo.";
-      setPageError(message);
+      setPageError(null);
+      throw error;
     }
   }
 
@@ -65,12 +61,12 @@ function NoviPredmetContent() {
           </p>
         </CardHeader>
         <CardContent>
-          <SignedOut>
+          <Show when="signed-out">
             <div className="py-10 text-center text-sm text-muted-foreground">
               Prijavite se da biste dodali predmet.
             </div>
-          </SignedOut>
-          <SignedIn>
+          </Show>
+          <Show when="signed-in">
             {itemId && item === undefined ? (
               <div className="py-10 text-center text-sm text-muted-foreground">
                 Učitavanje predmeta...
@@ -95,10 +91,12 @@ function NoviPredmetContent() {
                   onSave={handleSave}
                   onCancel={() => router.push("/kontrolna-tabla/predmeti")}
                   preferredContactTypes={preferredContactTypes}
+                  phoneNumber={profile.phoneNumber}
+                  onContactSaved={() => setPageError(null)}
                 />
               </>
             )}
-          </SignedIn>
+          </Show>
         </CardContent>
       </Card>
     </DashboardShell>

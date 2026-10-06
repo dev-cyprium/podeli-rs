@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useUser } from "@clerk/nextjs";
-import type { ExternalAccountResource } from "@clerk/types";
+import type { ExternalAccountResource } from "@clerk/nextjs/types";
 import { Link2, Unlink, Loader2 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

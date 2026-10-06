@@ -1,5 +1,6 @@
 "use client";
 
+import { getImageFocalPoint, ImageFocalPoints } from "@/lib/item-photos";
 import { useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, Expand } from "lucide-react";
@@ -13,15 +14,21 @@ interface ItemImageGalleryProps {
   images: Id<"_storage">[];
   title: string;
   imageFocalPoint?: { x: number; y: number };
+  imageFocalPoints?: ImageFocalPoints;
 }
 
-export function ItemImageGallery({ images, title, imageFocalPoint }: ItemImageGalleryProps) {
+export function ItemImageGallery({
+  images,
+  title,
+  imageFocalPoint,
+  imageFocalPoints,
+}: ItemImageGalleryProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const imageUrls = useQuery(
     api.items.getImageUrls,
-    images.length > 0 ? { storageIds: images } : "skip"
+    images.length > 0 ? { storageIds: images } : "skip",
   );
 
   const handlePrevious = () => {
@@ -41,9 +48,13 @@ export function ItemImageGallery({ images, title, imageFocalPoint }: ItemImageGa
   }
 
   const currentImageUrl = imageUrls?.[images[currentIndex]];
-  const focalStyle = imageFocalPoint
-    ? { objectPosition: `${imageFocalPoint.x}% ${imageFocalPoint.y}%` }
-    : undefined;
+  const point = getImageFocalPoint(
+    images[currentIndex],
+    currentIndex,
+    imageFocalPoints,
+    imageFocalPoint,
+  );
+  const focalStyle = { objectPosition: `${point.x}% ${point.y}%` };
 
   return (
     <div className="space-y-4">
@@ -107,6 +118,12 @@ export function ItemImageGallery({ images, title, imageFocalPoint }: ItemImageGa
         <div className="flex gap-2 overflow-x-auto pb-2">
           {images.map((imageId, index) => {
             const thumbnailUrl = imageUrls?.[imageId];
+            const focus = getImageFocalPoint(
+              imageId,
+              index,
+              imageFocalPoints,
+              imageFocalPoint,
+            );
             return (
               <Button
                 key={imageId}
@@ -124,6 +141,9 @@ export function ItemImageGallery({ images, title, imageFocalPoint }: ItemImageGa
                     alt={`${title} - thumbnail ${index + 1}`}
                     fill
                     className="object-cover"
+                    style={{
+                      objectPosition: `${focus.x}% ${focus.y}%`,
+                    }}
                   />
                 ) : (
                   <div className="h-full w-full animate-pulse bg-muted" />

@@ -58,6 +58,7 @@ export function ItemDetailContent({
           images={item.images}
           title={item.title}
           imageFocalPoint={item.imageFocalPoint}
+          imageFocalPoints={item.imageFocalPoints}
         />
 
         <div className="rounded-xl bg-card p-6 shadow-sm">

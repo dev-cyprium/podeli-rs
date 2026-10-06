@@ -1,3 +1,5 @@
+import { imageFocalPointsError } from "@/lib/item-photos";
+import { imageFocalPointValidator, imageFocalPointsValidator } from "./imageModel";
 import { v, ConvexError } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireIdentity } from "@/lib/convex-auth";
@@ -131,6 +133,7 @@ export const getByShortId = query({
 });
 
 export const create = mutation({
+  returns: v.id("items"),
   args: {
     title: v.string(),
     description: v.string(),
@@ -139,7 +142,8 @@ export const create = mutation({
     priceByAgreement: v.optional(v.boolean()),
     deposit: v.optional(v.number()),
     images: v.array(v.id("_storage")),
-    imageFocalPoint: v.optional(v.object({ x: v.number(), y: v.number() })),
+    imageFocalPoint: v.optional(imageFocalPointValidator),
+    imageFocalPoints: v.optional(imageFocalPointsValidator),
     availabilitySlots: v.array(
       v.object({
         startDate: v.string(),
@@ -225,6 +229,9 @@ export const create = mutation({
       throw new ConvexError("Maksimalno 10 fotografija po predmetu.");
     }
 
+    const focalError = imageFocalPointsError(args.images, args.imageFocalPoints);
+    if (focalError) throw new ConvexError(focalError);
+
     const validSlots = args.availabilitySlots;
     const slotError = availabilityError(validSlots);
     if (slotError) throw new ConvexError(slotError);
@@ -258,6 +265,7 @@ export const create = mutation({
 });
 
 export const update = mutation({
+  returns: v.null(),
   args: {
     id: v.id("items"),
     title: v.string(),
@@ -267,7 +275,8 @@ export const update = mutation({
     priceByAgreement: v.optional(v.boolean()),
     deposit: v.optional(v.number()),
     images: v.array(v.id("_storage")),
-    imageFocalPoint: v.optional(v.object({ x: v.number(), y: v.number() })),
+    imageFocalPoint: v.optional(imageFocalPointValidator),
+    imageFocalPoints: v.optional(imageFocalPointsValidator),
     availabilitySlots: v.array(
       v.object({
         startDate: v.string(),
@@ -330,6 +339,9 @@ export const update = mutation({
     if (args.images.length > 10) {
       throw new ConvexError("Maksimalno 10 fotografija po predmetu.");
     }
+
+    const focalError = imageFocalPointsError(args.images, args.imageFocalPoints);
+    if (focalError) throw new ConvexError(focalError);
 
     const validSlots = args.availabilitySlots;
     const slotError = availabilityError(validSlots);
