@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { formatLocation } from "@/lib/item-location";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Doc } from "@/convex/_generated/dataModel";
@@ -90,7 +91,7 @@ export function ItemCard({
         </h3>
         <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
           <MapPin className="h-3 w-3" />
-          <span>Beograd</span>
+          <span>{formatLocation(item)}</span>
           <span className="mx-0.5">&middot;</span>
           <span>{item.category}</span>
         </p>
